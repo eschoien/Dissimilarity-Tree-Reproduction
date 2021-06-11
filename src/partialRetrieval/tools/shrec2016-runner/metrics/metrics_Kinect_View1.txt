@@ -1,0 +1,19 @@
+Average Precision-recall:
+0.373961
+0.30335
+0.27485
+0.25264
+0.247834
+0.246058
+0.249522
+0.247113
+0.24112
+0.235341
+
+
+Computed metrics:
+Nearest Neighbors:7 28% 
+First Tier:0.20775  
+Second Tier:0.452569  
+E-Measure:0.0848485
+DCG:0.672251

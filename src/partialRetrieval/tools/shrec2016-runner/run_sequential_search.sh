@@ -1,0 +1,1 @@
+time ./sequentialSearchBenchmark --query-directory=/mnt/WAREHOUSE2/Stash/SHREC2016_generated_queries_original --index-directory=/mnt/WAREHOUSE2/Stash/SHREC2016_index --random-seed=725948161 --sample-count=2500 --output-file=sequential_search_383_original_2500.txt

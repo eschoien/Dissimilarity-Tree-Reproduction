@@ -1,0 +1,1 @@
+time ./indexedSearchBenchmark --query-directory=/mnt/WAREHOUSE2/Stash/SHREC2016_generated_queries_original --index-directory=/mnt/WAREHOUSE2/Stash/SHREC2016_index_32x32 --random-seed=725948161 --sample-count=100000 --output-file=indexed_search_383_original_100000_32x32.txt
