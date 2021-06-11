@@ -1,2 +1,5 @@
 *.pyc
 .idea/*
+bin/*
+
+input/**/*.obj

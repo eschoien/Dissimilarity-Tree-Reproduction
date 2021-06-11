@@ -88,7 +88,7 @@ def installDependenciesMenu():
         choice = install_menu.show()
 
         if choice == 0:
-            run_command_line_command('sudo apt install cmake python3 python3-pip libpcl-dev g++-8 gcc-8 wget p7zip')
+            run_command_line_command('sudo apt install cmake python3 python3-pip libpcl-dev g++ gcc build-essential wget p7zip')
             run_command_line_command('sudo pip3 install simple-term-menu xlwt xlrd numpy matplotlib pillow PyQt5')
             print()
         if choice == 1:
@@ -103,10 +103,10 @@ def compileProject():
     print('Also, depending on which version of CUDA you have installed, you may need')
     print('to change the version of GCC/G++ used for compatibility reasons.')
     print('If either of these occurs, modify the paths at the top of the following file: ')
-    print('    src/clutterbox/CMakeLists.txt')
+    print('    src/partialRetrieval/CMakeLists.txt')
     print()
 
-    os.makedirs('src/clutterbox/build', exist_ok=True)
+    os.makedirs('bin', exist_ok=True)
 
     compileProjectMenu = TerminalMenu([
         "Run cmake (must run before make)",
@@ -117,10 +117,10 @@ def compileProject():
         choice = compileProjectMenu.show()
 
         if choice == 0:
-            run_command_line_command('rm src/clutterbox/build/*')
-            run_command_line_command('cmake ..', 'src/clutterbox/build')
+            run_command_line_command('rm -rf bin/*')
+            run_command_line_command('cmake ../src/partialRetrieval', 'bin')
         if choice == 1:
-            run_command_line_command('make -j 4', 'src/clutterbox/build')
+            run_command_line_command('make -j 4', 'bin')
         if choice == 2:
             return
 
