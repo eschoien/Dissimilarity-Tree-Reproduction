@@ -6,6 +6,7 @@ import random
 from scripts.simple_term_menu import TerminalMenu
 
 gpuID = 0
+mainEvaluationRandomSeed = '725948161'
 
 def run_command_line_command(command, working_directory='.'):
     print('>> Executing command:', command)
@@ -118,7 +119,7 @@ def compileProject():
 
         if choice == 0:
             run_command_line_command('rm -rf bin/*')
-            run_command_line_command('cmake ../src/partialRetrieval', 'bin')
+            run_command_line_command('cmake ../src/partialRetrieval -DCMAKE_BUILD_TYPE=Release', 'bin')
         if choice == 1:
             run_command_line_command('make -j 4', 'bin')
         if choice == 2:
@@ -129,6 +130,30 @@ def configureGPU():
     run_command_line_command('src/clutterbox/build/clutterbox --list-gpus')
     print()
     gpuID = input('Enter the ID of the GPU to use (usually 0): ')
+
+def generateAugmentedDataset():
+    while True:
+        os.makedirs('output/AUGMENTEDbest', exist_ok=True)
+        os.makedirs('output/AUGMENTEDrem', exist_ok=True)
+
+        run_menu = TerminalMenu([
+            "Generate augmented dataset without remeshing",
+            "Generate augmented dataset with remeshing",
+            "back"], title='-- Generate augmented SHREC\'16 dataset --')
+        choice = run_menu.show()
+        if choice == 0:
+            run_command_line_command('bin/querysetgenerator '
+                                     '--object-directory=input/SHREC2016_partial_retrieval/complete_objects '
+                                     '--output-directory=output/AUGMENTEDbest '
+                                     '--random-seed=' + mainEvaluationRandomSeed)
+        if choice == 1:
+            run_command_line_command('bin/querysetgenerator '
+                                     '--object-directory=input/SHREC2016_partial_retrieval/complete_objects '
+                                     '--output-directory=output/AUGMENTEDrem '
+                                     '--redistribute-triangles '
+                                     '--random-seed=' + mainEvaluationRandomSeed)
+        if choice == 2:
+            return
 
 main_menu = TerminalMenu([
     "1. Install dependencies",
@@ -158,7 +183,7 @@ def runMainMenu():
         if choice == 2:
             compileProject()
         if choice == 3:
-            pass
+            generateAugmentedDataset()
         if choice == 4:
             pass
         if choice == 5:

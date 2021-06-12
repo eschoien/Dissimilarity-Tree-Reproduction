@@ -94,9 +94,9 @@ int main(int argc, const char** argv) {
     BufferObject screenQuadVAO = generateVertexArray(screenQuadVertices.data(), screenQuadTexCoords.data(), screenQuadColours.data(), 6);
 
     Shader objectIDShader;
-    objectIDShader.makeBasicShader("../res/shaders/objectIDShader.vert", "../res/shaders/objectIDShader.frag");
+    objectIDShader.makeBasicShader("res/shaders/objectIDShader.vert", "res/shaders/objectIDShader.frag");
     Shader fullscreenQuadShader;
-    fullscreenQuadShader.makeBasicShader("../res/shaders/fullscreenquad.vert", "../res/shaders/fullscreenquad.frag");
+    fullscreenQuadShader.makeBasicShader("res/shaders/fullscreenquad.vert", "res/shaders/fullscreenquad.frag");
 
     // Create offscreen renderer
 
@@ -192,12 +192,6 @@ int main(int argc, const char** argv) {
         glBindTexture(GL_TEXTURE_2D, texture);
         glReadPixels(0, 0, offscreenTextureWidth, offscreenTextureHeight, GL_RGB, GL_UNSIGNED_BYTE, localFramebufferCopy.data());
 
-        /*unsigned int error = lodepng::encode("temp.png", localFramebufferCopy, offscreenTextureWidth, offscreenTextureHeight, LCT_RGB, 8);
-
-        if(error)
-        {
-            std::cout << "encoder error " << error << ": " << lodepng_error_text(error) << std::endl;
-        }*/
 
         std::vector<bool> triangleAppearsInImage(loadedMesh.vertexCount / 3);
 
@@ -234,44 +228,11 @@ int main(int argc, const char** argv) {
 
         outMesh.vertexCount = visibleVertexCount;
 
-        // DEBUGGING
-
-        ShapeDescriptor::cpu::Mesh modifiedQueryMesh = loadedMesh.clone();
-        for(unsigned int triangle = 0; triangle < triangleAppearsInImage.size(); triangle++) {
-            if(triangleAppearsInImage.at(triangle)) {
-                modifiedQueryMesh.vertices[visibleVertexCount + 0] = {5000, 5000, 5000};
-                modifiedQueryMesh.vertices[visibleVertexCount + 1] = {5000, 5000, 5000};
-                modifiedQueryMesh.vertices[visibleVertexCount + 2] = {5000, 5000, 5000};
-            }
-        }
-        ShapeDescriptor::gpu::Mesh gpuModifiedQueryMesh = ShapeDescriptor::copy::hostMeshToDevice(modifiedQueryMesh);
-        ShapeDescriptor::gpu::array<ShapeDescriptor::OrientedPoint> descriptorOrigins = ShapeDescriptor::utilities::generateSpinOriginBuffer(
-                gpuModifiedQueryMesh);
-
-        ShapeDescriptor::gpu::Mesh gpuOutMesh = ShapeDescriptor::copy::hostMeshToDevice(outMesh);
-        ShapeDescriptor::gpu::Mesh gpuHaystackMesh = ShapeDescriptor::copy::hostMeshToDevice(loadedMesh);
-
-        ShapeDescriptor::gpu::array<ShapeDescriptor::RICIDescriptor> queryDescriptors = ShapeDescriptor::gpu::generateRadialIntersectionCountImages(gpuOutMesh, descriptorOrigins, 100);
-        ShapeDescriptor::gpu::array<ShapeDescriptor::QUICCIDescriptor> convertedDescriptors = convertRICIToModifiedQUICCI(queryDescriptors);
-
-        ShapeDescriptor::gpu::array<ShapeDescriptor::QUICCIDescriptor> haystackDescriptors = ShapeDescriptor::gpu::generateQUICCImages(gpuHaystackMesh, descriptorOrigins, 100);
-
-        ShapeDescriptor::cpu::array<ShapeDescriptor::QUICCIDescriptor> cpuQueryDescriptors = ShapeDescriptor::copy::deviceArrayToHost(convertedDescriptors);
-        ShapeDescriptor::cpu::array<ShapeDescriptor::QUICCIDescriptor> cpuHaystackDescriptors = ShapeDescriptor::copy::deviceArrayToHost(haystackDescriptors);
-
-        cpuQueryDescriptors.length = 5000;
-        cpuHaystackDescriptors.length = 5000;
-        ShapeDescriptor::dump::descriptors(cpuQueryDescriptors, "query_filtered_descriptors.png", 50);
-        ShapeDescriptor::dump::descriptors(cpuHaystackDescriptors, "haystack_filtered_descriptors.png", 50);
-
-
-        // END DEBUGGING
-
         std::string filename = std::experimental::filesystem::path(haystackFiles.at(i)).filename();
         std::experimental::filesystem::path outputMeshFile = std::experimental::filesystem::path(targetDirectory.value()) / filename;
         ShapeDescriptor::dump::mesh(outMesh, outputMeshFile);
 
-        if(enableTriangleRedistribution.value() || cpuQueryDescriptors.length > 9) {
+        if(enableTriangleRedistribution.value()) {
             std::cout << "Remeshing.. " << outputMeshFile.string() << std::endl;
             pmp::SurfaceMesh mesh;
             mesh.read(outputMeshFile.string());
@@ -288,17 +249,6 @@ int main(int argc, const char** argv) {
             remesher.uniform_remeshing(averageEdgeLength);
             mesh.write(outputMeshFile.string());
         }
-
-        ShapeDescriptor::cpu::Mesh remeshedMesh = ShapeDescriptor::utilities::loadMesh(outputMeshFile.string());
-        ShapeDescriptor::gpu::Mesh gpuRemeshedMesh = ShapeDescriptor::copy::hostMeshToDevice(remeshedMesh);
-
-        ShapeDescriptor::gpu::array<ShapeDescriptor::RICIDescriptor> queryRemeshedDescriptors = ShapeDescriptor::gpu::generateRadialIntersectionCountImages(gpuRemeshedMesh, descriptorOrigins, 100);
-        ShapeDescriptor::gpu::array<ShapeDescriptor::QUICCIDescriptor> convertedRemeshedDescriptors = convertRICIToModifiedQUICCI(queryRemeshedDescriptors);
-
-        ShapeDescriptor::cpu::array<ShapeDescriptor::QUICCIDescriptor> cpuRemeshedQueryDescriptors = ShapeDescriptor::copy::deviceArrayToHost(convertedRemeshedDescriptors);
-
-        cpuRemeshedQueryDescriptors.length = 5000;
-        ShapeDescriptor::dump::descriptors(cpuRemeshedQueryDescriptors, "query_remeshed_descriptors.png", 50);
 
         ShapeDescriptor::free::mesh(outMesh);
 
