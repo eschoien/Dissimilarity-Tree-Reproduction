@@ -136,9 +136,10 @@ def compileProject():
 
 def configureGPU():
     global gpuID
-    run_command_line_command('src/clutterbox/build/clutterbox --list-gpus')
+    run_command_line_command('nvidia-smi -L')
     print()
     gpuID = input('Enter the ID of the GPU to use (usually 0): ')
+    print()
 
 def changeDescriptorWidth(newWidth):
     run_command_line_command("sed -i 's/^#define spinImageWidthPixels .*/#define spinImageWidthPixels " + str(newWidth) + "/' src/libShapeDescriptor/src/shapeDescriptor/libraryBuildSettings.h")
@@ -190,6 +191,12 @@ def generateAugmentedDataset():
         if choice == 3:
             return
 
+def computeDescriptorsFromFile(inputFile, outputFile):
+    subprocess.run('bin/descriptorDumper'
+                   + ' --input-file="' + inputFile
+                   + '" --output-file="' + outputFile
+                   + '" --support-radius=' + str(shrec2016_support_radius), shell=True)
+
 def computeDescriptorsFromDirectory(inputDirectory, outputDirectory):
     os.makedirs(outputDirectory, exist_ok=True)
     filesToProcess = [f for f in os.listdir(inputDirectory) if os.path.isfile(os.path.join(inputDirectory, f))]
@@ -200,10 +207,7 @@ def computeDescriptorsFromDirectory(inputDirectory, outputDirectory):
         dumpFilePath = os.path.join(outputDirectory, fileToProcess[0:-4] + '.dat')
         print('\tProcessing file', (index + 1), '/', len(filesToProcess), ':', fileToProcess)
 
-        subprocess.run('bin/descriptorDumper'
-                       + ' --input-file="' + inputFilePath
-                       + '" --output-file="' + dumpFilePath
-                       + '" --support-radius=' + str(shrec2016_support_radius), shell=True)
+        computeDescriptorsFromFile(inputFilePath, dumpFilePath)
 
 def computeDescriptors():
     for descriptorwidth in ['32', '64', '96']:
@@ -218,6 +222,7 @@ def computeDescriptors():
             "Generate all descriptors (will take several hours)",
             "Copy all descriptors precomputed by authors",
             "Generate descriptors for a random object and compare checksums",
+            "Configure GPU (use if system has more than one, currently set to GPU " + str(gpuID) + ")",
             "back"], title='-- Compute descriptors --')
         choice = run_menu.show()
         if choice == 0:
@@ -244,6 +249,8 @@ def computeDescriptors():
         if choice == 2:
             pass
         if choice == 3:
+            configureGPU()
+        if choice == 4:
             return
 
 main_menu = TerminalMenu([
