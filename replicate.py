@@ -206,16 +206,11 @@ def computeDescriptorsFromDirectory(inputDirectory, outputDirectory):
                        + '" --support-radius=' + str(shrec2016_support_radius), shell=True)
 
 def computeDescriptors():
-    for index, descriptorwidth in enumerate(['32', '64', '96']):
-        print('Processing batch 1/5 in resolution ' + descriptorwidth + 'x' + descriptorwidth + ' (' + str(index+1) + '/3)' )
+    for descriptorwidth in ['32', '64', '96']:
         os.makedirs('output/descriptors/complete_objects_' + descriptorwidth + 'x' + descriptorwidth, exist_ok=True)
-        print('Processing batch 2/5 in resolution ' + descriptorwidth + 'x' + descriptorwidth + ' (' + str(index + 1) + '/3)')
         os.makedirs('output/descriptors/augmented_dataset_best_' + descriptorwidth + 'x' + descriptorwidth, exist_ok=True)
-        print('Processing batch 3/5 in resolution ' + descriptorwidth + 'x' + descriptorwidth + ' (' + str(index + 1) + '/3)')
         os.makedirs('output/descriptors/augmented_dataset_remeshed_' + descriptorwidth + 'x' + descriptorwidth, exist_ok=True)
-        print('Processing batch 4/5 in resolution ' + descriptorwidth + 'x' + descriptorwidth + ' (' + str(index + 1) + '/3)')
         os.makedirs('output/descriptors/shrec2016_25partiality_' + descriptorwidth + 'x' + descriptorwidth, exist_ok=True)
-        print('Processing batch 5/5 in resolution ' + descriptorwidth + 'x' + descriptorwidth + ' (' + str(index + 1) + '/3)')
         os.makedirs('output/descriptors/shrec2016_40partiality_' + descriptorwidth + 'x' + descriptorwidth, exist_ok=True)
 
     while True:
@@ -226,16 +221,21 @@ def computeDescriptors():
             "back"], title='-- Compute descriptors --')
         choice = run_menu.show()
         if choice == 0:
-            for descriptorwidth in ['32', '64', '96']:
+            for index, descriptorwidth in enumerate(['32', '64', '96']):
                 changeDescriptorWidth(int(descriptorwidth))
+                print('Processing batch 1/5 in resolution ' + descriptorwidth + 'x' + descriptorwidth + ' (' + str(index + 1) + '/3)')
                 computeDescriptorsFromDirectory('input/SHREC2016_partial_retrieval/complete_objects',
                                                 'output/descriptors/complete_objects_' + descriptorwidth + 'x' + descriptorwidth)
+                print('Processing batch 2/5 in resolution ' + descriptorwidth + 'x' + descriptorwidth + ' (' + str(index + 1) + '/3)')
                 computeDescriptorsFromDirectory('output/augmented_dataset_best',
                                                 'output/descriptors/augmented_dataset_best_' + descriptorwidth + 'x' + descriptorwidth)
+                print('Processing batch 3/5 in resolution ' + descriptorwidth + 'x' + descriptorwidth + ' (' + str(index + 1) + '/3)')
                 computeDescriptorsFromDirectory('output/augmented_dataset_remeshed',
                                                 'output/descriptors/augmented_dataset_remeshed_' + descriptorwidth + 'x' + descriptorwidth)
+                print('Processing batch 4/5 in resolution ' + descriptorwidth + 'x' + descriptorwidth + ' (' + str(index + 1) + '/3)')
                 computeDescriptorsFromDirectory('input/SHREC2016_partial_retrieval/queries_artificial/Q25',
                                                 'output/descriptors/shrec2016_25partiality_' + descriptorwidth + 'x' + descriptorwidth)
+                print('Processing batch 5/5 in resolution ' + descriptorwidth + 'x' + descriptorwidth + ' (' + str(index + 1) + '/3)')
                 computeDescriptorsFromDirectory('input/SHREC2016_partial_retrieval/queries_artificial/Q40',
                                                 'output/descriptors/shrec2016_40partiality_' + descriptorwidth + 'x' + descriptorwidth)
         if choice == 1:

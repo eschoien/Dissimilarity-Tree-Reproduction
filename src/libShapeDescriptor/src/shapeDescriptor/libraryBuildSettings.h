@@ -14,7 +14,7 @@
 // Their physical size depends on the size of individual cubes and is thus calculated separately.
 // Limitation: must be a multiple of 32
 // Limitation: can not be more than 255 due to the array of bytes
-#define spinImageWidthPixels 32
+#define spinImageWidthPixels 64
 
 // In a few places we need to check for equivalence between floating point numbers.
 // This is the maximum difference between two floating numbers such that they are considered equal.
