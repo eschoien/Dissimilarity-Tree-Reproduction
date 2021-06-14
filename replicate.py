@@ -4,6 +4,8 @@ import shutil
 import subprocess
 import random
 import sys
+import multiprocessing
+import hashlib
 
 from scripts.simple_term_menu import TerminalMenu
 
@@ -107,6 +109,9 @@ def installDependenciesMenu():
         if choice == 2:
             return
 
+def changeDescriptorWidth(newWidth):
+    run_command_line_command("sed -i 's/^#define spinImageWidthPixels .*/#define spinImageWidthPixels " + str(newWidth) + "/' src/libShapeDescriptor/src/shapeDescriptor/libraryBuildSettings.h")
+
 def compileProject():
     print('This project uses cmake for generating its makefiles.')
     print('It has a tendency to at times be unable to find an installed CUDA compiler.')
@@ -116,23 +121,25 @@ def compileProject():
     print('    src/partialRetrieval/CMakeLists.txt')
     print()
 
-    os.makedirs('bin', exist_ok=True)
+    run_command_line_command('rm -rf bin/*')
 
-    compileProjectMenu = TerminalMenu([
-        "Run cmake (must run before make)",
-        "Run make",
-        "back"], title='------------------- Compile Project -------------------')
+    os.makedirs('bin/build32x32', exist_ok=True)
+    os.makedirs('bin/build64x64', exist_ok=True)
+    os.makedirs('bin/build96x96', exist_ok=True)
 
-    while True:
-        choice = compileProjectMenu.show()
+    threadCount = str(multiprocessing.cpu_count() - 1)
 
-        if choice == 0:
-            run_command_line_command('rm -rf bin/*')
-            run_command_line_command('cmake ../src/partialRetrieval -DCMAKE_BUILD_TYPE=Release', 'bin')
-        if choice == 1:
-            run_command_line_command('make -j 4', 'bin')
-        if choice == 2:
-            return
+    changeDescriptorWidth(32)
+    run_command_line_command('cmake ../../src/partialRetrieval -DCMAKE_BUILD_TYPE=Release', 'bin/build32x32')
+    run_command_line_command('make -j ' + threadCount, 'bin/build32x32')
+
+    changeDescriptorWidth(64)
+    run_command_line_command('cmake ../../src/partialRetrieval -DCMAKE_BUILD_TYPE=Release', 'bin/build64x64')
+    run_command_line_command('make -j ' + threadCount, 'bin/build64x64')
+
+    changeDescriptorWidth(96)
+    run_command_line_command('cmake ../../src/partialRetrieval -DCMAKE_BUILD_TYPE=Release', 'bin/build96x96')
+    run_command_line_command('make -j ' + threadCount, 'bin/build96x96')
 
 def configureGPU():
     global gpuID
@@ -141,41 +148,26 @@ def configureGPU():
     gpuID = input('Enter the ID of the GPU to use (usually 0): ')
     print()
 
-def changeDescriptorWidth(newWidth):
-    run_command_line_command("sed -i 's/^#define spinImageWidthPixels .*/#define spinImageWidthPixels " + str(newWidth) + "/' src/libShapeDescriptor/src/shapeDescriptor/libraryBuildSettings.h")
-    run_command_line_command('make -j 4', 'bin')
-
-def configureDescriptorWidth():
-    descriptorWidthMenu = TerminalMenu([
-        "32x32 bits",
-        "64x64 bits",
-        "96x96 bits",
-        "cancel"], title='------------------- Set descriptor size -------------------')
-
-    choice = descriptorWidthMenu.show()
-
-    if choice == 0:
-        changeDescriptorWidth(32)
-    if choice == 1:
-        changeDescriptorWidth(64)
-    if choice == 2:
-        changeDescriptorWidth(96)
+def fileMD5(filePath):
+    with open(filePath, 'rb') as inFile:
+        return hashlib.md5(inFile.read()).hexdigest()
 
 def generateAugmentedDataset():
     while True:
-        os.makedirs('output/augmented_dataset_best', exist_ok=True)
+        os.makedirs('output/augmented_dataset_original', exist_ok=True)
         os.makedirs('output/augmented_dataset_remeshed', exist_ok=True)
 
         run_menu = TerminalMenu([
             "Generate augmented dataset without remeshing",
             "Generate augmented dataset with remeshing",
             "Copy objects computed by authors",
+            "Compare file checksums",
             "back"], title='-- Generate augmented SHREC\'16 dataset --')
         choice = run_menu.show()
         if choice == 0:
             run_command_line_command('bin/querysetgenerator '
                                      '--object-directory=input/SHREC2016_partial_retrieval/complete_objects '
-                                     '--output-directory=output/augmented_dataset_best '
+                                     '--output-directory=output/augmented_dataset_original '
                                      '--random-seed=' + mainEvaluationRandomSeed)
         if choice == 1:
             run_command_line_command('bin/querysetgenerator '
@@ -185,19 +177,28 @@ def generateAugmentedDataset():
                                      '--random-seed=' + mainEvaluationRandomSeed)
         if choice == 2:
             print('Copying best case objects')
-            shutil.copytree('input/augmented_dataset_best', 'output/augmented_dataset_best', dirs_exist_ok=True)
+            shutil.copytree('input/augmented_dataset_original', 'output/augmented_dataset_original', dirs_exist_ok=True)
             print('Copying remeshed objects')
             shutil.copytree('input/augmented_dataset_remeshed', 'output/augmented_dataset_remeshed', dirs_exist_ok=True)
         if choice == 3:
+            print('Comparing non-remeshed queries')
+            authorsOriginalDir = 'input/augmented_dataset_original'
+            for filename in os.listdir(authorsOriginalDir):
+                originalFileDigest = fileMD5(os.path.join(authorsOriginalDir, filename))
+                print(authorsOriginalDir, originalFileDigest)
+
+
+
+        if choice == 4:
             return
 
-def computeDescriptorsFromFile(inputFile, outputFile):
-    subprocess.run('bin/descriptorDumper'
+def computeDescriptorsFromFile(inputFile, outputFile, descriptorWidth):
+    subprocess.run('bin/build' + descriptorWidth + 'x' + descriptorWidth + '/descriptorDumper'
                    + ' --input-file="' + inputFile
                    + '" --output-file="' + outputFile
                    + '" --support-radius=' + str(shrec2016_support_radius), shell=True)
 
-def computeDescriptorsFromDirectory(inputDirectory, outputDirectory):
+def computeDescriptorsFromDirectory(inputDirectory, outputDirectory, descriptorWidth):
     os.makedirs(outputDirectory, exist_ok=True)
     filesToProcess = [f for f in os.listdir(inputDirectory) if os.path.isfile(os.path.join(inputDirectory, f))]
     print('Computing images: ', inputDirectory, '->', outputDirectory)
@@ -207,12 +208,12 @@ def computeDescriptorsFromDirectory(inputDirectory, outputDirectory):
         dumpFilePath = os.path.join(outputDirectory, fileToProcess[0:-4] + '.dat')
         print('\tProcessing file', (index + 1), '/', len(filesToProcess), ':', fileToProcess)
 
-        computeDescriptorsFromFile(inputFilePath, dumpFilePath)
+        computeDescriptorsFromFile(inputFilePath, dumpFilePath, descriptorWidth)
 
 def computeDescriptors():
     for descriptorwidth in ['32', '64', '96']:
         os.makedirs('output/descriptors/complete_objects_' + descriptorwidth + 'x' + descriptorwidth, exist_ok=True)
-        os.makedirs('output/descriptors/augmented_dataset_best_' + descriptorwidth + 'x' + descriptorwidth, exist_ok=True)
+        os.makedirs('output/descriptors/augmented_dataset_original_' + descriptorwidth + 'x' + descriptorwidth, exist_ok=True)
         os.makedirs('output/descriptors/augmented_dataset_remeshed_' + descriptorwidth + 'x' + descriptorwidth, exist_ok=True)
         os.makedirs('output/descriptors/shrec2016_25partiality_' + descriptorwidth + 'x' + descriptorwidth, exist_ok=True)
         os.makedirs('output/descriptors/shrec2016_40partiality_' + descriptorwidth + 'x' + descriptorwidth, exist_ok=True)
@@ -228,26 +229,33 @@ def computeDescriptors():
         if choice == 0:
             for index, descriptorwidth in enumerate(['32', '64', '96']):
                 changeDescriptorWidth(int(descriptorwidth))
-                print('Processing batch 1/5 in resolution ' + descriptorwidth + 'x' + descriptorwidth + ' (' + str(index + 1) + '/3)')
+                print('Processing batch 1/5 in resolution ' + str(index + 1) + '/3 (' + descriptorwidth + 'x' + descriptorwidth + ')')
                 computeDescriptorsFromDirectory('input/SHREC2016_partial_retrieval/complete_objects',
-                                                'output/descriptors/complete_objects_' + descriptorwidth + 'x' + descriptorwidth)
-                print('Processing batch 2/5 in resolution ' + descriptorwidth + 'x' + descriptorwidth + ' (' + str(index + 1) + '/3)')
-                computeDescriptorsFromDirectory('output/augmented_dataset_best',
-                                                'output/descriptors/augmented_dataset_best_' + descriptorwidth + 'x' + descriptorwidth)
-                print('Processing batch 3/5 in resolution ' + descriptorwidth + 'x' + descriptorwidth + ' (' + str(index + 1) + '/3)')
+                                                'output/descriptors/complete_objects_' + descriptorwidth + 'x' + descriptorwidth,
+                                                descriptorwidth)
+                print('Processing batch 2/5 in resolution ' + str(index + 1) + '/3 (' + descriptorwidth + 'x' + descriptorwidth + ')')
+                computeDescriptorsFromDirectory('output/augmented_dataset_original',
+                                                'output/descriptors/augmented_dataset_original_' + descriptorwidth + 'x' + descriptorwidth,
+                                                descriptorwidth)
+                print('Processing batch 3/5 in resolution ' + str(index + 1) + '/3 (' + descriptorwidth + 'x' + descriptorwidth + ')')
                 computeDescriptorsFromDirectory('output/augmented_dataset_remeshed',
-                                                'output/descriptors/augmented_dataset_remeshed_' + descriptorwidth + 'x' + descriptorwidth)
-                print('Processing batch 4/5 in resolution ' + descriptorwidth + 'x' + descriptorwidth + ' (' + str(index + 1) + '/3)')
+                                                'output/descriptors/augmented_dataset_remeshed_' + descriptorwidth + 'x' + descriptorwidth,
+                                                descriptorwidth)
+                print('Processing batch 4/5 in resolution ' + str(index + 1) + '/3 (' + descriptorwidth + 'x' + descriptorwidth + ')')
                 computeDescriptorsFromDirectory('input/SHREC2016_partial_retrieval/queries_artificial/Q25',
-                                                'output/descriptors/shrec2016_25partiality_' + descriptorwidth + 'x' + descriptorwidth)
-                print('Processing batch 5/5 in resolution ' + descriptorwidth + 'x' + descriptorwidth + ' (' + str(index + 1) + '/3)')
+                                                'output/descriptors/shrec2016_25partiality_' + descriptorwidth + 'x' + descriptorwidth,
+                                                descriptorwidth)
+                print('Processing batch 5/5 in resolution ' + str(index + 1) + '/3 (' + descriptorwidth + 'x' + descriptorwidth + ')')
                 computeDescriptorsFromDirectory('input/SHREC2016_partial_retrieval/queries_artificial/Q40',
-                                                'output/descriptors/shrec2016_40partiality_' + descriptorwidth + 'x' + descriptorwidth)
+                                                'output/descriptors/shrec2016_40partiality_' + descriptorwidth + 'x' + descriptorwidth,
+                                                descriptorwidth)
         if choice == 1:
             print('Copying precomputed descriptors..')
             shutil.copytree('input/descriptors', 'output/descriptors', dirs_exist_ok=True)
         if choice == 2:
-            pass
+            queryVariant = random.choice([True, False])
+            resolution = random.choice['32', '64', '96']
+            print('')
         if choice == 3:
             configureGPU()
         if choice == 4:
