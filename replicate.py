@@ -153,38 +153,18 @@ def fileMD5(filePath):
         return hashlib.md5(inFile.read()).hexdigest()
 
 def generateAugmentedDataset():
-    while True:
-        os.makedirs('output/augmented_dataset_original', exist_ok=True)
-        os.makedirs('output/augmented_dataset_remeshed', exist_ok=True)
+    os.makedirs('output/augmented_dataset_original', exist_ok=True)
+    os.makedirs('output/augmented_dataset_remeshed', exist_ok=True)
 
-        run_menu = TerminalMenu([
-            "Generate augmented dataset without remeshing",
-            "Generate augmented dataset with remeshing",
-            "Compare file checksums",
-            "back"], title='-- Generate augmented SHREC\'16 dataset --')
-        choice = run_menu.show()
-        if choice == 0:
-            run_command_line_command('bin/build32x32/querysetgenerator '
-                                     '--object-directory=input/SHREC2016_partial_retrieval/complete_objects '
-                                     '--output-directory=output/augmented_dataset_original '
-                                     '--random-seed=' + mainEvaluationRandomSeed)
-        if choice == 1:
-            run_command_line_command('bin/build32x32/querysetgenerator '
-                                     '--object-directory=input/SHREC2016_partial_retrieval/complete_objects '
-                                     '--output-directory=output/augmented_dataset_remeshed '
-                                     '--redistribute-triangles '
-                                     '--random-seed=' + mainEvaluationRandomSeed)
-        if choice == 2:
-            print('Comparing non-remeshed queries')
-            authorsOriginalDir = 'input/augmented_dataset_original'
-            replicatedOriginalDir = 'output/augmented_dataset_original'
-            for filename in os.listdir(authorsOriginalDir):
-                originalFileDigest = fileMD5(os.path.join(authorsOriginalDir, filename))
-                print('Computed by authors:', os.path.join(authorsOriginalDir, filename), 'MD5 digest:', originalFileDigest)
-                replicatedFileDigest = fileMD5(os.path.join(replicatedOriginalDir, filename))
-                print('Replicated version:', os.path.join(replicatedOriginalDir, filename), 'MD5 digest:', replicatedFileDigest, '- DIGEST MATCHES' if originalFileDigest == replicatedFileDigest else '- !!!!! DIGESTS DIFFER !!!!!')
-        if choice == 3:
-            return
+    run_command_line_command('bin/build32x32/querysetgenerator '
+                             '--object-directory=input/SHREC2016_partial_retrieval/complete_objects '
+                             '--output-directory=output/augmented_dataset_original '
+                             '--random-seed=' + mainEvaluationRandomSeed)
+    run_command_line_command('bin/build32x32/querysetgenerator '
+                             '--object-directory=input/SHREC2016_partial_retrieval/complete_objects '
+                             '--output-directory=output/augmented_dataset_remeshed '
+                             '--redistribute-triangles '
+                             '--random-seed=' + mainEvaluationRandomSeed)
 
 def computeDescriptorsFromFile(inputFile, outputFile, descriptorWidth):
     subprocess.run('bin/build' + descriptorWidth + 'x' + descriptorWidth + '/descriptorDumper'
