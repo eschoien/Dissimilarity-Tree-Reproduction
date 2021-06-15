@@ -160,36 +160,30 @@ def generateAugmentedDataset():
         run_menu = TerminalMenu([
             "Generate augmented dataset without remeshing",
             "Generate augmented dataset with remeshing",
-            "Copy objects computed by authors",
             "Compare file checksums",
             "back"], title='-- Generate augmented SHREC\'16 dataset --')
         choice = run_menu.show()
         if choice == 0:
-            run_command_line_command('bin/querysetgenerator '
+            run_command_line_command('bin/build32x32/querysetgenerator '
                                      '--object-directory=input/SHREC2016_partial_retrieval/complete_objects '
                                      '--output-directory=output/augmented_dataset_original '
                                      '--random-seed=' + mainEvaluationRandomSeed)
         if choice == 1:
-            run_command_line_command('bin/querysetgenerator '
+            run_command_line_command('bin/build32x32/querysetgenerator '
                                      '--object-directory=input/SHREC2016_partial_retrieval/complete_objects '
                                      '--output-directory=output/augmented_dataset_remeshed '
                                      '--redistribute-triangles '
                                      '--random-seed=' + mainEvaluationRandomSeed)
         if choice == 2:
-            print('Copying best case objects')
-            shutil.copytree('input/augmented_dataset_original', 'output/augmented_dataset_original', dirs_exist_ok=True)
-            print('Copying remeshed objects')
-            shutil.copytree('input/augmented_dataset_remeshed', 'output/augmented_dataset_remeshed', dirs_exist_ok=True)
-        if choice == 3:
             print('Comparing non-remeshed queries')
             authorsOriginalDir = 'input/augmented_dataset_original'
+            replicatedOriginalDir = 'output/augmented_dataset_original'
             for filename in os.listdir(authorsOriginalDir):
                 originalFileDigest = fileMD5(os.path.join(authorsOriginalDir, filename))
-                print(authorsOriginalDir, originalFileDigest)
-
-
-
-        if choice == 4:
+                print('Computed by authors:', os.path.join(authorsOriginalDir, filename), 'MD5 digest:', originalFileDigest)
+                replicatedFileDigest = fileMD5(os.path.join(replicatedOriginalDir, filename))
+                print('Replicated version:', os.path.join(replicatedOriginalDir, filename), 'MD5 digest:', replicatedFileDigest, '- DIGEST MATCHES' if originalFileDigest == replicatedFileDigest else '- !!!!! DIGESTS DIFFER !!!!!')
+        if choice == 3:
             return
 
 def computeDescriptorsFromFile(inputFile, outputFile, descriptorWidth):
@@ -253,9 +247,20 @@ def computeDescriptors():
             print('Copying precomputed descriptors..')
             shutil.copytree('input/descriptors', 'output/descriptors', dirs_exist_ok=True)
         if choice == 2:
-            queryVariant = random.choice([True, False])
-            resolution = random.choice['32', '64', '96']
-            print('')
+            enableRemeshing = random.choice([True, False])
+            resolution = random.choice(['32', '64', '96'])
+            inputDirectories = {
+                'input/SHREC2016_partial_retrieval/complete_objects': 'output/descriptors/complete_objects_' + resolution + 'x' + resolution,
+                'output/augmented_dataset_original': 'output/descriptors/augmented_dataset_original_' + resolution + 'x' + resolution,
+                'output/augmented_dataset_remeshed': 'output/descriptors/augmented_dataset_remeshed_' + resolution + 'x' + resolution,
+                'input/SHREC2016_partial_retrieval/queries_artificial/Q25': 'output/descriptors/shrec2016_25partiality_' + resolution + 'x' + resolution,
+                'input/SHREC2016_partial_retrieval/queries_artificial/Q40': 'output/descriptors/shrec2016_40partiality_' + resolution + 'x' + resolution
+            }
+            inputDirectory = random.choice([x for x in inputDirectories.keys()])
+            inputFile = random.choice(os.listdir(inputDirectory))
+            
+            print('Testing file', inputFile, 'with resolution', str(resolution) + 'x' + str(resolution), 'and remeshing', 'enabled' if enableRemeshing else 'disabled')
+
         if choice == 3:
             configureGPU()
         if choice == 4:
