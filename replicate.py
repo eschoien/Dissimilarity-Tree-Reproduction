@@ -13,6 +13,7 @@ gpuID = 0
 mainEvaluationRandomSeed = '725948161'
 shrec2016_support_radius = '100'
 descriptorWidthBits = 64
+indexGenerationMode = 'GPU'
 
 if not (sys.version_info.major == 3 and sys.version_info.minor >= 8):
     print("This script requires Python 3.8 or higher.")
@@ -143,7 +144,7 @@ def compileProject():
 
 def configureGPU():
     global gpuID
-    run_command_line_command('nvidia-smi -L')
+    run_command_line_command('bin/build32x32/descriptorDumper --list-gpus')
     print()
     gpuID = input('Enter the ID of the GPU to use (usually 0): ')
     print()
@@ -227,41 +228,106 @@ def computeDescriptors():
         if choice == 2:
             return
 
+def configureIndexGeneration():
+    global indexGenerationMode
+
+    cpu_or_gpu_menu = TerminalMenu([
+        "Use CPU for index construction",
+        "Use GPU for index construction"], title='---------------- Configure CPU or GPU indexing ----------------')
+
+    choice = cpu_or_gpu_menu.show()
+
+    if choice == 0:
+        indexGenerationMode = 'CPU'
+    if choice == 1:
+        indexGenerationMode = 'GPU'
+
+def computeDissimilarityTree():
+    os.makedirs('output/dissimilarity_tree/index32x32', exist_ok=True)
+    os.makedirs('output/dissimilarity_tree/index64x64', exist_ok=True)
+    os.makedirs('output/dissimilarity_tree/index96x96', exist_ok=True)
+
+    while True:
+        run_menu = TerminalMenu([
+            "Configure CPU or GPU based index generation (current: " + indexGenerationMode + ')',
+            "Configure GPU to use for index generation (current: GPU " + str(gpuID) + ')',
+            "Compute index for 32x32 descriptors",
+            "Compute index for 64x64 descriptors",
+            "Compute index for 96x96 descriptors",
+            "Copy precomputed index of 32x32 descriptors",
+            "Copy precomputed index of 64x64 descriptors",
+            "Copy precomputed index of 96x96 descriptors",
+            "back"], title='-- Compute descriptors --')
+
+        choice = run_menu.show() + 1
+
+        indexGenerationCommand = 'clusterbuilder ' \
+                                 '--quicci-dump-directory="input/SHREC2016_partial_retrieval/complete_objects" ' \
+                                 '--force-gpu=' + str(gpuID) + ' ' \
+                                 '--force-cpu=' + ('true' if indexGenerationMode == 'CPU' else 'false')
+
+        if choice == 1:
+            configureIndexGeneration()
+        if choice == 2:
+            configureGPU()
+        if choice == 3:
+            run_command_line_command('bin/build32x32/' + indexGenerationCommand
+                                     + ' --index-directory=output/dissimilarity_tree/index32x32'
+                                       ' --quicci-dump-directory=output/descriptors/complete_objects_32x32')
+        if choice == 4:
+            run_command_line_command('bin/build64x64/' + indexGenerationCommand
+                                     + ' --index-directory=output/dissimilarity_tree/index64x64'
+                                       ' --quicci-dump-directory=output/descriptors/complete_objects_64x64')
+        if choice == 5:
+            run_command_line_command('bin/build96x96/' + indexGenerationCommand
+                                     + ' --index-directory=output/dissimilarity_tree/index96x96'
+                                       ' --quicci-dump-directory=output/descriptors/complete_objects_96x96')
+        if choice == 6:
+            print('Copying precomputed index of 32x32 images..')
+            shutil.copy('input/dissimilarity_tree_32x32/index.dat', 'output/dissimilarity_tree/index32x32/index.dat')
+        if choice == 7:
+            print('Copying precomputed index of 64x64 images..')
+            shutil.copy('input/dissimilarity_tree_64x64/index.dat', 'output/dissimilarity_tree/index64x64/index.dat')
+        if choice == 8:
+            print('Copying precomputed index of 96x96 images..')
+            shutil.copy('input/dissimilarity_tree_96x96/index.dat', 'output/dissimilarity_tree/index96x96/index.dat')
+        if choice == 9:
+            return
+
 main_menu = TerminalMenu([
     "1. Install dependencies",
     "2. Download datasets",
     "3. Compile project",
     "4. Generate augmented SHREC'2016 dataset",
     "5. Compute descriptors",
-    "6. Run vote counting experiment (Figure 3)",
-    "7. Run average search result distance experiment (Figure 4)",
-    "8. Compute average descriptor heatmap (Figure 6)",
-    "9. Run dissimilarity tree evaluation (Figure 10)",
-    "10. Run modified quicci evaluation (Figures 11 and 12)",
-    "11. Run all to all object search (Table 1 and Figure 13)",
-    "12. Run partial retrieval pipeline evaluation (Figures 14 and 15)",
-    "13. Run SHREC'16 artificial benchmark (Figure 16)",
-    "14. Run query duration evaluation (Figure 17)",
-    "15. exit"], title='---------------------- Main Menu ----------------------')
+    "6. Compute dissimilarity tree from descriptors",
+    "7. Run vote counting experiment (Figure 3)",
+    "8. Run average search result distance experiment (Figure 4)",
+    "9. Compute average descriptor heatmap (Figure 6)",
+    "10. Run dissimilarity tree evaluation (Figure 10)",
+    "11. Run modified quicci evaluation (Figures 11 and 12)",
+    "12. Run all to all object search (Table 1 and Figure 13)",
+    "13. Run partial retrieval pipeline evaluation (Figures 14 and 15)",
+    "14. Run SHREC'16 artificial benchmark (Figure 16)",
+    "15. Run query duration evaluation (Figure 17)",
+    "16. exit"], title='---------------------- Main Menu ----------------------')
 
 def runMainMenu():
     while True:
-        choice = main_menu.show()
+        choice = main_menu.show() + 1
 
-        if choice == 0:
-            installDependenciesMenu()
         if choice == 1:
-            downloadDatasetsMenu()
+            installDependenciesMenu()
         if choice == 2:
-            compileProject()
+            downloadDatasetsMenu()
         if choice == 3:
-            generateAugmentedDataset()
+            compileProject()
         if choice == 4:
-            computeDescriptors()
+            generateAugmentedDataset()
         if choice == 5:
-            pass
+            computeDescriptors()
         if choice == 6:
-            pass
+            computeDissimilarityTree()
         if choice == 7:
             pass
         if choice == 8:
@@ -277,6 +343,10 @@ def runMainMenu():
         if choice == 13:
             pass
         if choice == 14:
+            pass
+        if choice == 15:
+            pass
+        if choice == 16:
             return
 
 def runIntroSequence():

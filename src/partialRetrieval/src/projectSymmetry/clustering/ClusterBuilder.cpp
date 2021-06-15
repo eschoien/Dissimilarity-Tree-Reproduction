@@ -213,10 +213,8 @@ Cluster* buildClusterFromDumpDirectory(const cluster::path &imageDumpDirectory,
 
     std::cout << "Counting images to index.." << std::endl;
     size_t imageCountToIndex = 0;
-    #pragma omp parallel for schedule(dynamic)
     for(unsigned int i = 0; i < haystackFiles.size(); i++) {
         ShapeDescriptor::QUICCIDescriptorFileHeader header = ShapeDescriptor::read::QuicciDescriptorFileHeader(haystackFiles.at(i));
-        #pragma omp atomic
         imageCountToIndex += header.imageCount;
     }
     std::cout << "Found " << imageCountToIndex << " images in directory" << std::endl;
@@ -232,7 +230,6 @@ Cluster* buildClusterFromDumpDirectory(const cluster::path &imageDumpDirectory,
 
     std::cout << "Loading descriptors.." << std::endl;
 
-    #pragma omp parallel for schedule(dynamic)
     for(unsigned int i = 0; i < haystackFiles.size(); i++) {
         ShapeDescriptor::cpu::array<ShapeDescriptor::QUICCIDescriptor> descriptors = ShapeDescriptor::read::QUICCIDescriptors(haystackFiles.at(i));
         unsigned int startIndex = nextStartIndex.fetch_add(descriptors.length, std::memory_order_relaxed);

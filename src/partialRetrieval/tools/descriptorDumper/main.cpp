@@ -18,10 +18,11 @@
 int main(int argc, const char** argv) {
     arrrgh::parser parser("descriptorDumper", "Do symmetry detection or something along those lines.");
     const auto& showHelp = parser.add<bool>("help", "Show this help message.", 'h', arrrgh::Optional, false);
-    const auto& meshFile = parser.add<std::string>("input-file", "Location of the file which should be queried", '\0', arrrgh::Required, "NOT_SELECTED");
+    const auto& meshFile = parser.add<std::string>("input-file", "Location of the file which should be queried", '\0', arrrgh::Optional, "NOT_SELECTED");
     const auto &forceGPU = parser.add<int>("force-gpu", "Index of the GPU device to use for search kernels.", '\0', arrrgh::Optional, -1);
-    const auto& outputFile = parser.add<std::string>("output-file", "Location where to dump the produced QUICCI descriptors", '\0', arrrgh::Required, "NOT_SELECTED");
+    const auto& outputFile = parser.add<std::string>("output-file", "Location where to dump the produced QUICCI descriptors", '\0', arrrgh::Optional, "NOT_SELECTED");
     const auto& supportRadius = parser.add<float>("support-radius", "The support radius to use during rendering", '\0', arrrgh::Optional, 1);
+    const auto& listGPUs = parser.add<bool>("list-gpus", "Print a list of available GPUs to stdout.", '\0', arrrgh::Optional, false);
 
     try
     {
@@ -37,6 +38,22 @@ int main(int argc, const char** argv) {
     // Show help if desired
     if(showHelp.value())
     {
+        return 0;
+    }
+
+    if(listGPUs.value()) {
+        int deviceCount;
+        checkCudaErrors(cudaGetDeviceCount(&deviceCount));
+
+        std::cout << "Found " << deviceCount << " devices:" << std::endl;
+
+        for(int i = 0; i < deviceCount; i++)
+        {
+            cudaDeviceProp deviceProperties;
+            checkCudaErrors(cudaGetDeviceProperties(&deviceProperties, i));
+
+            std::cout << "\t- " << deviceProperties.name << " (ID " << i << ")" << std::endl;
+        }
         return 0;
     }
 

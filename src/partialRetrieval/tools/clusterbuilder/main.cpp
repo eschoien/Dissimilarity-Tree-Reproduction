@@ -13,9 +13,9 @@
 int main(int argc, const char** argv) {
     arrrgh::parser parser("clusterbuilder", "Create indexes for QUICCI images.");
     const auto& indexDirectory = parser.add<std::string>(
-            "index-directory", "The directory where the index should be stored.", '\0', arrrgh::Required, "");
+            "index-directory", "The directory where the index should be stored.", '\0', arrrgh::Optional, "");
     const auto& sourceDirectory = parser.add<std::string>(
-            "quicci-dump-directory", "The directory where binary dump files of QUICCI images are stored that should be indexed.", '\0', arrrgh::Required, "");
+            "quicci-dump-directory", "The directory where binary dump files of QUICCI images are stored that should be indexed.", '\0', arrrgh::Optional, "");
     const auto &forceGPU = parser.add<int>(
             "force-gpu", "Index of the GPU device to use for search kernels.", '\0', arrrgh::Optional, -1);
     const auto& forceCPU = parser.add<bool>(
