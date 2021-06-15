@@ -196,8 +196,6 @@ def computeDescriptors():
         run_menu = TerminalMenu([
             "Generate all descriptors (will take several hours)",
             "Copy all descriptors precomputed by authors",
-            "Generate descriptors for a random object and compare checksums",
-            "Configure GPU (use if system has more than one, currently set to GPU " + str(gpuID) + ")",
             "back"], title='-- Compute descriptors --')
         choice = run_menu.show()
         if choice == 0:
@@ -227,23 +225,6 @@ def computeDescriptors():
             print('Copying precomputed descriptors..')
             shutil.copytree('input/descriptors', 'output/descriptors', dirs_exist_ok=True)
         if choice == 2:
-            enableRemeshing = random.choice([True, False])
-            resolution = random.choice(['32', '64', '96'])
-            inputDirectories = {
-                'input/SHREC2016_partial_retrieval/complete_objects': 'output/descriptors/complete_objects_' + resolution + 'x' + resolution,
-                'output/augmented_dataset_original': 'output/descriptors/augmented_dataset_original_' + resolution + 'x' + resolution,
-                'output/augmented_dataset_remeshed': 'output/descriptors/augmented_dataset_remeshed_' + resolution + 'x' + resolution,
-                'input/SHREC2016_partial_retrieval/queries_artificial/Q25': 'output/descriptors/shrec2016_25partiality_' + resolution + 'x' + resolution,
-                'input/SHREC2016_partial_retrieval/queries_artificial/Q40': 'output/descriptors/shrec2016_40partiality_' + resolution + 'x' + resolution
-            }
-            inputDirectory = random.choice([x for x in inputDirectories.keys()])
-            inputFile = random.choice(os.listdir(inputDirectory))
-            
-            print('Testing file', inputFile, 'with resolution', str(resolution) + 'x' + str(resolution), 'and remeshing', 'enabled' if enableRemeshing else 'disabled')
-
-        if choice == 3:
-            configureGPU()
-        if choice == 4:
             return
 
 main_menu = TerminalMenu([
