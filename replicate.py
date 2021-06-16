@@ -310,6 +310,11 @@ def runVoteCountProgressionExperiment():
                              '--output-progression-file=output/Figure_3_voteCountProgression/query_progression.csv '
                              '--progression-iteration-limit=1000')
 
+    print()
+    print('Done! You can now open the file output/Figure_3_voteCountProgression/input/T103.obj, and create a chart of all columns.')
+    print('It should exactly match the one shown in the paper.')
+    print()
+
 def computeBitsHeatmap():
     run_command_line_command('bin/build64x64/occurrenceCounter '
                              '--index-directory=output/dissimilarity_tree/index64x64 '
