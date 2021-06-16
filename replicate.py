@@ -294,12 +294,30 @@ def computeDissimilarityTree():
         if choice == 9:
             return
 
+def runVoteCountProgressionExperiment():
+    os.makedirs('output/Figure_3_voteCountProgression/input', exist_ok=True)
+    shutil.copy('input/augmented_dataset_remeshed/T103.obj',
+                'output/Figure_3_voteCountProgression/input/T103.obj')
+    run_command_line_command('bin/build64x64/objectSearch '
+                             '--index-directory=output/dissimilarity_tree/index64x64 '
+                             '--haystack-directory=input/SHREC2016_partial_retrieval/complete_objects '
+                             '--query-directory=output/Figure_3_voteCountProgression/input '
+                             '--resultsPerQueryImage=1 '
+                             '--randomSeed=' + mainEvaluationRandomSeed + ' '
+                             '--support-radius=' + shrec2016_support_radius + ' '
+                             '--consensus-threshold=1000 '
+                             '--force-gpu=' + str(gpuID) + ' '
+                             '--output-progression-file=output/Figure_3_voteCountProgression/query_progression.csv '
+                             '--progression-iteration-limit=1000')
+
 def computeBitsHeatmap():
     run_command_line_command('bin/build64x64/occurrenceCounter '
                              '--index-directory=output/dissimilarity_tree/index64x64 '
                              '--output-file=output/shrec16_occurrence_counts.txt')
     run_command_line_command('python3 src/partialRetrieval/tools/shrec2016-runner/heatmap.py '
                              'output/shrec16_occurrence_counts.txt')
+
+
 
 main_menu = TerminalMenu([
     "1. Install dependencies",
@@ -336,11 +354,11 @@ def runMainMenu():
         if choice == 6:
             computeDissimilarityTree()
         if choice == 7:
-            computeBitsHeatmap()
+            runVoteCountProgressionExperiment()
         if choice == 8:
             pass
         if choice == 9:
-            pass
+            computeBitsHeatmap()
         if choice == 10:
             pass
         if choice == 11:

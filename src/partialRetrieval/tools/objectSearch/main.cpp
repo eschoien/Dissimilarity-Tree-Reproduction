@@ -62,7 +62,8 @@ ObjectQueryResult runObjectQuery(
         unsigned int resultsPerQuery,
         unsigned int consensusThreshold,
         std::vector<std::experimental::filesystem::path> &haystackFiles,
-        std::string outputProgressionFile) {
+        std::string outputProgressionFile,
+        int progressionFileIterationLimit) {
 
     ShapeDescriptor::cpu::Mesh mesh = ShapeDescriptor::utilities::loadMesh(queryFile, true);
     ShapeDescriptor::gpu::Mesh gpuMesh = ShapeDescriptor::copy::hostMeshToDevice(mesh);
@@ -109,7 +110,7 @@ ObjectQueryResult runObjectQuery(
         consensusThreshold = INT_MAX;
         std::cout << "Number of query object descriptors: " << queryDescriptors.length << std::endl;
     }
-    unsigned int nextThresholdToDump = 1000;
+    unsigned int nextThresholdToDump = progressionFileIterationLimit == -1 ? 1000 : std::min<unsigned int>(1000, progressionFileIterationLimit);
 
     std::chrono::steady_clock::time_point queryStartTime = std::chrono::steady_clock::now();
 
@@ -188,13 +189,23 @@ ObjectQueryResult runObjectQuery(
                                     const cluster::filesystem::path &haystackFile = haystackFiles.at(i);
                                     progressionFileStream << haystackFile.filename() << (i + 1 == haystackFiles.size() ? "\n" : ", ");
                                 }
-                                for(const std::vector<unsigned int> &counts : progressionCounts) {
+                                unsigned int limit = progressionCounts.size();
+                                if(limit > progressionFileIterationLimit && progressionFileIterationLimit != -1) {
+                                    limit = progressionFileIterationLimit;
+                                }
+                                for(unsigned int j = 0; j < limit; j++) {
                                     for(unsigned int i = 0; i < haystackFiles.size(); i++) {
-                                        progressionFileStream << counts.at(i) << (i + 1 == haystackFiles.size() ? "\n" : ", ");
+                                        progressionFileStream << progressionCounts.at(j).at(i) << (i + 1 == haystackFiles.size() ? "\n" : ", ");
                                     }
                                 }
                                 progressionFileStream.close();
+
+                                if(progressionCounts.size() >= progressionFileIterationLimit && progressionFileIterationLimit != -1) {
+                                    exit(0);
+                                }
+
                                 nextThresholdToDump += 1000;
+                                nextThresholdToDump = std::min<unsigned int>(nextThresholdToDump, progressionFileIterationLimit);
                             }
                         }
                     }
@@ -252,7 +263,8 @@ int main(int argc, const char** argv) {
             "force-gpu", "Index of the GPU device to use for search kernels.", '\0', arrrgh::Optional, -1);
     const auto &outputProgressionFile = parser.add<std::string>(
             "output-progression-file", "Path to a csv file showing scores after every query.", '\0', arrrgh::Optional, "NONE_SELECTED");
-
+    const auto &progressionIterationLimit = parser.add<int>(
+            "progression-iteration-limit", "For producing a progression file of a certain length, limit the number of queries processed.", '\0', arrrgh::Optional, -1);
 
     const auto &showHelp = parser.add<bool>(
             "help", "Show this help message.", 'h', arrrgh::Optional, false);
@@ -294,7 +306,7 @@ int main(int argc, const char** argv) {
         std::cout << "Processing query " << (queryFile + 1) << "/" << queryFiles.size() << ": " << queryFiles.at(queryFile).string() << std::endl;
         ObjectQueryResult queryResult = runObjectQuery(
                 queryFiles.at(queryFile), cluster, supportRadius.value(), seed.value(),
-                resultsPerQuery.value(), consensusThreshold.value(), haystackFiles, outputProgressionFile.value());
+                resultsPerQuery.value(), consensusThreshold.value(), haystackFiles, outputProgressionFile.value(), progressionIterationLimit.value());
         searchResults.push_back(queryResult);
 
         if(outputFile.value() != "NONE_SELECTED") {
