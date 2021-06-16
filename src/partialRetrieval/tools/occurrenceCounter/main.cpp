@@ -69,9 +69,9 @@ int main(int argc, const char** argv) {
     }
 
     std::ofstream outFile(outputFile.value());
-    for(unsigned int row = 0; row < spinImageWidthPixels; row++) {
+    for(int row = spinImageWidthPixels - 1; row >= 0; row--) {
         for(unsigned int col = 0; col < spinImageWidthPixels; col++) {
-            outFile << counts.contents[spinImageWidthPixels * row + col] << ", ";
+            outFile << counts.contents[spinImageWidthPixels * row + col] << (col == spinImageWidthPixels - 1 ? "" : ", ");
         }
         outFile << std::endl;
     }

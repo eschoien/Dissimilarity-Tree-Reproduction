@@ -294,6 +294,13 @@ def computeDissimilarityTree():
         if choice == 9:
             return
 
+def computeBitsHeatmap():
+    run_command_line_command('bin/build64x64/occurrenceCounter '
+                             '--index-directory=output/dissimilarity_tree/index64x64 '
+                             '--output-file=output/shrec16_occurrence_counts.txt')
+    run_command_line_command('python3 src/partialRetrieval/tools/shrec2016-runner/heatmap.py '
+                             'output/shrec16_occurrence_counts.txt')
+
 main_menu = TerminalMenu([
     "1. Install dependencies",
     "2. Download datasets",
@@ -329,7 +336,7 @@ def runMainMenu():
         if choice == 6:
             computeDissimilarityTree()
         if choice == 7:
-            pass
+            computeBitsHeatmap()
         if choice == 8:
             pass
         if choice == 9:
