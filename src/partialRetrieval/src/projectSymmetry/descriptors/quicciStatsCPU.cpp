@@ -7,6 +7,7 @@
 #include <cassert>
 #include <numeric>
 #include <projectSymmetry/types/Cluster.h>
+#include <omp.h>
 #include <shapeDescriptor/utilities/print/QuicciDescriptor.h>
 
 const unsigned int imagesPerBlock = 64;
@@ -18,7 +19,12 @@ void computeOccurrenceCountsCPU(ShapeDescriptor::cpu::array<ShapeDescriptor::QUI
 
     auto totalExecutionTimeStart = std::chrono::steady_clock::now();
 
-#pragma omp parallel for
+    unsigned int threadCount = omp_get_max_threads();
+    if(descriptors.length < 1000) {
+        threadCount = 1;
+    }
+
+#pragma omp parallel for num_threads(threadCount)
     for(unsigned int imageIndex = 0; imageIndex < descriptors.length; imageIndex++) {
         for(unsigned int chunkIndex = 0; chunkIndex < UINTS_PER_QUICCI; chunkIndex++) {
             // Fetch chunk from memory
