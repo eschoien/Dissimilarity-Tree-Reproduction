@@ -3,6 +3,8 @@
 bin/*
 
 input/**/*.obj
+input/**/*.dat
 
 output/**/*.obj
 output/**/*.dat
+output/**/*.txt
