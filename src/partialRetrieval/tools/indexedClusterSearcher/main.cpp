@@ -99,6 +99,8 @@ int main(int argc, const char** argv) {
             "search-results-per-query", "Number of search results to generate per query.", '\0', arrrgh::Required, 1);
     const auto &forceGPU = parser.add<int>(
             "force-gpu", "Index of the GPU device to use for search kernels.", '\0', arrrgh::Optional, -1);
+    const auto &singleQueryIndex = parser.add<int>(
+            "single-query-index", "Only execute a single search query from the sequence.", '\0', arrrgh::Optional, -1);
     const auto &outputFile = parser.add<std::string>(
             "output-file", "Path to a JSON file to which to write the search results.", '\0', arrrgh::Optional, "NONE_SELECTED");
     const auto &supportRadius = parser.add<float>(
@@ -128,14 +130,9 @@ int main(int argc, const char** argv) {
     Cluster* cluster = readCluster(cluster::path(indexDirectory.value()) / "index.dat");
     std::cout << "\tCluster contains " << cluster->nodes.size() << " nodes, " << cluster->images.size() << " images, and indexes " << cluster->indexedFiles.size() << " files." << std::endl;
 
-    std::cout << "Root node: " << cluster->nodes.at(cluster->nodes.at(0).matchingNodeID).subtreeStartIndex << std::endl;
-    std::cout << "Root node: " << cluster->nodes.at(cluster->nodes.at(0).matchingNodeID).subtreeEndIndex << std::endl;
-    std::cout << "Root node: " << cluster->nodes.at(cluster->nodes.at(0).differingNodeID).subtreeStartIndex << std::endl;
-    std::cout << "Root node: " << cluster->nodes.at(cluster->nodes.at(0).differingNodeID).subtreeEndIndex << std::endl;
-
     std::vector<std::experimental::filesystem::path> queryFiles = ShapeDescriptor::utilities::listDirectory(queryDirectory.value());
 
-    std::cout << "Computing image counts for query files.. (this will take a while)" << std::endl;
+    std::cout << "Computing image counts for query files.." << std::endl;
     std::vector<QueryDescriptor> queryImageList;
 
     std::unordered_map<std::string, size_t> fileImageBaseIndexMap;
@@ -175,12 +172,12 @@ int main(int argc, const char** argv) {
     queryImageList.resize(count.value());
     trimmedQueryDescriptorList.swap(queryImageList);
 
-
-
-    std::cout << "Random images selected, running benchmark.." << std::endl;
     std::vector<QueryResult> queryResults;
 
     for(unsigned int i = 0; i < trimmedQueryDescriptorList.size(); i++) {
+        if(singleQueryIndex.value() != -1 && singleQueryIndex.value() != i) {
+            continue;
+        }
         std::cout << "Processing query " << (i + 1) << "/" << trimmedQueryDescriptorList.size() << std::endl;
 
         QueryDescriptor query = trimmedQueryDescriptorList.at(i);
@@ -215,8 +212,6 @@ int main(int argc, const char** argv) {
         //ShapeDescriptor::free::mesh(mesh);
         ShapeDescriptor::free::mesh(gpuMesh);
 
-        std::cout << queryFiles.at(query.fileID) << " (id " << query.fileID << ", image " << query.imageID << ") vs " << std::endl << cluster->indexedFiles.at(results.at(0).entry.fileID) << " (id " << results.at(0).entry.fileID << ")" << std::endl;
-
         QueryResult result;
         result.executionTimeSeconds = info.totalQueryTime;
         result.queryFile = queryFiles.at(query.fileID);
@@ -232,7 +227,7 @@ int main(int argc, const char** argv) {
 
         queryResults.push_back(result);
 
-        if(outputFile.value() != "NONE_SELECTED" && i % 25 == 24) {
+        if(outputFile.value() != "NONE_SELECTED" && (i % 25 == 24 || singleQueryIndex.value() != -1)) {
             json outJson;
 
             outJson["version"] = "v8";

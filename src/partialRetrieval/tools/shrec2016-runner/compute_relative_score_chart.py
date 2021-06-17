@@ -29,5 +29,5 @@ with open(args.resultsFile, 'r') as inFile:
 
     with open(args.outFile, 'w') as outFile:
         stringScores = [str(score) for score in averages]
-        outFile.write(', '.join(stringScores))
+        outFile.write('\n'.join(stringScores))
         outFile.write('\n')

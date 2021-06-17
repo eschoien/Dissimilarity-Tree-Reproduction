@@ -9,6 +9,8 @@ import hashlib
 
 from scripts.simple_term_menu import TerminalMenu
 
+from prettytable import PrettyTable
+
 gpuID = 0
 mainEvaluationRandomSeed = '725948161'
 shrec2016_support_radius = '100'
@@ -317,22 +319,74 @@ def runVoteCountProgressionExperiment():
 
 def computeAverageScoreChart():
     os.makedirs('output/Figure_4_averageRelativeDistance', exist_ok=True)
-    run_command_line_command('bin/build64x64/indexedSearchBenchmark '
-                             '--index-directory=output/dissimilarity_tree/index64x64 '
-                             '--query-directory=input/augmented_dataset_original '
-                             '--output-file=output/Figure_4_averageRelativeDistance/measurements.json '
-                             '--search-results-per-query=50 '
-                             '--random-seed=' + mainEvaluationRandomSeed + ' '
-                             '--support-radius=' + shrec2016_support_radius + ' '
-                             '--sample-count=1000 '
-                             '--force-gpu=' + str(gpuID) + ' ')
+
+    while True:
+        run_menu = TerminalMenu([
+            "Compute random search result and compare it to the one computed by authors",
+            "Compute chart based on search results computed by authors",
+            "Compute all search results, then compute chart",
+            "Configure GPU to use for index generation (current: GPU " + str(gpuID) + ')',
+            "back"], title='-- Reproduce Figure 4: average relative distance chart --')
+
+        choice = run_menu.show() + 1
+        resultsFileToProcess = ''
+        runCommand = 'bin/build64x64/indexedSearchBenchmark ' \
+                     '--index-directory=output/dissimilarity_tree/index64x64 ' \
+                     '--query-directory=input/augmented_dataset_original ' \
+                     '--output-file=output/Figure_4_averageRelativeDistance/measurements.json ' \
+                     '--search-results-per-query=50 ' \
+                     '--random-seed=' + mainEvaluationRandomSeed + ' ' \
+                     '--support-radius=' + shrec2016_support_radius + ' ' \
+                     '--sample-count=1000 ' \
+                     '--force-gpu=' + str(gpuID) + ' '
+
+        if choice == 1:
+            objectIndexToTest = random.randint(0, 1000)
+            print()
+            print('Randomly selected query image #', (objectIndexToTest + 1))
+            print()
+            run_command_line_command(runCommand + ' --single-query-index=' + str(objectIndexToTest))
+            print()
+            with open('output/Figure_4_averageRelativeDistance/measurements.json', 'r') as inFile:
+                computedResults = json.loads(inFile.read())
+            with open('input/misc_precomputed_results/figure4_results_authors.json', 'r') as inFile:
+                referenceResults = json.loads(inFile.read())
+
+            outputTable = PrettyTable(['Score (computed)', 'File ID (computed)', 'Image ID (computed)', 'Score (authors)', 'File ID (authors)', 'Image ID (authors)'])
+            for i in range(0, 50):
+                outputTable.add_row([computedResults['results'][0]['searchResultFileIDs'][i]['score'],
+                                     computedResults['results'][0]['searchResultFileIDs'][i]['fileID'],
+                                     computedResults['results'][0]['searchResultFileIDs'][i]['imageID'],
+                                     referenceResults['results'][objectIndexToTest]['searchResultFileIDs'][i]['score'],
+                                     referenceResults['results'][objectIndexToTest]['searchResultFileIDs'][i]['fileID'],
+                                    referenceResults['results'][objectIndexToTest]['searchResultFileIDs'][i]['imageID']])
+            print(outputTable)
+
+        if choice == 2:
+            resultsFileToProcess = 'input/misc_precomputed_results/figure4_results_authors.json'
+        if choice == 3:
+            run_command_line_command(runCommand)
+            resultsFileToProcess = 'output/Figure_4_averageRelativeDistance/measurements.json '
+        if choice == 2 or choice == 3:
+            run_command_line_command('python3 src/partialRetrieval/tools/shrec2016-runner/compute_relative_score_chart.py '
+                                     + resultsFileToProcess +
+                                     ' output/Figure_4_averageRelativeDistance/chart_values.csv')
+            print()
+            print('Complete. The computed chart values have been written to:')
+            print('output/Figure_4_averageRelativeDistance/chart_values.csv')
+            print()
+        if choice == 4:
+            configureGPU()
+        if choice == 5:
+            return
 
 def computeBitsHeatmap():
+    os.makedirs('output/Figure_6_OccurrenceCountHeatmap', exist_ok=True)
     run_command_line_command('bin/build64x64/occurrenceCounter '
                              '--index-directory=output/dissimilarity_tree/index64x64 '
-                             '--output-file=output/shrec16_occurrence_counts.txt')
+                             '--output-file=output/Figure_6_OccurrenceCountHeatmap/shrec16_occurrence_counts.txt')
     run_command_line_command('python3 src/partialRetrieval/tools/shrec2016-runner/heatmap.py '
-                             'output/shrec16_occurrence_counts.txt')
+                             'output/Figure_6_OccurrenceCountHeatmap/shrec16_occurrence_counts.txt')
 
 
 
