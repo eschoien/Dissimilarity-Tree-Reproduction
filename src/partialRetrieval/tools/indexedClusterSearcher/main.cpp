@@ -83,7 +83,6 @@ bool searchResultComparator(SearchResult const &lhs, SearchResult const &rhs) {
 }
 
 int main(int argc, const char** argv) {
-    const float supportRadius = 100.0;
 
 
     arrrgh::parser parser("indexedSearchBenchmark", "Perform a sequential search through a list of descriptors.");
@@ -102,7 +101,8 @@ int main(int argc, const char** argv) {
             "force-gpu", "Index of the GPU device to use for search kernels.", '\0', arrrgh::Optional, -1);
     const auto &outputFile = parser.add<std::string>(
             "output-file", "Path to a JSON file to which to write the search results.", '\0', arrrgh::Optional, "NONE_SELECTED");
-
+    const auto &supportRadius = parser.add<float>(
+            "support-radius", "Support radius to use for generating quicci descriptors.", '\0', arrrgh::Optional, 1.0);
     const auto &showHelp = parser.add<bool>(
             "help", "Show this help message.", 'h', arrrgh::Optional, false);
 
@@ -194,7 +194,7 @@ int main(int argc, const char** argv) {
         // Compute the descriptor(s)
         //std::cout << "Computing descriptors.." << std::endl;
         ShapeDescriptor::gpu::array<ShapeDescriptor::RICIDescriptor> riciDescriptors =
-                ShapeDescriptor::gpu::generateRadialIntersectionCountImages(gpuMesh, descriptorOrigins, supportRadius);
+                ShapeDescriptor::gpu::generateRadialIntersectionCountImages(gpuMesh, descriptorOrigins, supportRadius.value());
 
         ShapeDescriptor::gpu::array<ShapeDescriptor::QUICCIDescriptor> descriptors = convertRICIToModifiedQUICCI(riciDescriptors);
         ShapeDescriptor::cpu::array<ShapeDescriptor::QUICCIDescriptor> queryDescriptors = ShapeDescriptor::copy::deviceArrayToHost(descriptors);
@@ -237,7 +237,7 @@ int main(int argc, const char** argv) {
 
             outJson["version"] = "v8";
             outJson["resultCount"] = numberOfSearchResultsToGenerate.value();
-            outJson["queryObjectSupportRadius"] = supportRadius;
+            outJson["queryObjectSupportRadius"] = supportRadius.value();
             outJson["randomSeed"] = randomSeed.value();
             outJson["sampleCount"] = count.value();
 

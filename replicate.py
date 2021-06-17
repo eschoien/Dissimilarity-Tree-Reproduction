@@ -315,6 +315,18 @@ def runVoteCountProgressionExperiment():
     print('It should exactly match the one shown in the paper.')
     print()
 
+def computeAverageScoreChart():
+    os.makedirs('output/Figure_4_averageRelativeDistance', exist_ok=True)
+    run_command_line_command('bin/build64x64/indexedSearchBenchmark '
+                             '--index-directory=output/dissimilarity_tree/index64x64 '
+                             '--query-directory=input/augmented_dataset_original '
+                             '--output-file=output/Figure_4_averageRelativeDistance/measurements.json '
+                             '--search-results-per-query=50 '
+                             '--random-seed=' + mainEvaluationRandomSeed + ' '
+                             '--support-radius=' + shrec2016_support_radius + ' '
+                             '--sample-count=1000 '
+                             '--force-gpu=' + str(gpuID) + ' ')
+
 def computeBitsHeatmap():
     run_command_line_command('bin/build64x64/occurrenceCounter '
                              '--index-directory=output/dissimilarity_tree/index64x64 '
@@ -361,7 +373,7 @@ def runMainMenu():
         if choice == 7:
             runVoteCountProgressionExperiment()
         if choice == 8:
-            pass
+            computeAverageScoreChart()
         if choice == 9:
             computeBitsHeatmap()
         if choice == 10:
