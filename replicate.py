@@ -389,6 +389,14 @@ def computeBitsHeatmap():
                              'output/Figure_6_OccurrenceCountHeatmap/shrec16_occurrence_counts.txt')
 
 
+def runModifiedQuicciEvaluation():
+    os.makedirs('output/Figure_11_and_12_unwantedBitEvaluation', exist_ok=True)
+    run_command_line_command('bin/build64x64/edgeRemovalExperiment '
+                             '--query-directory=input/augmented_dataset_original '
+                             '--reference-object-directory=input/SHREC2016_partial_retrieval/complete_objects '
+                             '--output-file=output/Figure_11_and_12_unwantedBitEvaluation/output.json '
+                             '--force-gpu=' + str(gpuID) + ' '
+                             '--support-radius=' + shrec2016_support_radius)
 
 main_menu = TerminalMenu([
     "1. Install dependencies",
@@ -433,7 +441,7 @@ def runMainMenu():
         if choice == 10:
             pass
         if choice == 11:
-            pass
+            runModifiedQuicciEvaluation()
         if choice == 12:
             pass
         if choice == 13:

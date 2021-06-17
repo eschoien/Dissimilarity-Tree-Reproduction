@@ -131,7 +131,7 @@ ObjectQueryResult runObjectQuery(
             if(!hasSurpassedThreshold) {
                 processedCount++;
                 if(enableProgressionDump) {
-                    std::cout << "\rProcessed: " << processedCount << ", " << nextResultIndexToComplete << std::flush;
+                    std::cout << "\rTotal queries processed: " << processedCount << ", of which " << nextResultIndexToComplete << " are consecutive" << std::flush;
                 }
 
                 allSearchResults.at(queryImageIndex) = queryResults;
