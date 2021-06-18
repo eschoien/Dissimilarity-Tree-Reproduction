@@ -255,7 +255,6 @@ def computeDissimilarityTree():
     while True:
         run_menu = TerminalMenu([
             "Configure CPU or GPU based index generation (current: " + indexGenerationMode + ')',
-            "Configure GPU to use for index generation (current: GPU " + str(gpuID) + ')',
             "Compute index for 32x32 descriptors",
             "Compute index for 64x64 descriptors",
             "Compute index for 96x96 descriptors",
@@ -274,29 +273,27 @@ def computeDissimilarityTree():
         if choice == 1:
             configureIndexGeneration()
         if choice == 2:
-            configureGPU()
-        if choice == 3:
             run_command_line_command('bin/build32x32/' + indexGenerationCommand
                                      + ' --index-directory=output/dissimilarity_tree/index32x32'
                                        ' --quicci-dump-directory=output/descriptors/complete_objects_32x32')
-        if choice == 4:
+        if choice == 3:
             run_command_line_command('bin/build64x64/' + indexGenerationCommand
                                      + ' --index-directory=output/dissimilarity_tree/index64x64'
                                        ' --quicci-dump-directory=output/descriptors/complete_objects_64x64')
-        if choice == 5:
+        if choice == 4:
             run_command_line_command('bin/build96x96/' + indexGenerationCommand
                                      + ' --index-directory=output/dissimilarity_tree/index96x96'
                                        ' --quicci-dump-directory=output/descriptors/complete_objects_96x96')
-        if choice == 6:
+        if choice == 5:
             print('Copying precomputed index of 32x32 images..')
             shutil.copy('input/dissimilarity_tree_32x32/index.dat', 'output/dissimilarity_tree/index32x32/index.dat')
-        if choice == 7:
+        if choice == 6:
             print('Copying precomputed index of 64x64 images..')
             shutil.copy('input/dissimilarity_tree_64x64/index.dat', 'output/dissimilarity_tree/index64x64/index.dat')
-        if choice == 8:
+        if choice == 7:
             print('Copying precomputed index of 96x96 images..')
             shutil.copy('input/dissimilarity_tree_96x96/index.dat', 'output/dissimilarity_tree/index96x96/index.dat')
-        if choice == 9:
+        if choice == 8:
             return
 
 def runVoteCountProgressionExperiment():
@@ -328,7 +325,6 @@ def computeAverageScoreChart():
             "Compute random search result and compare it to the one computed by authors",
             "Compute chart based on search results computed by authors",
             "Compute all search results, then compute chart",
-            "Configure GPU to use for index generation (current: GPU " + str(gpuID) + ')',
             "back"], title='-- Reproduce Figure 4: average relative distance chart --')
 
         choice = run_menu.show() + 1
@@ -379,8 +375,6 @@ def computeAverageScoreChart():
             print('output/Figure_4_averageRelativeDistance/chart_values.csv')
             print()
         if choice == 4:
-            configureGPU()
-        if choice == 5:
             return
 
 def computeBitsHeatmap():
@@ -391,12 +385,22 @@ def computeBitsHeatmap():
     run_command_line_command('python3 src/partialRetrieval/tools/shrec2016-runner/heatmap.py '
                              'output/Figure_6_OccurrenceCountHeatmap/shrec16_occurrence_counts.txt')
 
+def runIndexEvaluation():
+    os.makedirs('output/Figure_10_indexQueryTimes', exist_ok=True)
+    run_command_line_command('bin/build64x64/indexedSearchBenchmark '
+                             '--index-directory=output/dissimilarity_tree/index64x64 '
+                             '--query-directory=input/augmented_dataset_original '
+                             '--output-file=output/Figure_10_indexQueryTimes/measurements.json '
+                             '--search-results-per-query=1 '
+                             '--random-seed=' + mainEvaluationRandomSeed + ' '
+                             '--support-radius=' + shrec2016_support_radius + ' '
+                             '--sample-count=100000 '
+                             '--force-gpu=' + str(gpuID) + ' ')
+
 
 def runModifiedQuicciEvaluation():
     os.makedirs('output/Figure_11_and_12_unwantedBitEvaluation', exist_ok=True)
-    printAvailableGPUs()
-    if not ask_for_confirmation('Should GPU ' + str(gpuID) + ' be used?'):
-        configureGPU()
+
     run_command_line_command('bin/build64x64/edgeRemovalExperiment '
                              '--query-directory=input/augmented_dataset_original '
                              '--reference-object-directory=input/SHREC2016_partial_retrieval/complete_objects '
@@ -417,26 +421,29 @@ def runModifiedQuicciEvaluation():
     print()
 
 
-main_menu = TerminalMenu([
-    "1. Install dependencies",
-    "2. Download datasets",
-    "3. Compile project",
-    "4. Generate augmented SHREC'2016 dataset",
-    "5. Compute descriptors",
-    "6. Compute dissimilarity tree from descriptors",
-    "7. Run vote counting experiment (Figure 3)",
-    "8. Run average search result distance experiment (Figure 4)",
-    "9. Compute average descriptor heatmap (Figure 6)",
-    "10. Run dissimilarity tree evaluation (Figure 10)",
-    "11. Run modified quicci evaluation (Figures 11 and 12)",
-    "12. Run all to all object search (Table 1 and Figure 13)",
-    "13. Run partial retrieval pipeline evaluation (Figures 14 and 15)",
-    "14. Run SHREC'16 artificial benchmark (Figure 16)",
-    "15. Run query duration evaluation (Figure 17)",
-    "16. exit"], title='---------------------- Main Menu ----------------------')
+
 
 def runMainMenu():
     while True:
+        main_menu = TerminalMenu([
+            "1. Install dependencies",
+            "2. Download datasets",
+            "3. Compile project",
+            "4. Select which GPU to use (for multi GPU systems)",
+            "5. Generate augmented SHREC'2016 dataset",
+            "6. Compute descriptors",
+            "7. Compute dissimilarity tree from descriptors",
+            "8. Run vote counting experiment (Figure 3)",
+            "9. Run average search result distance experiment (Figure 4)",
+            "10. Compute average descriptor heatmap (Figure 6)",
+            "11. Run dissimilarity tree evaluation (Figure 10)",
+            "12. Run modified quicci evaluation (Figures 11 and 12)",
+            "13. Run all to all object search (Table 1 and Figure 13)",
+            "14. Run partial retrieval pipeline evaluation (Figures 14 and 15)",
+            "15. Run SHREC'16 artificial benchmark (Figure 16)",
+            "16. Run query duration evaluation (Figure 17)",
+            "17. exit"], title='---------------------- Main Menu ----------------------')
+
         choice = main_menu.show() + 1
 
         if choice == 1:
@@ -446,23 +453,23 @@ def runMainMenu():
         if choice == 3:
             compileProject()
         if choice == 4:
-            generateAugmentedDataset()
+            configureGPU()
         if choice == 5:
-            computeDescriptors()
+            generateAugmentedDataset()
         if choice == 6:
-            computeDissimilarityTree()
+            computeDescriptors()
         if choice == 7:
-            runVoteCountProgressionExperiment()
+            computeDissimilarityTree()
         if choice == 8:
-            computeAverageScoreChart()
+            runVoteCountProgressionExperiment()
         if choice == 9:
-            computeBitsHeatmap()
+            computeAverageScoreChart()
         if choice == 10:
-            pass
+            computeBitsHeatmap()
         if choice == 11:
-            runModifiedQuicciEvaluation()
+            runIndexEvaluation()
         if choice == 12:
-            pass
+            runModifiedQuicciEvaluation()
         if choice == 13:
             pass
         if choice == 14:
@@ -470,6 +477,8 @@ def runMainMenu():
         if choice == 15:
             pass
         if choice == 16:
+            pass
+        if choice == 17:
             return
 
 def runIntroSequence():
