@@ -8,3 +8,5 @@ input/**/*.dat
 output/**/*.obj
 output/**/*.dat
 output/**/*.txt
+output/**/*.csv
+output/**/*.json

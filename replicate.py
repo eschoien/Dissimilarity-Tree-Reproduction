@@ -144,9 +144,12 @@ def compileProject():
     run_command_line_command('cmake ../../src/partialRetrieval -DCMAKE_BUILD_TYPE=Release', 'bin/build96x96')
     run_command_line_command('make -j ' + threadCount, 'bin/build96x96')
 
+def printAvailableGPUs():
+    run_command_line_command('bin/build32x32/descriptorDumper --list-gpus')
+
 def configureGPU():
     global gpuID
-    run_command_line_command('bin/build32x32/descriptorDumper --list-gpus')
+    printAvailableGPUs()
     print()
     gpuID = input('Enter the ID of the GPU to use (usually 0): ')
     print()
@@ -391,12 +394,28 @@ def computeBitsHeatmap():
 
 def runModifiedQuicciEvaluation():
     os.makedirs('output/Figure_11_and_12_unwantedBitEvaluation', exist_ok=True)
+    printAvailableGPUs()
+    if not ask_for_confirmation('Should GPU ' + str(gpuID) + ' be used?'):
+        configureGPU()
     run_command_line_command('bin/build64x64/edgeRemovalExperiment '
                              '--query-directory=input/augmented_dataset_original '
                              '--reference-object-directory=input/SHREC2016_partial_retrieval/complete_objects '
                              '--output-file=output/Figure_11_and_12_unwantedBitEvaluation/output.json '
                              '--force-gpu=' + str(gpuID) + ' '
                              '--support-radius=' + shrec2016_support_radius)
+
+    run_command_line_command('python3 src/partialRetrieval/tools/shrec2016-runner/collate_results_quicci_modification_evaluation.py '
+                             'output/Figure_11_and_12_unwantedBitEvaluation/output.json '
+                             'output/Figure_11_and_12_unwantedBitEvaluation/')
+    print()
+    print('All done!')
+    print('To create the figures shown in the paper:')
+    print('Figure 11: Open output/Figure_11_and_12_unwantedBitEvaluation/unwanted_bit_reductions.csv')
+    print('           Then create a chart from its contents.')
+    print('Figure 12: Open output/Figure_11_and_12_unwantedBitEvaluation/overlap_with_reference.csv')
+    print('           And create a chart from its contents.')
+    print()
+
 
 main_menu = TerminalMenu([
     "1. Install dependencies",
