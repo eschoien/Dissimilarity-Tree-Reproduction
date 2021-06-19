@@ -11,6 +11,9 @@ from scripts.simple_term_menu import TerminalMenu
 
 from scripts.prettytable import PrettyTable
 
+# TODO: is it needed to compute all 5 flavours of descriptors?
+#  I think it may be possible to only generate those of complete objects
+
 gpuID = 0
 mainEvaluationRandomSeed = '725948161'
 shrec2016_support_radius = '100'
@@ -80,17 +83,17 @@ def downloadDatasetsMenu():
             print('- input/download/clutter_estimated_by_authors.7z')
             print()
 
-        if choice == 0 or choice == 3:
-            if not os.path.isfile('input/download/distances_computed_by_authors.7z') or ask_for_confirmation('It appears the computed distances archive file has already been downloaded. Would you like to download it again?'):
-                print('Downloading distance function distances computed by authors..')
-                run_command_line_command('wget --output-document distances_computed_by_authors.7z https://data.mendeley.com/public-files/datasets/k9j5ymry29/files/b3fe4f65-bf36-4fa7-9d26-217a59e35e54/file_downloaded', 'input/download/')
-            print()
-            os.makedirs('input/SHREC17', exist_ok=True)
-            run_command_line_command('p7zip -k -d download/distances_computed_by_authors.7z', 'input/')
-            print('Download and extraction complete. You may now delete the file input/download/distances_computed_by_authors.7z if you need the disk space.')
-            print()
+        #if choice == 0 or choice == 3:
+        #    if not os.path.isfile('input/download/distances_computed_by_authors.7z') or ask_for_confirmation('It appears the computed distances archive file has already been downloaded. Would you like to download it again?'):
+        #        print('Downloading distance function distances computed by authors..')
+        #        run_command_line_command('wget --output-document distances_computed_by_authors.7z https://data.mendeley.com/public-files/datasets/k9j5ymry29/files/b3fe4f65-bf36-4fa7-9d26-217a59e35e54/file_downloaded', 'input/download/')
+        #    print()
+        #    os.makedirs('input/SHREC17', exist_ok=True)
+        #    run_command_line_command('p7zip -k -d download/distances_computed_by_authors.7z', 'input/')
+        #    print('Download and extraction complete. You may now delete the file input/download/distances_computed_by_authors.7z if you need the disk space.')
+        #    print()
 
-        if choice == 4:
+        if choice == 3:
             return
 
 def installDependenciesMenu():
@@ -173,10 +176,10 @@ def generateAugmentedDataset():
                              '--random-seed=' + mainEvaluationRandomSeed)
 
 def computeDescriptorsFromFile(inputFile, outputFile, descriptorWidth):
-    subprocess.run('bin/build' + descriptorWidth + 'x' + descriptorWidth + '/descriptorDumper'
+    run_command_line_command('bin/build' + descriptorWidth + 'x' + descriptorWidth + '/descriptorDumper'
                    + ' --input-file="' + inputFile
                    + '" --output-file="' + outputFile
-                   + '" --support-radius=' + str(shrec2016_support_radius), shell=True)
+                   + '" --support-radius=' + str(shrec2016_support_radius))
 
 def computeDescriptorsFromDirectory(inputDirectory, outputDirectory, descriptorWidth):
     os.makedirs(outputDirectory, exist_ok=True)
@@ -325,7 +328,7 @@ def computeDissimilarityTree():
 
 def runVoteCountProgressionExperiment():
     os.makedirs('output/Figure_3_voteCountProgression/input', exist_ok=True)
-    shutil.copy('input/augmented_dataset_remeshed/T103.obj',
+    shutil.copy('output/augmented_dataset_remeshed/T103.obj',
                 'output/Figure_3_voteCountProgression/input/T103.obj')
     run_command_line_command('bin/build64x64/objectSearch '
                              '--index-directory=output/dissimilarity_tree/index64x64 '
@@ -358,7 +361,7 @@ def computeAverageScoreChart():
         resultsFileToProcess = ''
         runCommand = 'bin/build64x64/indexedSearchBenchmark ' \
                      '--index-directory=output/dissimilarity_tree/index64x64 ' \
-                     '--query-directory=input/augmented_dataset_original ' \
+                     '--query-directory=output/augmented_dataset_original ' \
                      '--output-file=output/Figure_4_averageRelativeDistance/measurements.json ' \
                      '--search-results-per-query=50 ' \
                      '--random-seed=' + mainEvaluationRandomSeed + ' ' \
@@ -378,11 +381,13 @@ def computeAverageScoreChart():
             with open('input/misc_precomputed_results/figure4_results_authors.json', 'r') as inFile:
                 referenceResults = json.loads(inFile.read())
 
-            outputTable = PrettyTable(['Score (computed)', 'File ID (computed)', 'Image ID (computed)', 'Score (authors)', 'File ID (authors)', 'Image ID (authors)'])
+            outputTable = PrettyTable(['Score (computed)', 'File ID (computed)', 'Image ID (computed)', '', 'Score (authors)', 'File ID (authors)', 'Image ID (authors)'])
+            outputTable.align = "l"
             for i in range(0, 50):
                 outputTable.add_row([computedResults['results'][0]['searchResultFileIDs'][i]['score'],
                                      computedResults['results'][0]['searchResultFileIDs'][i]['fileID'],
                                      computedResults['results'][0]['searchResultFileIDs'][i]['imageID'],
+                                     '',
                                      referenceResults['results'][objectIndexToTest]['searchResultFileIDs'][i]['score'],
                                      referenceResults['results'][objectIndexToTest]['searchResultFileIDs'][i]['fileID'],
                                     referenceResults['results'][objectIndexToTest]['searchResultFileIDs'][i]['imageID']])
@@ -417,7 +422,7 @@ def runIndexEvaluation():
 
     baseIndexedSearchCommand = 'bin/build64x64/indexedSearchBenchmark ' \
                                '--index-directory=output/dissimilarity_tree/index64x64 ' \
-                               '--query-directory=input/augmented_dataset_original ' \
+                               '--query-directory=output/augmented_dataset_original ' \
                                '--output-file=output/Figure_10_indexQueryTimes/measurements.json ' \
                                '--search-results-per-query=1 ' \
                                '--random-seed=' + mainEvaluationRandomSeed + ' ' \
@@ -448,14 +453,11 @@ def runIndexEvaluation():
             return
 
 
-    run_command_line_command()
-
-
 def runModifiedQuicciEvaluation():
     os.makedirs('output/Figure_11_and_12_unwantedBitEvaluation', exist_ok=True)
 
     run_command_line_command('bin/build64x64/edgeRemovalExperiment '
-                             '--query-directory=input/augmented_dataset_original '
+                             '--query-directory=output/augmented_dataset_original '
                              '--reference-object-directory=input/SHREC2016_partial_retrieval/complete_objects '
                              '--output-file=output/Figure_11_and_12_unwantedBitEvaluation/output.json '
                              '--force-gpu=' + str(gpuID) + ' '
@@ -474,6 +476,36 @@ def runModifiedQuicciEvaluation():
     print()
 
 
+def runShrec16Queries():
+    os.makedirs('output/Figure_16_SHREC16_benchmark', exist_ok=True)
+
+    while True:
+        run_menu = TerminalMenu([
+            "Compute results for queries with 25% partiality with 32x32 bit descriptors",
+            "Compute results for queries with 25% partiality with 64x64 bit descriptors",
+            "Compute results for queries with 25% partiality with 96x96 bit descriptors",
+            "Compute results for queries with 40% partiality with 32x32 bit descriptors",
+            "Compute results for queries with 40% partiality with 64x64 bit descriptors",
+            "Compute results for queries with 40% partiality with 96x96 bit descriptors",
+            "back"], title='-- Reproduce Figure 16: SHREC\'16 benchmark --')
+
+        choice = run_menu.show() + 1
+
+        if choice == 1:
+            run_command_line_command('bin/build64x64/objectSearch '
+                                     '--index-directory=output/dissimilarity_tree/index64x64 '
+                                     '--haystack-directory=input/SHREC2016_partial_retrieval/complete_objects '
+                                     '--query-directory=input/SHREC2016_partial_retrieval/queries_artificial/Q25 '
+                                     '--resultsPerQueryImage=1 '
+                                     '--randomSeed=' + mainEvaluationRandomSeed + ' '
+                                     '--support-radius=' + shrec2016_support_radius + ' '
+                                     '--consensus-threshold=10 '
+                                     '--force-gpu=' + str(gpuID) + ' '
+                                     '--output-file=output/Figure_16_SHREC16_benchmark/results_25_partiality.json')
+
+
+        if choice == 5:
+            return
 
 
 def runMainMenu():
@@ -528,7 +560,7 @@ def runMainMenu():
         if choice == 14:
             pass
         if choice == 15:
-            pass
+            runShrec16Queries()
         if choice == 16:
             pass
         if choice == 17:

@@ -137,7 +137,6 @@ int main(int argc, const char** argv) {
 
     std::vector<std::experimental::filesystem::path> queryFiles = ShapeDescriptor::utilities::listDirectory(queryDirectory.value());
 
-    std::cout << "Computing image counts for query files.. (this will take a while)" << std::endl;
     std::vector<QueryDescriptor> queryImageList;
 
     std::unordered_map<std::string, size_t> fileImageBaseIndexMap;
@@ -145,9 +144,7 @@ int main(int argc, const char** argv) {
     std::vector<ShapeDescriptor::cpu::Mesh> queryMeshes(queryFiles.size());
 
     unsigned int nextDatasetImageID = 0;
-    int startIndex = subsetEndIndex.value() != -1 ? subsetEndIndex.value() : 0;
-    int endIndex = subsetEndIndex.value() != -1 ? subsetEndIndex.value() : queryFiles.size();
-    for(unsigned int fileID = startIndex; fileID < endIndex; fileID++) {
+    for(unsigned int fileID = 0; fileID < queryFiles.size(); fileID++) {
         std::cout << "\rProcessing file " << (fileID + 1) << "/" << queryFiles.size() << ".." << std::flush;
 
         fileImageBaseIndexMap[queryFiles.at(fileID).string()] = nextDatasetImageID;
@@ -171,7 +168,7 @@ int main(int argc, const char** argv) {
         ShapeDescriptor::free::array(descriptorOrigins);
     }
 
-    std::cout << std::endl << "Image counting complete. Total query count in dataset: " << queryImageList.size() << std::endl;
+    std::cout << std::endl << "Image counting complete. A total of " << queryImageList.size() << " images were found across " << queryFiles.size() << " files." << std::endl;
 
     std::minstd_rand0 generator{randomSeed.value()};
     std::shuffle(std::begin(queryImageList), std::end(queryImageList), generator);
@@ -181,7 +178,10 @@ int main(int argc, const char** argv) {
 
     std::vector<QueryResult> queryResults;
 
-    for(unsigned int i = 0; i < trimmedQueryDescriptorList.size(); i++) {
+    int startIndex = subsetStartIndex.value() != -1 ? subsetStartIndex.value() : 0;
+    int endIndex = subsetEndIndex.value() != -1 ? subsetEndIndex.value() : queryFiles.size();
+
+    for(unsigned int i = startIndex; i < endIndex; i++) {
         if(singleQueryIndex.value() != -1 && singleQueryIndex.value() != i) {
             continue;
         }
@@ -234,7 +234,7 @@ int main(int argc, const char** argv) {
 
         queryResults.push_back(result);
 
-        if(outputFile.value() != "NONE_SELECTED" && (i % 25 == 24 || singleQueryIndex.value() != -1)) {
+        if(outputFile.value() != "NONE_SELECTED" && (i % 25 == 24 || singleQueryIndex.value() != -1 || (subsetEndIndex.value() != -1 && i == subsetEndIndex.value() - 1))) {
             json outJson;
 
             outJson["version"] = "v8";
