@@ -102,6 +102,8 @@ int main(int argc, const char** argv) {
     const auto& supportRadius = parser.add<float>("support-radius", "The support radius to use during rendering", '\0', arrrgh::Optional, 1);
     const auto &numberOfSearchResultsToGenerate = parser.add<int>(
             "search-results-per-query", "Number of search results to generate per query.", '\0', arrrgh::Required, 1);
+    const auto &singleQueryIndex = parser.add<int>(
+            "single-query-index", "Only execute a single search query from the sequence.", '\0', arrrgh::Optional, -1);
     const auto &forceGPU = parser.add<int>(
             "force-gpu", "Index of the GPU device to use for search kernels.", '\0', arrrgh::Optional, -1);
     const auto &outputFile = parser.add<std::string>(

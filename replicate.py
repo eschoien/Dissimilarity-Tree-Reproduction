@@ -190,6 +190,25 @@ def computeDescriptorsFromDirectory(inputDirectory, outputDirectory, descriptorW
 
         computeDescriptorsFromFile(inputFilePath, dumpFilePath, descriptorWidth)
 
+
+descriptorInputDirectories = ['input/SHREC2016_partial_retrieval/complete_objects',
+                              'output/augmented_dataset_original',
+                              'output/augmented_dataset_remeshed',
+                              'input/SHREC2016_partial_retrieval/queries_artificial/Q25',
+                              'input/SHREC2016_partial_retrieval/queries_artificial/Q40']
+
+def getDescriptorDirectoriesByResolution(resolution):
+    outputDirectories = ['output/descriptors/complete_objects_' + resolution + 'x' + resolution,
+                         'output/descriptors/augmented_dataset_original_' + resolution + 'x' + resolution,
+                         'output/descriptors/augmented_dataset_remeshed_' + resolution + 'x' + resolution,
+                         'output/descriptors/shrec2016_25partiality_' + resolution + 'x' + resolution,
+                         'output/descriptors/shrec2016_40partiality_' + resolution + 'x' + resolution]
+    return outputDirectories
+
+def computeDescriptorBatch(batchIndex, resolution):
+    outputDirectories = getDescriptorDirectoriesByResolution(resolution)
+    computeDescriptorsFromDirectory(descriptorInputDirectories[batchIndex], outputDirectories[batchIndex], resolution)
+
 def computeDescriptors():
     for descriptorwidth in ['32', '64', '96']:
         os.makedirs('output/descriptors/complete_objects_' + descriptorwidth + 'x' + descriptorwidth, exist_ok=True)
@@ -202,35 +221,89 @@ def computeDescriptors():
         run_menu = TerminalMenu([
             "Generate all descriptors (will take several hours)",
             "Copy all descriptors precomputed by authors",
+            "Generate descriptors for one random object from each set and verify against authors",
+            #"Generate all 32x32 descriptors of complete objects",
+            #"Generate all 32x32 3descriptors of the augmented dataset's original partial query objects",
+            #"Generate all 32x32 descriptors of the augmented dataset's remeshed partial query objects",
+            #"Generate all 32x32 descriptors of the SHREC'16 25% partiality query objects",
+            #"Generate all 32x32 descriptors of the SHREC'16 40% partiality query objects",
+            #"Generate all 64x64 descriptors of complete objects",
+            #"Generate all 64x64 3descriptors of the augmented dataset's original partial query objects",
+            #"Generate all 64x64 descriptors of the augmented dataset's remeshed partial query objects",
+            #"Generate all 64x64 descriptors of the SHREC'16 25% partiality query objects",
+            #"Generate all 64x64 descriptors of the SHREC'16 40% partiality query objects",
+            #"Generate all 96x96 descriptors of complete objects",
+            #"Generate all 96x96 3descriptors of the augmented dataset's original partial query objects",
+            #"Generate all 96x96 descriptors of the augmented dataset's remeshed partial query objects",
+            #"Generate all 96x96 descriptors of the SHREC'16 25% partiality query objects",
+            #"Generate all 96x96 descriptors of the SHREC'16 40% partiality query objects",
             "back"], title='-- Compute descriptors --')
-        choice = run_menu.show()
-        if choice == 0:
+        choice = run_menu.show() + 1
+        if choice == 1:
             for index, descriptorwidth in enumerate(['32', '64', '96']):
                 changeDescriptorWidth(int(descriptorwidth))
                 print('Processing batch 1/5 in resolution ' + str(index + 1) + '/3 (' + descriptorwidth + 'x' + descriptorwidth + ')')
-                computeDescriptorsFromDirectory('input/SHREC2016_partial_retrieval/complete_objects',
-                                                'output/descriptors/complete_objects_' + descriptorwidth + 'x' + descriptorwidth,
-                                                descriptorwidth)
+                computeDescriptorBatch(0, descriptorwidth)
                 print('Processing batch 2/5 in resolution ' + str(index + 1) + '/3 (' + descriptorwidth + 'x' + descriptorwidth + ')')
-                computeDescriptorsFromDirectory('output/augmented_dataset_original',
-                                                'output/descriptors/augmented_dataset_original_' + descriptorwidth + 'x' + descriptorwidth,
-                                                descriptorwidth)
+                computeDescriptorBatch(1, descriptorwidth)
                 print('Processing batch 3/5 in resolution ' + str(index + 1) + '/3 (' + descriptorwidth + 'x' + descriptorwidth + ')')
-                computeDescriptorsFromDirectory('output/augmented_dataset_remeshed',
-                                                'output/descriptors/augmented_dataset_remeshed_' + descriptorwidth + 'x' + descriptorwidth,
-                                                descriptorwidth)
+                computeDescriptorBatch(2, descriptorwidth)
                 print('Processing batch 4/5 in resolution ' + str(index + 1) + '/3 (' + descriptorwidth + 'x' + descriptorwidth + ')')
-                computeDescriptorsFromDirectory('input/SHREC2016_partial_retrieval/queries_artificial/Q25',
-                                                'output/descriptors/shrec2016_25partiality_' + descriptorwidth + 'x' + descriptorwidth,
-                                                descriptorwidth)
+                computeDescriptorBatch(3, descriptorwidth)
                 print('Processing batch 5/5 in resolution ' + str(index + 1) + '/3 (' + descriptorwidth + 'x' + descriptorwidth + ')')
-                computeDescriptorsFromDirectory('input/SHREC2016_partial_retrieval/queries_artificial/Q40',
-                                                'output/descriptors/shrec2016_40partiality_' + descriptorwidth + 'x' + descriptorwidth,
-                                                descriptorwidth)
-        if choice == 1:
+                computeDescriptorBatch(4, descriptorwidth)
+        if choice == 2:
             print('Copying precomputed descriptors..')
             shutil.copytree('input/descriptors', 'output/descriptors', dirs_exist_ok=True)
-        if choice == 2:
+        if choice == 3:
+            os.makedirs('output/descriptors/temp', exist_ok=True)
+            for index, descriptorwidth in enumerate(['32', '64', '96']):
+                for directoryIndex, inputDirectory in enumerate(descriptorInputDirectories):
+                    chosenFile = random.choice(os.listdir(inputDirectory))
+                    print('Processing directory', str(directoryIndex+1) + '/' + str(len(descriptorInputDirectories)),
+                          'at resolution', str(index+1) + '/3 (' + descriptorwidth + 'x' + descriptorwidth + '):',
+                          'chose file', chosenFile)
+                    computeDescriptorsFromFile(os.path.join(inputDirectory, chosenFile),
+                                               'output/descriptors/temp/descriptors.dat', descriptorwidth)
+                    computedHash = fileMD5('output/descriptors/temp/descriptors.dat')
+
+                    outputDirectories = getDescriptorDirectoriesByResolution(descriptorwidth)
+                    referenceHash = fileMD5(os.path.join(outputDirectories[directoryIndex].replace('output', 'input'), chosenFile.replace('.obj', '.dat')))
+
+                    print('  File hashes - computed:', computedHash, 'authors:', referenceHash,
+                          '- MATCHES' if computedHash == referenceHash else "- !!! DOES NOT MATCH !!!")
+
+        #if choice == 4:
+        #    computeDescriptorBatch(0, '32')
+        #if choice == 5:
+        #    computeDescriptorBatch(1, '32')
+        #if choice == 6:
+        #    computeDescriptorBatch(2, '32')
+        #if choice == 7:
+        #    computeDescriptorBatch(3, '32')
+        #if choice == 8:
+        #    computeDescriptorBatch(4, '32')
+        #if choice == 9:
+        #    computeDescriptorBatch(0, '64')
+        #if choice == 10:
+        #    computeDescriptorBatch(1, '64')
+        #if choice == 11:
+        #    computeDescriptorBatch(2, '64')
+        #if choice == 12:
+        #    computeDescriptorBatch(3, '64')
+        #if choice == 13:
+        #    computeDescriptorBatch(4, '64')
+        #if choice == 14:
+        #    computeDescriptorBatch(0, '96')
+        #if choice == 15:
+        #    computeDescriptorBatch(1, '96')
+        #if choice == 16:
+        #    computeDescriptorBatch(2, '96')
+        #if choice == 17:
+        #    computeDescriptorBatch(3, '96')
+        #if choice == 18:
+        #    computeDescriptorBatch(4, '96')
+        if choice == 4: #19:
             return
 
 def configureIndexGeneration():
@@ -415,7 +488,7 @@ def runIndexEvaluation():
                                      '--subset-end-index=' + str(startIndex + 100))
             with open('output/Figure_10_indexQueryTimes/measurements.json', 'r') as inFile:
                 computedResults = json.loads(inFile.read())
-        
+
 
         if choice == 5:
             return

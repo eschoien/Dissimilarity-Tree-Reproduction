@@ -34,7 +34,7 @@ cudaDeviceProp ShapeDescriptor::utilities::createCUDAContext(int forceGPU)
 
 	checkCudaErrors(cudaSetDevice(chosenDeviceIndex));
 
-	std::cout << "CUDA context created on device " << chosenDeviceIndex << " (" << deviceWithMostMemory.name << ")" << std::endl;
+	//std::cout << "CUDA context created on device " << chosenDeviceIndex << " (" << deviceWithMostMemory.name << ")" << std::endl;
 
 	return deviceWithMostMemory;
 }
