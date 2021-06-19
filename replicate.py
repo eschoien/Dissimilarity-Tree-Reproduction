@@ -222,21 +222,6 @@ def computeDescriptors():
             "Generate all descriptors (will take several hours)",
             "Copy all descriptors precomputed by authors",
             "Generate descriptors for one random object from each set and verify against authors",
-            #"Generate all 32x32 descriptors of complete objects",
-            #"Generate all 32x32 3descriptors of the augmented dataset's original partial query objects",
-            #"Generate all 32x32 descriptors of the augmented dataset's remeshed partial query objects",
-            #"Generate all 32x32 descriptors of the SHREC'16 25% partiality query objects",
-            #"Generate all 32x32 descriptors of the SHREC'16 40% partiality query objects",
-            #"Generate all 64x64 descriptors of complete objects",
-            #"Generate all 64x64 3descriptors of the augmented dataset's original partial query objects",
-            #"Generate all 64x64 descriptors of the augmented dataset's remeshed partial query objects",
-            #"Generate all 64x64 descriptors of the SHREC'16 25% partiality query objects",
-            #"Generate all 64x64 descriptors of the SHREC'16 40% partiality query objects",
-            #"Generate all 96x96 descriptors of complete objects",
-            #"Generate all 96x96 3descriptors of the augmented dataset's original partial query objects",
-            #"Generate all 96x96 descriptors of the augmented dataset's remeshed partial query objects",
-            #"Generate all 96x96 descriptors of the SHREC'16 25% partiality query objects",
-            #"Generate all 96x96 descriptors of the SHREC'16 40% partiality query objects",
             "back"], title='-- Compute descriptors --')
         choice = run_menu.show() + 1
         if choice == 1:
@@ -272,38 +257,7 @@ def computeDescriptors():
 
                     print('  File hashes - computed:', computedHash, 'authors:', referenceHash,
                           '- MATCHES' if computedHash == referenceHash else "- !!! DOES NOT MATCH !!!")
-
-        #if choice == 4:
-        #    computeDescriptorBatch(0, '32')
-        #if choice == 5:
-        #    computeDescriptorBatch(1, '32')
-        #if choice == 6:
-        #    computeDescriptorBatch(2, '32')
-        #if choice == 7:
-        #    computeDescriptorBatch(3, '32')
-        #if choice == 8:
-        #    computeDescriptorBatch(4, '32')
-        #if choice == 9:
-        #    computeDescriptorBatch(0, '64')
-        #if choice == 10:
-        #    computeDescriptorBatch(1, '64')
-        #if choice == 11:
-        #    computeDescriptorBatch(2, '64')
-        #if choice == 12:
-        #    computeDescriptorBatch(3, '64')
-        #if choice == 13:
-        #    computeDescriptorBatch(4, '64')
-        #if choice == 14:
-        #    computeDescriptorBatch(0, '96')
-        #if choice == 15:
-        #    computeDescriptorBatch(1, '96')
-        #if choice == 16:
-        #    computeDescriptorBatch(2, '96')
-        #if choice == 17:
-        #    computeDescriptorBatch(3, '96')
-        #if choice == 18:
-        #    computeDescriptorBatch(4, '96')
-        if choice == 4: #19:
+        if choice == 4:
             return
 
 def configureIndexGeneration():
