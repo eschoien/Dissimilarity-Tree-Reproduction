@@ -9,7 +9,7 @@ import hashlib
 
 from scripts.simple_term_menu import TerminalMenu
 
-from prettytable import PrettyTable
+from scripts.prettytable import PrettyTable
 
 gpuID = 0
 mainEvaluationRandomSeed = '725948161'
