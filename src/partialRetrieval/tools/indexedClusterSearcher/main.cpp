@@ -95,16 +95,18 @@ int main(int argc, const char** argv) {
             "random-seed", "Random seed to use (allows results to be reproducible).", '\0', arrrgh::Required, -1);
     const auto &count = parser.add<int>(
             "sample-count", "Number of queries to try.", '\0', arrrgh::Required, -1);
+    const auto &subsetStartIndex = parser.add<int>(
+            "subset-start-index", "Query index to start from.", '\0', arrrgh::Optional, -1);
+    const auto &subsetEndIndex = parser.add<int>(
+            "subset-end-index", "Query index to end at. Must be equal or less than the --sample-count parameter.", '\0', arrrgh::Optional, -1);
+    const auto& supportRadius = parser.add<float>("support-radius", "The support radius to use during rendering", '\0', arrrgh::Optional, 1);
     const auto &numberOfSearchResultsToGenerate = parser.add<int>(
             "search-results-per-query", "Number of search results to generate per query.", '\0', arrrgh::Required, 1);
     const auto &forceGPU = parser.add<int>(
             "force-gpu", "Index of the GPU device to use for search kernels.", '\0', arrrgh::Optional, -1);
-    const auto &singleQueryIndex = parser.add<int>(
-            "single-query-index", "Only execute a single search query from the sequence.", '\0', arrrgh::Optional, -1);
     const auto &outputFile = parser.add<std::string>(
             "output-file", "Path to a JSON file to which to write the search results.", '\0', arrrgh::Optional, "NONE_SELECTED");
-    const auto &supportRadius = parser.add<float>(
-            "support-radius", "Support radius to use for generating quicci descriptors.", '\0', arrrgh::Optional, 1.0);
+
     const auto &showHelp = parser.add<bool>(
             "help", "Show this help message.", 'h', arrrgh::Optional, false);
 
@@ -130,9 +132,10 @@ int main(int argc, const char** argv) {
     Cluster* cluster = readCluster(cluster::path(indexDirectory.value()) / "index.dat");
     std::cout << "\tCluster contains " << cluster->nodes.size() << " nodes, " << cluster->images.size() << " images, and indexes " << cluster->indexedFiles.size() << " files." << std::endl;
 
+
     std::vector<std::experimental::filesystem::path> queryFiles = ShapeDescriptor::utilities::listDirectory(queryDirectory.value());
 
-    std::cout << "Computing image counts for query files.." << std::endl;
+    std::cout << "Computing image counts for query files.. (this will take a while)" << std::endl;
     std::vector<QueryDescriptor> queryImageList;
 
     std::unordered_map<std::string, size_t> fileImageBaseIndexMap;
@@ -140,7 +143,9 @@ int main(int argc, const char** argv) {
     std::vector<ShapeDescriptor::cpu::Mesh> queryMeshes(queryFiles.size());
 
     unsigned int nextDatasetImageID = 0;
-    for(unsigned int fileID = 0; fileID < queryFiles.size(); fileID++) {
+    int startIndex = subsetEndIndex.value() != -1 ? subsetEndIndex.value() : 0;
+    int endIndex = subsetEndIndex.value() != -1 ? subsetEndIndex.value() : queryFiles.size();
+    for(unsigned int fileID = startIndex; fileID < endIndex; fileID++) {
         std::cout << "\rProcessing file " << (fileID + 1) << "/" << queryFiles.size() << ".." << std::flush;
 
         fileImageBaseIndexMap[queryFiles.at(fileID).string()] = nextDatasetImageID;

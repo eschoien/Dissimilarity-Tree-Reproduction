@@ -387,15 +387,41 @@ def computeBitsHeatmap():
 
 def runIndexEvaluation():
     os.makedirs('output/Figure_10_indexQueryTimes', exist_ok=True)
-    run_command_line_command('bin/build64x64/indexedSearchBenchmark '
-                             '--index-directory=output/dissimilarity_tree/index64x64 '
-                             '--query-directory=input/augmented_dataset_original '
-                             '--output-file=output/Figure_10_indexQueryTimes/measurements.json '
-                             '--search-results-per-query=1 '
-                             '--random-seed=' + mainEvaluationRandomSeed + ' '
-                             '--support-radius=' + shrec2016_support_radius + ' '
-                             '--sample-count=100000 '
-                             '--force-gpu=' + str(gpuID) + ' ')
+
+    baseIndexedSearchCommand = 'bin/build64x64/indexedSearchBenchmark ' \
+                               '--index-directory=output/dissimilarity_tree/index64x64 ' \
+                               '--query-directory=input/augmented_dataset_original ' \
+                               '--output-file=output/Figure_10_indexQueryTimes/measurements.json ' \
+                               '--search-results-per-query=1 ' \
+                               '--random-seed=' + mainEvaluationRandomSeed + ' ' \
+                               '--support-radius=' + shrec2016_support_radius + ' ' \
+                               '--sample-count=100000 ' \
+                               '--force-gpu=' + str(gpuID) + ' '
+
+    while True:
+        run_menu = TerminalMenu([
+            "Compute random batch of 100 indexed queries",
+            "Compute random batch of 10 sequential searches"
+            "Compute chart based on search results computed by authors",
+            "Compute entire chart from scratch",
+            "back"], title='-- Reproduce Figure 10: Dissimilarity Tree Query Times --')
+
+        choice = run_menu.show() + 1
+
+        if choice == 1:
+            startIndex = random.randint(0, 100000 - 100)
+            run_command_line_command(baseIndexedSearchCommand +
+                                     '--subset-start-index=' + str(startIndex) + ' '
+                                     '--subset-end-index=' + str(startIndex + 100))
+            with open('output/Figure_10_indexQueryTimes/measurements.json', 'r') as inFile:
+                computedResults = json.loads(inFile.read())
+        
+
+        if choice == 5:
+            return
+
+
+    run_command_line_command()
 
 
 def runModifiedQuicciEvaluation():
