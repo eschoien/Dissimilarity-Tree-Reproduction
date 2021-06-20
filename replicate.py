@@ -477,9 +477,9 @@ def runModifiedQuicciEvaluation():
 
 def runRandomSingleAllToAll(queryMesh, remeshed, resolution):
     if remeshed:
-        outputBasePath = 'output/Table_1_and_Figure_13_AllToAllSearch/remeshedResults'
+        outputBasePath = 'output/Figure_13_and_Table_1_AllToAllSearch/remeshedResults'
     else:
-        outputBasePath = 'output/Table_1_and_Figure_13_AllToAllSearch/nonRemeshedResults'
+        outputBasePath = 'output/Figure_13_and_Table_1_AllToAllSearch/nonRemeshedResults'
 
     os.makedirs(outputBasePath, exist_ok=True)
     outputFile = os.path.join(outputBasePath, os.path.basename(queryMesh).replace('.obj', '.json'))
