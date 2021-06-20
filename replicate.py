@@ -475,6 +475,72 @@ def runModifiedQuicciEvaluation():
     print('           And create a chart from its contents.')
     print()
 
+def runRandomSingleAllToAll(queryMesh, remeshed, resolution):
+    if remeshed:
+        outputBasePath = 'output/Table_1_and_Figure_13_AllToAllSearch/remeshedResults'
+    else:
+        outputBasePath = 'output/Table_1_and_Figure_13_AllToAllSearch/nonRemeshedResults'
+
+    os.makedirs(outputBasePath, exist_ok=True)
+    outputFile = os.path.join(outputBasePath, os.path.basename(queryMesh).replace('.obj', '.json'))
+
+
+    run_command_line_command('bin/build' + resolution + 'x' + resolution + '/simplesearch '
+                             '--haystack-directory=input/SHREC2016_partial_retrieval/complete_objects '
+                             '--query-mesh=' + queryMesh + ' '
+                             '--force-gpu=' + str(gpuID) + ' '
+                             '--output-file=' + outputFile)
+
+def runAllToAllObjectSearch():
+    while True:
+        run_menu = TerminalMenu([
+            "Compute and compare search results for one non-remeshed query at resolution 32x32 bits",
+            "Compute and compare search results for one non-remeshed query at resolution 64x64 bits",
+            "Compute and compare search results for one non-remeshed query at resolution 96x96 bits",
+            "Compute and compare search results for one remeshed query at resolution 32x32 bits",
+            "Compute and compare search results for one remeshed query at resolution 64x64 bits",
+            "Compute and compare search results for one remeshed query at resolution 96x96 bits",
+            "Compute chart from results computed by authors",
+            "Compute entire chart from scratch",
+            "back"], title='-- Reproduce Table 1 and Figure 13: All to all retrieval --')
+
+        choice = run_menu.show() + 1
+
+        if choice <= 6:
+            if choice <= 3:
+                inputBasePath = 'output/augmented_dataset_original'
+            else:
+                inputBasePath = 'output/augmented_dataset_remeshed'
+
+            randomMeshIndex = random.randint(0, len(os.listdir(inputBasePath)))
+            queryMeshFileName = os.listdir(inputBasePath)[randomMeshIndex]
+            queryMesh = os.path.join(inputBasePath, queryMeshFileName)
+
+            print()
+            print('Randomly selected query mesh:', queryMesh)
+            print()
+
+            if choice == 1:
+                runRandomSingleAllToAll(queryMesh, False, '32')
+            if choice == 2:
+                runRandomSingleAllToAll(queryMesh, False, '64')
+            if choice == 3:
+                runRandomSingleAllToAll(queryMesh, False, '96')
+            if choice == 4:
+                runRandomSingleAllToAll(queryMesh, True, '32')
+            if choice == 5:
+                runRandomSingleAllToAll(queryMesh, True, '64')
+            if choice == 6:
+                runRandomSingleAllToAll(queryMesh, True, '96')
+        if choice == 7:
+            pass
+        if choice == 8:
+            pass
+        if choice == 9:
+            return
+
+
+
 def computeShrec16Benchmark(partiality, resolution):
     outputFile = 'output/Figure_16_SHREC16_benchmark/results_' + resolution + 'x' + resolution \
                              + '_' + partiality + '_partiality.json'
@@ -529,6 +595,7 @@ def computeShrec16Benchmark(partiality, resolution):
                              'Yes' if matchedObjectName == computedMatches[index] else 'NO!!!!'])
     print(outputTable)
     print()
+    print('For the results to match those shown in the paper, the left two columns of the table must match entirely.')
     print()
 
 
@@ -587,37 +654,37 @@ def runMainMenu():
 
         choice = main_menu.show() + 1
 
-        if choice == 1:
+        if choice == 1:  # Done
             installDependenciesMenu()
-        if choice == 2:
+        if choice == 2:  # TODO
             downloadDatasetsMenu()
-        if choice == 3:
+        if choice == 3:  # Done
             compileProject()
-        if choice == 4:
+        if choice == 4:  # Done
             configureGPU()
-        if choice == 5:
+        if choice == 5:  # Done
             generateAugmentedDataset()
-        if choice == 6:
+        if choice == 6:  # Done
             computeDescriptors()
-        if choice == 7:
+        if choice == 7:  # Done
             computeDissimilarityTree()
-        if choice == 8:
+        if choice == 8:  # Done
             runVoteCountProgressionExperiment()
-        if choice == 9:
+        if choice == 9:  # Done
             computeAverageScoreChart()
-        if choice == 10:
+        if choice == 10:  # Done
             computeBitsHeatmap()
-        if choice == 11:
+        if choice == 11:  # TODO
             runIndexEvaluation()
-        if choice == 12:
+        if choice == 12:  # Done
             runModifiedQuicciEvaluation()
-        if choice == 13:
+        if choice == 13:  # TODO
+            runAllToAllObjectSearch()
+        if choice == 14:  # TODO
             pass
-        if choice == 14:
-            pass
-        if choice == 15:
+        if choice == 15:    # Done
             runShrec16Queries()
-        if choice == 16:
+        if choice == 16:  # TODO
             pass
         if choice == 17:
             return
