@@ -475,6 +475,63 @@ def runModifiedQuicciEvaluation():
     print('           And create a chart from its contents.')
     print()
 
+def computeShrec16Benchmark(partiality, resolution):
+    outputFile = 'output/Figure_16_SHREC16_benchmark/results_' + resolution + 'x' + resolution \
+                             + '_' + partiality + '_partiality.json'
+    run_command_line_command('bin/build' + resolution + 'x' + resolution + '/objectSearch '
+                             '--index-directory=output/dissimilarity_tree/index' + resolution + 'x' + resolution + ' '
+                             '--haystack-directory=input/SHREC2016_partial_retrieval/complete_objects '
+                             '--query-directory=input/SHREC2016_partial_retrieval/queries_artificial/Q' + partiality + ' '
+                             '--resultsPerQueryImage=1 '
+                             '--randomSeed=' + mainEvaluationRandomSeed + ' '
+                             '--support-radius=' + shrec2016_support_radius + ' '
+                             '--consensus-threshold=10 '
+                             '--force-gpu=' + str(gpuID) + ' '
+                             '--output-file=' + outputFile)
+
+    # Load label files provided by benchmark authors
+    with open('input/SHREC2016_partial_retrieval/Hampson_query_cla_6.txt', 'r') as inFile:
+        queryLabelsFileContents = inFile.readlines()
+    with open('input/SHREC2016_partial_retrieval/Hampson_target_cla_6.txt', 'r') as inFile:
+        targetLabelsFileContents = inFile.readlines()
+
+    # Filter data
+    queryLabels = [x.split('\t')[0] for x in queryLabelsFileContents]
+    targertLabels = [x.split(' ')[0] for x in targetLabelsFileContents]
+
+    # Build index
+    targetIndices = {}
+    for index, label in enumerate(targertLabels):
+        # The file is organised as an indexed list. Row 1 is object 1, row 2 is object 2, etc.
+        # We can therefore translate object indices to dataset object filenames
+        targetIndices[label] = 'T' + str(index + 1) + '.obj'
+
+    # Use this to compute the 'answer key' for the retrieval task
+    correctMatches = [targetIndices[x] for x in queryLabels]
+
+    with open(outputFile, 'r') as inFile:
+        computedMatchesFileContents = json.loads(inFile.read())
+
+    computedMatches = len(queryLabels) * [None]
+    for entry in computedMatchesFileContents['results']:
+        queryIndex = int(os.path.basename(entry['queryFile'])[1:-4]) - 1
+        bestMatchingObject = os.path.basename(entry['searchResults'][0]['objectFilePath'])
+        computedMatches[queryIndex] = bestMatchingObject
+
+    print()
+    print('Results:')
+    print()
+    outputTable = PrettyTable(
+        ['Computed nearest neighbour', 'Benchmark label', 'Do the left two columns match?'])
+    outputTable.align = "l"
+    for index, matchedObjectName in enumerate(correctMatches):
+        outputTable.add_row([matchedObjectName, computedMatches[index],
+                             'Yes' if matchedObjectName == computedMatches[index] else 'NO!!!!'])
+    print(outputTable)
+    print()
+    print()
+
+
 
 def runShrec16Queries():
     os.makedirs('output/Figure_16_SHREC16_benchmark', exist_ok=True)
@@ -492,19 +549,18 @@ def runShrec16Queries():
         choice = run_menu.show() + 1
 
         if choice == 1:
-            run_command_line_command('bin/build64x64/objectSearch '
-                                     '--index-directory=output/dissimilarity_tree/index64x64 '
-                                     '--haystack-directory=input/SHREC2016_partial_retrieval/complete_objects '
-                                     '--query-directory=input/SHREC2016_partial_retrieval/queries_artificial/Q25 '
-                                     '--resultsPerQueryImage=1 '
-                                     '--randomSeed=' + mainEvaluationRandomSeed + ' '
-                                     '--support-radius=' + shrec2016_support_radius + ' '
-                                     '--consensus-threshold=10 '
-                                     '--force-gpu=' + str(gpuID) + ' '
-                                     '--output-file=output/Figure_16_SHREC16_benchmark/results_25_partiality.json')
-
-
+            computeShrec16Benchmark('25', '32')
+        if choice == 2:
+            computeShrec16Benchmark('25', '64')
+        if choice == 3:
+            computeShrec16Benchmark('25', '96')
+        if choice == 4:
+            computeShrec16Benchmark('40', '32')
         if choice == 5:
+            computeShrec16Benchmark('40', '64')
+        if choice == 6:
+            computeShrec16Benchmark('40', '96')
+        if choice == 7:
             return
 
 
