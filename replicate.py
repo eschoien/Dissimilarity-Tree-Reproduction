@@ -486,7 +486,7 @@ def runRandomSingleAllToAll(queryMesh, remeshed, resolution):
 
 
     run_command_line_command('bin/build' + resolution + 'x' + resolution + '/simplesearch '
-                             '--haystack-directory=input/SHREC2016_partial_retrieval/complete_objects '
+                             '--haystack-directory=output/descriptors/complete_objects_' + resolution + 'x' + resolution + ' '
                              '--query-mesh=' + queryMesh + ' '
                              '--force-gpu=' + str(gpuID) + ' '
                              '--output-file=' + outputFile)
