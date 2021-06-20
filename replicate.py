@@ -447,6 +447,7 @@ def runIndexEvaluation():
                                      '--subset-end-index=' + str(startIndex + 100))
             with open('output/Figure_10_indexQueryTimes/measurements.json', 'r') as inFile:
                 computedResults = json.loads(inFile.read())
+        if choice == 2:
 
 
         if choice == 5:
@@ -475,7 +476,7 @@ def runModifiedQuicciEvaluation():
     print('           And create a chart from its contents.')
     print()
 
-def runRandomSingleAllToAll(queryMesh, remeshed, resolution):
+def runRandomSingleAllToAll(queryMesh, remeshed, disableModifiedQUICCI):
     if remeshed:
         outputBasePath = 'output/Figure_13_and_Table_1_AllToAllSearch/remeshedResults'
     else:
@@ -485,8 +486,8 @@ def runRandomSingleAllToAll(queryMesh, remeshed, resolution):
     outputFile = os.path.join(outputBasePath, os.path.basename(queryMesh).replace('.obj', '.json'))
 
 
-    run_command_line_command('bin/build' + resolution + 'x' + resolution + '/simplesearch '
-                             '--haystack-directory=output/descriptors/complete_objects_' + resolution + 'x' + resolution + ' '
+    run_command_line_command('bin/build64x64/simplesearch '
+                             '--haystack-directory=output/descriptors/complete_objects_64x64 '
                              '--query-mesh=' + queryMesh + ' '
                              '--force-gpu=' + str(gpuID) + ' '
                              '--output-file=' + outputFile)
@@ -494,20 +495,18 @@ def runRandomSingleAllToAll(queryMesh, remeshed, resolution):
 def runAllToAllObjectSearch():
     while True:
         run_menu = TerminalMenu([
-            "Compute and compare search results for one non-remeshed query at resolution 32x32 bits",
-            "Compute and compare search results for one non-remeshed query at resolution 64x64 bits",
-            "Compute and compare search results for one non-remeshed query at resolution 96x96 bits",
-            "Compute and compare search results for one remeshed query at resolution 32x32 bits",
-            "Compute and compare search results for one remeshed query at resolution 64x64 bits",
-            "Compute and compare search results for one remeshed query at resolution 96x96 bits",
-            "Compute chart from results computed by authors",
-            "Compute entire chart from scratch",
+            "Compute and compare search results for one non-remeshed query using the original QUICCI descriptor",
+            "Compute and compare search results for one non-remeshed query using the modified QUICCI descriptor",
+            "Compute and compare search results for one remeshed query using the original QUICCI descriptor",
+            "Compute and compare search results for one remeshed query using the modified QUICCI descriptor",
+            "Compute Table 1 and Figure 13 from results computed by authors",
+            "Compute Table 1 and Figure 13 from scratch",
             "back"], title='-- Reproduce Table 1 and Figure 13: All to all retrieval --')
 
         choice = run_menu.show() + 1
 
-        if choice <= 6:
-            if choice <= 3:
+        if choice <= 4:
+            if choice <= 2:
                 inputBasePath = 'output/augmented_dataset_original'
             else:
                 inputBasePath = 'output/augmented_dataset_remeshed'
@@ -521,22 +520,18 @@ def runAllToAllObjectSearch():
             print()
 
             if choice == 1:
-                runRandomSingleAllToAll(queryMesh, False, '32')
+                runRandomSingleAllToAll(queryMesh, False, False)
             if choice == 2:
-                runRandomSingleAllToAll(queryMesh, False, '64')
+                runRandomSingleAllToAll(queryMesh, False, True)
             if choice == 3:
-                runRandomSingleAllToAll(queryMesh, False, '96')
+                runRandomSingleAllToAll(queryMesh, True, False)
             if choice == 4:
-                runRandomSingleAllToAll(queryMesh, True, '32')
-            if choice == 5:
-                runRandomSingleAllToAll(queryMesh, True, '64')
-            if choice == 6:
-                runRandomSingleAllToAll(queryMesh, True, '96')
+                runRandomSingleAllToAll(queryMesh, True, True)
+        if choice == 5:
+            pass
+        if choice == 6:
+            pass
         if choice == 7:
-            pass
-        if choice == 8:
-            pass
-        if choice == 9:
             return
 
 
@@ -658,7 +653,7 @@ def runMainMenu():
             installDependenciesMenu()
         if choice == 2:  # TODO
             downloadDatasetsMenu()
-        if choice == 3:  # Done
+        if choice == 3:  # TODO: add build for simplesearch modified QUICCI disabled
             compileProject()
         if choice == 4:  # Done
             configureGPU()
@@ -682,7 +677,7 @@ def runMainMenu():
             runAllToAllObjectSearch()
         if choice == 14:  # TODO
             pass
-        if choice == 15:    # Done
+        if choice == 15:  # Done
             runShrec16Queries()
         if choice == 16:  # TODO
             pass
