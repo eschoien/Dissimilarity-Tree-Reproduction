@@ -55,6 +55,12 @@ def downloadDatasetsMenu():
             print('Download and extraction complete. You may now delete the file input/download/SHREC17.7z if you need the disk space.')
             print()
 
+        # SHREC2016: https://ntnu.box.com/shared/static/zb2co430vdcpao7gwco3vaxsf7ahz09u.7z
+        # Index 64x64: https://ntnu.box.com/shared/static/cv4h14yqy9tx5llyc4t2tbbpr1nak52r.7z
+        # Index 96x96: https://ntnu.box.com/shared/static/q1blnwzrq8g0cuh3pl3f0av3v4n4qqi6.7z
+        # Index 32x32: https://ntnu.box.com/shared/static/g5ckpzuqilcx2oknvytbh8l4uyv08ifv.7z
+        # Augmented dataset: https://ntnu.box.com/shared/static/e57v52moxf3g0fx394cs7bhfo6oto4mr.7z
+
         if choice == 0 or choice == 2:
             if not os.path.isfile('input/download/results_computed_by_authors.7z') or ask_for_confirmation('It appears the results archive file has already been downloaded. Would you like to download it again?'):
                 print('Downloading results archive file..')
