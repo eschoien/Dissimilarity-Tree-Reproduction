@@ -880,7 +880,25 @@ def runPipelineEvaluation():
         if choice == 9:
             pass
         if choice == 10:
-            pass
+            if not os.path.exists(computePipelineEvaluationOutputFileName('Best Case', '10', '64x64')):
+                print()
+                print('It looks like you have not generated the prerequisite Best Case search results.')
+                print('No worries, I\'ll generate them for you! Hang tight.')
+                print()
+                pipelineEvaluation_queryMode = 'Best Case'
+                pipelineEvaluation_consensusThreshold = '10'
+                pipelineEvaluation_resolution = '64x64'
+                runQuerySet(len(os.listdir('input/SHREC2016_partial_retrieval/complete_objects')))
+            if not os.path.exists(computePipelineEvaluationOutputFileName('Remeshed', '10', '64x64')):
+                print()
+                print('It looks like you have not generated the prerequisite Remeshed search results.')
+                print('No worries, I\'ll generate them for you! Hang tight.')
+                print()
+                pipelineEvaluation_queryMode = 'Remeshed'
+                pipelineEvaluation_consensusThreshold = '10'
+                pipelineEvaluation_resolution = '64x64'
+                runQuerySet(len(os.listdir('input/SHREC2016_partial_retrieval/complete_objects')))
+
         if choice == 11:
             return
 
