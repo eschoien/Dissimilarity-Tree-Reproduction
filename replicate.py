@@ -423,13 +423,57 @@ def computeBitsHeatmap():
     run_command_line_command('python3 src/partialRetrieval/tools/shrec2016-runner/heatmap.py '
                              'output/Figure_6_OccurrenceCountHeatmap/shrec16_occurrence_counts.txt')
 
+def collateIndexEvaluationResults(indexedInputFile, sequentialInputFile, outputFile):
+    factor = 10
+    histogramBins = 150
+
+    def computeHistograms(inputFile):
+        histogram = [0] * histogramBins * factor
+
+        averagesSumHistogram = [0] * histogramBins * factor
+        averagesCountsHistogram = [0.0000001] * histogramBins * factor
+        averagesMinHistogram = [9999999999] * histogramBins * factor
+        averagesMaxHistogram = [0] * histogramBins * factor
+
+        with open(inputFile, 'r') as inputFile:
+            fileContents = json.loads(inputFile.read())
+        for entry in fileContents['results']:
+            histogram[int(entry['executionTimeSeconds'] * factor)] += 1
+
+            histogramBin = int(entry['executionTimeSeconds'] * factor)
+            averagesSumHistogram[histogramBin] += entry['nodesVisited']
+            averagesCountsHistogram[histogramBin] += 1
+            averagesMaxHistogram[histogramBin] = max(entry['nodesVisited'], averagesMaxHistogram[histogramBin])
+            averagesMinHistogram[histogramBin] = min(entry['nodesVisited'], averagesMinHistogram[histogramBin])
+        return (histogram, averagesSumHistogram, averagesCountsHistogram, averagesMinHistogram, averagesMaxHistogram)
+
+    indexedHistogram, averagesSumHistogram, averagesCountsHistogram, averagesMinHistogram, averagesMaxHistogram = computeHistograms(indexedInputFile)
+    sequentialHistogram, _, _, _, _ = computeHistograms(sequentialInputFile)
+
+    with open(outputFile, 'w') as outFile:
+        outFile.write('Execution Time (s), Number of Queries executed (Proposed), Number of Queries executed (Sequential), Number of Queries executed (Sequential and scaled by a factor of 10), ')
+        outFile.write('Average Node Count Visited, Minimum Node Count Visited, Maximum Node Count Visited')
+        outFile.write('\n')
+
+        for i in range(0, histogramBins * factor):
+            if indexedHistogram[i] == 0 and sequentialHistogram[i] == 0:
+                # Skip time slices which contain no queries
+                continue
+            outFile.write(','.join(map(str, (i / factor, indexedHistogram[i], sequentialHistogram[i], 10 * sequentialHistogram[i]))))
+            if indexedHistogram[i] != 0:
+                outFile.write(',' + ','.join(map(str, (float(averagesSumHistogram[i]) / averagesCountsHistogram[i],
+                                                       averagesMinHistogram[i], averagesMaxHistogram[i]))))
+            else:
+                outFile.write(', , , ')
+            outFile.write('\n')
+
 def runIndexEvaluation():
-    os.makedirs('output/Figure_10_indexQueryTimes', exist_ok=True)
+    os.makedirs('output/Figure_10_and_17_indexQueryTimes', exist_ok=True)
 
     baseIndexedSearchCommand = 'bin/build64x64/indexedSearchBenchmark ' \
                                '--index-directory=output/dissimilarity_tree/index64x64 ' \
                                '--query-directory=output/augmented_dataset_original ' \
-                               '--output-file=output/Figure_10_indexQueryTimes/measurements_indexed.json ' \
+                               '--output-file=output/Figure_10_and_17_indexQueryTimes/measurements_indexed.json ' \
                                '--search-results-per-query=1 ' \
                                '--random-seed=' + mainEvaluationRandomSeed + ' ' \
                                '--support-radius=' + shrec2016_support_radius + ' ' \
@@ -440,7 +484,7 @@ def runIndexEvaluation():
                                   '--index-directory=output/dissimilarity_tree/index64x64 ' \
                                   '--query-directory=output/augmented_dataset_original ' \
                                   '--random-seed=' + mainEvaluationRandomSeed + ' ' \
-                                  '--output-file=output/Figure_10_indexQueryTimes/measurements_sequential.json ' \
+                                  '--output-file=output/Figure_10_and_17_indexQueryTimes/measurements_sequential.json ' \
                                   '--sample-count=2500 ' \
                                   '--force-gpu=' + str(gpuID) + ' '
 
@@ -460,7 +504,7 @@ def runIndexEvaluation():
             run_command_line_command(baseIndexedSearchCommand +
                                      '--subset-start-index=' + str(startIndex) + ' '
                                      '--subset-end-index=' + str(startIndex + resultsToCompute))
-            with open('output/Figure_10_indexQueryTimes/measurements_indexed.json', 'r') as inFile:
+            with open('output/Figure_10_and_17_indexQueryTimes/measurements_indexed.json', 'r') as inFile:
                 computedResults = json.loads(inFile.read())
             with open('input/misc_precomputed_results/figure10_indexed_search_100000.json', 'r') as inFile:
                 chartExecutionTimes = json.loads(inFile.read())
@@ -478,12 +522,12 @@ def runIndexEvaluation():
             print(outputTable)
 
         if choice == 2:
-            resultsToCompute = 2
+            resultsToCompute = 10
             startIndex = random.randint(0, 2500 - resultsToCompute)
             run_command_line_command(baseSequentialSearchCommand +
                                      '--subset-start-index=' + str(startIndex) + ' '
                                      '--subset-end-index=' + str(startIndex + resultsToCompute))
-            with open('output/Figure_10_indexQueryTimes/measurements_sequential.json', 'r') as inFile:
+            with open('output/Figure_10_and_17_indexQueryTimes/measurements_sequential.json', 'r') as inFile:
                 computedResults = json.loads(inFile.read())
             with open('input/misc_precomputed_results/figure10_sequential_search_2500.json', 'r') as inFile:
                 chartExecutionTimes = json.loads(inFile.read())
@@ -499,6 +543,22 @@ def runIndexEvaluation():
                                      'File ' + str(chartExecutionTimes['results'][startIndex + i]['bestSearchResultFileID']) + ', image '
                                      + str(chartExecutionTimes['results'][startIndex + i]['bestSearchResultImageID'])])
             print(outputTable)
+
+        if choice == 3:
+            print()
+            print('Compiling results..')
+            collateIndexEvaluationResults('input/misc_precomputed_results/figure10_indexed_search_100000.json',
+                                          'input/misc_precomputed_results/figure10_sequential_search_2500.json',
+                                          'output/Figure_10_and_17_indexQueryTimes/authors_indexed_search_times.csv')
+            print()
+            print('Done. You can find the produced CSV file here:')
+            print('    output/Figure_10_and_17_indexQueryTimes/authors_indexed_search_times.csv')
+            print()
+            print('Use columns 0, 1, and 3 for Figure 10.')
+            print('Use columns 0, 4, 5, and 6 for Figure 17.')
+            print()
+        if choice == 4:
+            pass
 
         if choice == 5:
             return
@@ -689,13 +749,12 @@ def runMainMenu():
             "8. Run vote counting experiment (Figure 3)",
             "9. Run average search result distance experiment (Figure 4)",
             "10. Compute average descriptor heatmap (Figure 6)",
-            "11. Run dissimilarity tree evaluation (Figure 10)",
+            "11. Run dissimilarity tree execution time evaluation (Figure 10 and Figure 17)",
             "12. Run modified quicci evaluation (Figures 11 and 12)",
             "13. Run all to all object search (Table 1 and Figure 13)",
             "14. Run partial retrieval pipeline evaluation (Figures 14 and 15)",
             "15. Run SHREC'16 artificial benchmark (Figure 16)",
-            "16. Run query duration evaluation (Figure 17)",
-            "17. exit"], title='---------------------- Main Menu ----------------------')
+            "16. exit"], title='---------------------- Main Menu ----------------------')
 
         choice = main_menu.show() + 1
 
@@ -729,9 +788,7 @@ def runMainMenu():
             pass
         if choice == 15:  # Done
             runShrec16Queries()
-        if choice == 16:  # TODO
-            pass
-        if choice == 17:
+        if choice == 16:
             return
 
 def runIntroSequence():
