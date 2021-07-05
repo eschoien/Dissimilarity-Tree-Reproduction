@@ -337,6 +337,8 @@ int main(int argc, const char** argv) {
             outJson["dumpFilePath"] = cluster::path(outputFile.value()).string();
             outJson["randomSeed"] = seed.value();
             outJson["consensusThreshold"] = consensusThreshold.value();
+            outJson["queryStartIndex"] = startIndex;
+            outJson["queryEndIndex"] = endIndex;
 
             outJson["results"] = {};
 
