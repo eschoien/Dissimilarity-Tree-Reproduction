@@ -153,6 +153,10 @@ def compileProject():
     run_command_line_command('cmake ../../src/partialRetrieval -DCMAKE_BUILD_TYPE=Release', 'bin/build96x96')
     run_command_line_command('make -j ' + threadCount, 'bin/build96x96')
 
+    print()
+    print('Complete.')
+    print()
+
 def printAvailableGPUs():
     run_command_line_command('bin/build32x32/descriptorDumper --list-gpus')
 
@@ -710,7 +714,103 @@ def computeShrec16Benchmark(partiality, resolution):
     print('For the results to match those shown in the paper, the left two columns of the table must match entirely.')
     print()
 
+pipelineEvaluation_queryMode = 'Best Case'
+pipelineEvaluation_consensusThreshold = '10'
+pipelineEvaluation_resolution = '32x32'
 
+def runQuerySet(queryPath, concensusThreshold, resolution, outputFile):
+    global pipelineEvaluation_resolution
+    global pipelineEvaluation_consensusThreshold
+    global pipelineEvaluation_queryMode
+
+    run_command_line_command('bin/build' + resolution + '/objectSearch '
+         '--index-directory=output/dissimilarity_tree/index' + resolution + ' '
+         '--haystack-directory=input/SHREC2016_partial_retrieval/complete_objects '
+         '--query-directory=' + queryPath + ' '
+         '--resultsPerQueryImage=1 '
+         '--randomSeed=' + mainEvaluationRandomSeed + ' '
+         '--support-radius=' + shrec2016_support_radius + ' '
+         '--consensus-threshold=' + concensusThreshold + ' '
+         '--force-gpu=' + str(gpuID) + ' '
+         '--output-file=' + outputFile)
+
+def runPipelineEvaluation():
+    global pipelineEvaluation_resolution
+    global pipelineEvaluation_consensusThreshold
+    global pipelineEvaluation_queryMode
+
+    os.makedirs('output/Figure_14_and_15_Pipeline_Evaluation/computed_results', exist_ok=True)
+
+    #runQuerySet('input/augmented_best', '10', '32x32', 'output/Figure_14_and_15_Pipeline_Evaluation/computed_results/best_case_threshold_10.json')
+
+    while True:
+        run_menu = TerminalMenu([
+            "Run and compare results for 10 random objects",
+            "Run and compare results for 50 random objects",
+            "Run and compare results for all objects",
+            "Configure descriptor resolution (currently: " + pipelineEvaluation_resolution + ')',
+            "Configure vote threshold (currently: " + pipelineEvaluation_consensusThreshold + ')',
+            "Configure query dataset (currently: " + pipelineEvaluation_queryMode + ')',
+            "Compute Figure 14 based on results computed by Authors",
+            "Compute Figure 14 based on replicated results",
+            "Compute Figure 15 based on results computed by Authors",
+            "Compute Figure 15 based on replicated results",
+            "back"], title='-- Reproduce Figure 14 and 15: Pipeline Evaluation --')
+
+        choice = run_menu.show() + 1
+
+        if choice == 1:
+            pass
+        if choice == 2:
+            pass
+        if choice == 3:
+            pass
+        if choice == 4:
+            configure_resolution_menu = TerminalMenu([
+                "Compute descriptors with resolution 32x32",
+                "Compute descriptors with resolution 64x64",
+                "Compute descriptors with resolution 96x96",
+                "back"], title='-- Configure Descriptor Resolution --')
+            configure_choice = configure_resolution_menu.show() + 1
+            if configure_choice == 1:
+                pipelineEvaluation_resolution = '32x32'
+            if configure_choice == 2:
+                pipelineEvaluation_resolution = '64x64'
+            if configure_choice == 3:
+                pipelineEvaluation_resolution = '96x96'
+        if choice == 5:
+            configure_resolution_menu = TerminalMenu([
+                "Set vote threshold to 10",
+                "Set vote threshold to 25",
+                "Set vote threshold to 50",
+                "back"], title='-- Configure Vote Threshold --')
+            configure_choice = configure_resolution_menu.show() + 1
+            if configure_choice == 1:
+                pipelineEvaluation_consensusThreshold = '10'
+            if configure_choice == 2:
+                pipelineEvaluation_consensusThreshold = '25'
+            if configure_choice == 3:
+                pipelineEvaluation_consensusThreshold = '50'
+        if choice == 6:
+            configure_resolution_menu = TerminalMenu([
+                "Use the Best Case dataset as query objects",
+                "Use the Remeshed dataset as query objects",
+                "back"], title='-- Configure Query Dataset --')
+            configure_choice = configure_resolution_menu.show() + 1
+            if configure_choice == 1:
+                pipelineEvaluation_queryMode = 'Best Case'
+            if configure_choice == 2:
+                pipelineEvaluation_queryMode = 'Remeshed'
+        if choice == 7:
+            pass
+        if choice == 8:
+            pass
+        if choice == 9:
+            pass
+        if choice == 10:
+            pass
+        if choice == 11:
+            return
 
 def runShrec16Queries():
     os.makedirs('output/Figure_16_SHREC16_benchmark', exist_ok=True)
@@ -769,7 +869,7 @@ def runMainMenu():
             installDependenciesMenu()
         if choice == 2:  # TODO
             downloadDatasetsMenu()
-        if choice == 3:  # TODO: add build for simplesearch modified QUICCI disabled
+        if choice == 3:  # Done
             compileProject()
         if choice == 4:  # Done
             configureGPU()
@@ -792,7 +892,7 @@ def runMainMenu():
         if choice == 13:  # TODO
             runAllToAllObjectSearch()
         if choice == 14:  # TODO
-            pass
+            runPipelineEvaluation()
         if choice == 15:  # Done
             runShrec16Queries()
         if choice == 16:
