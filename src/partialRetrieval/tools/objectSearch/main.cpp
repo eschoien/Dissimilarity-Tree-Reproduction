@@ -131,7 +131,7 @@ ObjectQueryResult runObjectQuery(
             if(!hasSurpassedThreshold) {
                 processedCount++;
                 if(enableProgressionDump) {
-                    std::cout << "\rTotal queries processed: " << processedCount << ", of which " << nextResultIndexToComplete << " are consecutive" << std::flush;
+                    std::cout << "\rProcessed: " << processedCount << ", " << nextResultIndexToComplete << std::flush;
                 }
 
                 allSearchResults.at(queryImageIndex) = queryResults;
@@ -265,7 +265,10 @@ int main(int argc, const char** argv) {
             "output-progression-file", "Path to a csv file showing scores after every query.", '\0', arrrgh::Optional, "NONE_SELECTED");
     const auto &progressionIterationLimit = parser.add<int>(
             "progression-iteration-limit", "For producing a progression file of a certain length, limit the number of queries processed.", '\0', arrrgh::Optional, -1);
-
+    const auto &subsetStartIndex = parser.add<int>(
+            "subset-start-index", "Query index to start from.", '\0', arrrgh::Optional, 0);
+    const auto &subsetEndIndex = parser.add<int>(
+            "subset-end-index", "Query index to end at. Must be equal or less than the --sample-count parameter.", '\0', arrrgh::Optional, -1);
     const auto &showHelp = parser.add<bool>(
             "help", "Show this help message.", 'h', arrrgh::Optional, false);
 
@@ -301,9 +304,10 @@ int main(int argc, const char** argv) {
 
     std::vector<ObjectQueryResult> searchResults;
 
-
-    for(unsigned int queryFile = 0; queryFile < queryFiles.size(); queryFile++) {
-        std::cout << "Processing query " << (queryFile + 1) << "/" << queryFiles.size() << ": " << queryFiles.at(queryFile).string() << std::endl;
+    unsigned int startIndex = subsetStartIndex.value();
+    unsigned int endIndex = subsetEndIndex.value() != -1 ? subsetEndIndex.value() : queryFiles.size();
+    for(unsigned int queryFile = startIndex; queryFile < endIndex; queryFile++) {
+        std::cout << "Processing query " << (queryFile + 1) << "/" << endIndex << ": " << queryFiles.at(queryFile).string() << std::endl;
         ObjectQueryResult queryResult = runObjectQuery(
                 queryFiles.at(queryFile), cluster, supportRadius.value(), seed.value(),
                 resultsPerQuery.value(), consensusThreshold.value(), haystackFiles, outputProgressionFile.value(), progressionIterationLimit.value());
@@ -342,7 +346,7 @@ int main(int argc, const char** argv) {
                 outJson["results"][resultIndex]["executionTimeSeconds"] = searchResults.at(resultIndex).executionTimeSeconds;
                 outJson["results"][resultIndex]["allTotalDistances"] = searchResults.at(resultIndex).allTotalDistances;
                 outJson["results"][resultIndex]["allOccurrenceCounts"] = searchResults.at(resultIndex).allOccurrenceCounts;
-                outJson["results"][resultIndex]["queryFile"] = queryFiles.at(resultIndex).string();
+                outJson["results"][resultIndex]["queryFile"] = queryFiles.at(startIndex + resultIndex).string();
                 outJson["results"][resultIndex]["searchResults"] = {};
                 for(unsigned int i = 0; i < searchResults.at(resultIndex).searchResults.size(); i++) {
                     outJson["results"][resultIndex]["searchResults"].emplace_back();
