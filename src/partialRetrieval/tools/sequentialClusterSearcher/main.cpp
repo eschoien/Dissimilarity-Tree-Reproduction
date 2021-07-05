@@ -308,7 +308,7 @@ int main(int argc, const char** argv) {
 
         queryResults.push_back(result);
 
-        if(outputFile.value() != "NONE_SELECTED" && i % 25 == 24) {
+        if(outputFile.value() != "NONE_SELECTED" && (i % 25 == 24 || i + 1 == endIndex)) {
             json outJson;
 
             outJson["version"] = "v7";
