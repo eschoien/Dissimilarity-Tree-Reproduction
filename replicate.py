@@ -718,10 +718,20 @@ pipelineEvaluation_queryMode = 'Best Case'
 pipelineEvaluation_consensusThreshold = '10'
 pipelineEvaluation_resolution = '32x32'
 
-def runQuerySet(queryPath, concensusThreshold, resolution, outputFile):
+def computePipelineEvaluationOutputFileName(queryMode, threshold, resolution):
+    filename = 'results_pipelineEvaluation_' + ('bestCase' if queryMode == "Best Case" else 'remeshed') + '_resolution' + resolution + '_threshold' + threshold + '.json'
+    return 'output/Figure_14_and_15_Pipeline_Evaluation/computed_results/' + filename
+
+def runQuerySet(randomBatchSize):
     global pipelineEvaluation_resolution
     global pipelineEvaluation_consensusThreshold
     global pipelineEvaluation_queryMode
+
+    queryPath = 'input/augmented_best' if pipelineEvaluation_queryMode == 'Best Case' else 'input/augmented_remeshed'
+    resolution = pipelineEvaluation_resolution
+    consensusThreshold = pipelineEvaluation_consensusThreshold
+
+    outputFile = computePipelineEvaluationOutputFileName(pipelineEvaluation_queryMode, consensusThreshold, resolution)
 
     run_command_line_command('bin/build' + resolution + '/objectSearch '
          '--index-directory=output/dissimilarity_tree/index' + resolution + ' '
@@ -730,7 +740,7 @@ def runQuerySet(queryPath, concensusThreshold, resolution, outputFile):
          '--resultsPerQueryImage=1 '
          '--randomSeed=' + mainEvaluationRandomSeed + ' '
          '--support-radius=' + shrec2016_support_radius + ' '
-         '--consensus-threshold=' + concensusThreshold + ' '
+         '--consensus-threshold=' + consensusThreshold + ' '
          '--force-gpu=' + str(gpuID) + ' '
          '--output-file=' + outputFile)
 
@@ -760,11 +770,11 @@ def runPipelineEvaluation():
         choice = run_menu.show() + 1
 
         if choice == 1:
-            pass
+            runQuerySet(10)
         if choice == 2:
-            pass
+            runQuerySet(50)
         if choice == 3:
-            pass
+            runQuerySet(383)
         if choice == 4:
             configure_resolution_menu = TerminalMenu([
                 "Compute descriptors with resolution 32x32",
