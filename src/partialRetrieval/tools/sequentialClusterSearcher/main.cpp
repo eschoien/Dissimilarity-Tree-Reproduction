@@ -112,7 +112,7 @@ int main(int argc, const char** argv) {
     const float supportRadius = 100.0;
 
 
-    arrrgh::parser parser("indexedSearchBenchmark", "Perform a sequential search through a list of descriptors.");
+    arrrgh::parser parser("sequentialSearchBenchmark", "Perform a sequential search through a list of descriptors.");
     const auto &indexDirectory = parser.add<std::string>(
             "index-directory", "The directory containing the index to be queried.", '\0',
             arrrgh::Required, "");
@@ -124,6 +124,10 @@ int main(int argc, const char** argv) {
             "sample-count", "Number of queries to try.", '\0', arrrgh::Required, -1);
     const auto &forceGPU = parser.add<int>(
             "force-gpu", "Index of the GPU device to use for search kernels.", '\0', arrrgh::Optional, -1);
+    const auto &subsetStartIndex = parser.add<int>(
+            "subset-start-index", "Query index to start from.", '\0', arrrgh::Optional, 0);
+    const auto &subsetEndIndex = parser.add<int>(
+            "subset-end-index", "Query index to end at. Must be equal or less than the --sample-count parameter.", '\0', arrrgh::Optional, -1);
     const auto &outputFile = parser.add<std::string>(
             "output-file", "Path to a JSON file to which to write the search results.", '\0', arrrgh::Optional, "NONE_SELECTED");
 
@@ -152,14 +156,9 @@ int main(int argc, const char** argv) {
     Cluster* cluster = readCluster(cluster::path(indexDirectory.value()) / "index.dat");
     std::cout << "\tCluster contains " << cluster->nodes.size() << " nodes and " << cluster->images.size() << " images." << std::endl;
 
-    std::cout << "Root node: " << cluster->nodes.at(cluster->nodes.at(0).matchingNodeID).subtreeStartIndex << std::endl;
-    std::cout << "Root node: " << cluster->nodes.at(cluster->nodes.at(0).matchingNodeID).subtreeEndIndex << std::endl;
-    std::cout << "Root node: " << cluster->nodes.at(cluster->nodes.at(0).differingNodeID).subtreeStartIndex << std::endl;
-    std::cout << "Root node: " << cluster->nodes.at(cluster->nodes.at(0).differingNodeID).subtreeEndIndex << std::endl;
-
     std::vector<std::experimental::filesystem::path> queryFiles = ShapeDescriptor::utilities::listDirectory(queryDirectory.value());
 
-    std::cout << "Computing image counts for query files.. (this will take a while)" << std::endl;
+    std::cout << "Computing image counts for query files.. " << std::endl;
     std::vector<QueryDescriptor> queryImageList;
 
     std::unordered_map<std::string, size_t> fileImageBaseIndexMap;
@@ -202,8 +201,11 @@ int main(int argc, const char** argv) {
     std::cout << "Random images selected, running benchmark.." << std::endl;
     std::vector<QueryResult> queryResults;
 
-    for(unsigned int i = 0; i < trimmedQueryDescriptorList.size(); i++) {
-        std::cout << "Processing query " << (i + 1) << "/" << trimmedQueryDescriptorList.size() << std::endl;
+    unsigned int startIndex = subsetStartIndex.value();
+    unsigned int endIndex = subsetEndIndex.value() == -1 ? 0 : subsetEndIndex.value();
+
+    for(unsigned int i = startIndex; i < endIndex; i++) {
+        std::cout << "Processing query " << (i + 1) << "/" << endIndex << std::endl;
 
         QueryDescriptor query = trimmedQueryDescriptorList.at(i);
 
