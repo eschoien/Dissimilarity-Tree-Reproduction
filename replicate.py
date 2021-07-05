@@ -545,20 +545,27 @@ def runIndexEvaluation():
             print(outputTable)
 
         if choice == 3:
+            indexedResultsFile = 'input/misc_precomputed_results/figure10_indexed_search_100000.json'
+            sequentialResultsFile = 'input/misc_precomputed_results/figure10_sequential_search_2500.json'
+            outputFile = 'output/Figure_10_and_17_indexQueryTimes/authors_indexed_search_times.csv'
+        if choice == 4:
+            run_command_line_command(baseIndexedSearchCommand)
+            run_command_line_command(baseSequentialSearchCommand)
+            indexedResultsFile = 'output/Figure_10_and_17_indexQueryTimes/measurements_indexed.json'
+            sequentialResultsFile = 'output/Figure_10_and_17_indexQueryTimes/measurements_sequential.json'
+            outputFile = 'output/Figure_10_and_17_indexQueryTimes/computed_indexed_search_times.csv'
+
+        if choice == 3 or choice == 4:
             print()
             print('Compiling results..')
-            collateIndexEvaluationResults('input/misc_precomputed_results/figure10_indexed_search_100000.json',
-                                          'input/misc_precomputed_results/figure10_sequential_search_2500.json',
-                                          'output/Figure_10_and_17_indexQueryTimes/authors_indexed_search_times.csv')
+            collateIndexEvaluationResults(indexedResultsFile, sequentialResultsFile, outputFile)
             print()
             print('Done. You can find the produced CSV file here:')
-            print('    output/Figure_10_and_17_indexQueryTimes/authors_indexed_search_times.csv')
+            print('    ' + outputFile)
             print()
             print('Use columns 0, 1, and 3 for Figure 10.')
             print('Use columns 0, 4, 5, and 6 for Figure 17.')
             print()
-        if choice == 4:
-            pass
 
         if choice == 5:
             return
