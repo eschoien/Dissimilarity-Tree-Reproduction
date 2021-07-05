@@ -778,6 +778,36 @@ def runQuerySet(randomBatchSize):
     print(outputTable)
     print()
 
+def evaluatePipelineResults(inputFile, outputFile):
+    correctCount = 0
+
+    maxTimeSeconds = 600
+    histogramPrecision = 1
+    timeHistogram = (histogramPrecision * maxTimeSeconds) * [0]
+
+    with open(inputFile, 'r') as inFile:
+        fileContents = json.loads(inFile.read())
+
+        for queryIndex, result in enumerate(fileContents['results']):
+            if result['searchResults'][0]['objectID'] == queryIndex:
+                correctCount += 1
+            executionTime = result['executionTimeSeconds']
+            timeHistogramIndex = int(executionTime * histogramPrecision)
+            timeHistogram[timeHistogramIndex] += 1
+
+    print()
+    print('Correct count:', correctCount, '/', len(fileContents['results']))
+    print()
+
+    with open(outputFile, 'w') as outFile:
+        outFile.write('Time (s), Count')
+        for i in range(0, maxTimeSeconds * histogramPrecision):
+            outFile.write(str(float(i) / histogramPrecision) + ',' + str(timeHistogram[i]))
+
+    print('Execution times have been written to:')
+    print('    ' + outputFile)
+    print()
+
 def runPipelineEvaluation():
     global pipelineEvaluation_resolution
     global pipelineEvaluation_consensusThreshold
