@@ -718,14 +718,25 @@ pipelineEvaluation_queryMode = 'Best Case'
 pipelineEvaluation_consensusThreshold = '10'
 pipelineEvaluation_resolution = '32x32'
 
+def computePipelineEvaluationAuthorReferenceFileName(queryMode, threshold, resolution):
+    filename = 'results_' + ('bestcase' if queryMode == "Best Case" else 'remeshed') \
+                          + '_threshold' + threshold \
+                          + '_resolution' + resolution + '.json'
+    return 'input/misc_precomputed_results/figure14_and_15/' + filename
+
 def computePipelineEvaluationOutputFileName(queryMode, threshold, resolution):
-    filename = 'results_pipelineEvaluation_' + ('bestCase' if queryMode == "Best Case" else 'remeshed') + '_resolution' + resolution + '_threshold' + threshold + '.json'
+    filename = 'results_pipelineEvaluation_' + ('bestcase' if queryMode == "Best Case" else 'remeshed') \
+                                             + '_resolution' + resolution \
+                                             + '_threshold' + threshold + '.json'
     return 'output/Figure_14_and_15_Pipeline_Evaluation/computed_results/' + filename
 
 def runQuerySet(randomBatchSize):
     global pipelineEvaluation_resolution
     global pipelineEvaluation_consensusThreshold
     global pipelineEvaluation_queryMode
+
+    startIndex = random.randint(0, len(os.listdir('input/SHREC2016_partial_retrieval/complete_objects')) - randomBatchSize)
+    endIndex = startIndex + randomBatchSize
 
     queryPath = 'input/augmented_best' if pipelineEvaluation_queryMode == 'Best Case' else 'input/augmented_remeshed'
     resolution = pipelineEvaluation_resolution
@@ -742,7 +753,30 @@ def runQuerySet(randomBatchSize):
          '--support-radius=' + shrec2016_support_radius + ' '
          '--consensus-threshold=' + consensusThreshold + ' '
          '--force-gpu=' + str(gpuID) + ' '
-         '--output-file=' + outputFile)
+         '--output-file=' + outputFile + ' '
+         '--subset-start-index=' + str(startIndex) + ' '
+         '--subset-end-index=' + str(endIndex))
+
+    with open(outputFile, 'r') as inFile:
+        computedResults = json.loads(inFile.read())
+
+    referenceFileName = computePipelineEvaluationAuthorReferenceFileName(pipelineEvaluation_queryMode, consensusThreshold, resolution)
+    with open(referenceFileName, 'r') as inFile:
+        referenceResults = json.loads(inFile.read())
+
+    outputTable = PrettyTable(['Query Object', 'Execution Time (computed)', 'Best Match (computed)', '',
+                               'Execution Time (authors)', 'Best Match (authors)'])
+    outputTable.align = "l"
+    for i in range(0, randomBatchSize):
+        outputTable.add_row([os.path.basename(computedResults['results'][i]['queryFile']),
+                             computedResults['results'][i]['executionTimeSeconds'],
+                             os.path.basename(computedResults['results'][i]['searchResults'][0]['objectFilePath']),
+                             '',
+                             referenceResults['results'][startIndex + i]['executionTimeSeconds'],
+                             os.path.basename(referenceResults['results'][startIndex + i]['searchResults'][0]['objectFilePath'])])
+    print()
+    print(outputTable)
+    print()
 
 def runPipelineEvaluation():
     global pipelineEvaluation_resolution
@@ -750,8 +784,6 @@ def runPipelineEvaluation():
     global pipelineEvaluation_queryMode
 
     os.makedirs('output/Figure_14_and_15_Pipeline_Evaluation/computed_results', exist_ok=True)
-
-    #runQuerySet('input/augmented_best', '10', '32x32', 'output/Figure_14_and_15_Pipeline_Evaluation/computed_results/best_case_threshold_10.json')
 
     while True:
         run_menu = TerminalMenu([
@@ -774,7 +806,7 @@ def runPipelineEvaluation():
         if choice == 2:
             runQuerySet(50)
         if choice == 3:
-            runQuerySet(383)
+            runQuerySet(len(os.listdir('input/SHREC2016_partial_retrieval/complete_objects')))
         if choice == 4:
             configure_resolution_menu = TerminalMenu([
                 "Compute descriptors with resolution 32x32",
