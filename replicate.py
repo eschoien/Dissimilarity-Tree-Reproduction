@@ -42,7 +42,7 @@ def downloadDatasetsMenu():
         "back"], title='------------------ Download Datasets ------------------')
 
     while True:
-        choice = download_menu.show()
+        choice = download_menu.show() + 1
         os.makedirs('input/download/', exist_ok=True)
 
         if choice == 0 or choice == 1:
@@ -429,17 +429,25 @@ def runIndexEvaluation():
     baseIndexedSearchCommand = 'bin/build64x64/indexedSearchBenchmark ' \
                                '--index-directory=output/dissimilarity_tree/index64x64 ' \
                                '--query-directory=output/augmented_dataset_original ' \
-                               '--output-file=output/Figure_10_indexQueryTimes/measurements.json ' \
+                               '--output-file=output/Figure_10_indexQueryTimes/measurements_indexed.json ' \
                                '--search-results-per-query=1 ' \
                                '--random-seed=' + mainEvaluationRandomSeed + ' ' \
                                '--support-radius=' + shrec2016_support_radius + ' ' \
                                '--sample-count=100000 ' \
                                '--force-gpu=' + str(gpuID) + ' '
 
+    baseSequentialSearchCommand = 'bin/build64x64/sequentialSearchBenchmark ' \
+                                  '--index-directory=output/dissimilarity_tree/index64x64 ' \
+                                  '--query-directory=output/augmented_dataset_original ' \
+                                  '--random-seed=' + mainEvaluationRandomSeed + ' ' \
+                                  '--output-file=output/Figure_10_indexQueryTimes/measurements_sequential.json ' \
+                                  '--sample-count=2500 ' \
+                                  '--force-gpu=' + str(gpuID) + ' '
+
     while True:
         run_menu = TerminalMenu([
-            "Compute random batch of 100 indexed queries",
-            "Compute random batch of 10 sequential searches"
+            "Compute random batch of 50 indexed queries",
+            "Compute random batch of 10 sequential searches",
             "Compute chart based on search results computed by authors",
             "Compute entire chart from scratch",
             "back"], title='-- Reproduce Figure 10: Dissimilarity Tree Query Times --')
@@ -447,14 +455,50 @@ def runIndexEvaluation():
         choice = run_menu.show() + 1
 
         if choice == 1:
-            startIndex = random.randint(0, 100000 - 100)
+            resultsToCompute = 50
+            startIndex = random.randint(0, 100000 - resultsToCompute)
             run_command_line_command(baseIndexedSearchCommand +
                                      '--subset-start-index=' + str(startIndex) + ' '
-                                     '--subset-end-index=' + str(startIndex + 100))
-            with open('output/Figure_10_indexQueryTimes/measurements.json', 'r') as inFile:
+                                     '--subset-end-index=' + str(startIndex + resultsToCompute))
+            with open('output/Figure_10_indexQueryTimes/measurements_indexed.json', 'r') as inFile:
                 computedResults = json.loads(inFile.read())
-        if choice == 2:
+            with open('input/misc_precomputed_results/figure10_indexed_search_100000.json', 'r') as inFile:
+                chartExecutionTimes = json.loads(inFile.read())
+            outputTable = PrettyTable(['Query ID', 'Execution Time (computed)', 'Best Match (computed)', '',
+                                       'Execution Time (authors)', 'Best Match (authors)'])
+            outputTable.align = "l"
+            for i in range(0, resultsToCompute):
+                outputTable.add_row([startIndex + i,
+                                     computedResults['results'][i]['executionTimeSeconds'],
+                                     'File ' + str(computedResults['results'][i]['bestSearchResultFileID']) + ', image '
+                                     + str(computedResults['results'][i]['bestSearchResultImageID']), '',
+                                     chartExecutionTimes['results'][startIndex + i]['executionTimeSeconds'],
+                                     'File ' + str(chartExecutionTimes['results'][startIndex + i]['bestSearchResultFileID']) + ', image '
+                                     + str(chartExecutionTimes['results'][startIndex + i]['bestSearchResultImageID'])])
+            print(outputTable)
 
+        if choice == 2:
+            resultsToCompute = 2
+            startIndex = random.randint(0, 2500 - resultsToCompute)
+            run_command_line_command(baseSequentialSearchCommand +
+                                     '--subset-start-index=' + str(startIndex) + ' '
+                                     '--subset-end-index=' + str(startIndex + resultsToCompute))
+            with open('output/Figure_10_indexQueryTimes/measurements_sequential.json', 'r') as inFile:
+                computedResults = json.loads(inFile.read())
+            with open('input/misc_precomputed_results/figure10_sequential_search_2500.json', 'r') as inFile:
+                chartExecutionTimes = json.loads(inFile.read())
+            outputTable = PrettyTable(['Query ID', 'Execution Time (computed)', 'Best Match (computed)', '',
+                                       'Execution Time (authors)', 'Best Match (authors)'])
+            outputTable.align = "l"
+            for i in range(0, resultsToCompute):
+                outputTable.add_row([startIndex + i,
+                                     computedResults['results'][i]['executionTimeSeconds'],
+                                     'File ' + str(computedResults['results'][i]['bestSearchResultFileID']) + ', image '
+                                     + str(computedResults['results'][i]['bestSearchResultImageID']), '',
+                                     chartExecutionTimes['results'][startIndex + i]['executionTimeSeconds'],
+                                     'File ' + str(chartExecutionTimes['results'][startIndex + i]['bestSearchResultFileID']) + ', image '
+                                     + str(chartExecutionTimes['results'][startIndex + i]['bestSearchResultImageID'])])
+            print(outputTable)
 
         if choice == 5:
             return
