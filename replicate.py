@@ -785,7 +785,7 @@ def runMainMenu():
             computeAverageScoreChart()
         if choice == 10:  # Done
             computeBitsHeatmap()
-        if choice == 11:  # TODO
+        if choice == 11:  # Done
             runIndexEvaluation()
         if choice == 12:  # Done
             runModifiedQuicciEvaluation()

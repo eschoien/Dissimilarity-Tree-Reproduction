@@ -70,6 +70,8 @@ int main(int argc, const char** argv) {
             arrrgh::Required, "");
     const auto &queryMesh = parser.add<std::string>(
             "query-mesh", "The mesh which should be found in the haystack objects.", '\0', arrrgh::Required, "");
+    const auto &disableModifiedQUICCI = parser.add<bool>(
+            "disable-modified-quicci", "By default, the search generates QUICCI query descriptors using the proposed modification for partial retrieval. Disabling this will use the original algorithm.", '\0', arrrgh::Optional, "");
     const auto &forceGPU = parser.add<int>(
             "force-gpu", "Index of the GPU device to use for search kernels.", '\0', arrrgh::Optional, -1);
     const auto &outputFile = parser.add<std::string>(
@@ -124,10 +126,17 @@ int main(int argc, const char** argv) {
     // Compute the descriptor(s)
     std::cout << "Computing descriptors.." << std::endl;
     float supportRadius = 100.0;
-    ShapeDescriptor::gpu::array<ShapeDescriptor::RICIDescriptor> riciDescriptors =
-            ShapeDescriptor::gpu::generateRadialIntersectionCountImages(gpuMesh, descriptorOrigins, supportRadius);
 
-    ShapeDescriptor::gpu::array<ShapeDescriptor::QUICCIDescriptor> descriptors = convertRICIToModifiedQUICCI(riciDescriptors);
+    ShapeDescriptor::gpu::array<ShapeDescriptor::QUICCIDescriptor> descriptors;
+
+    if(disableModifiedQUICCI.value()) {
+        descriptors = ShapeDescriptor::gpu::generateQUICCImages(gpuMesh, descriptorOrigins, supportRadius);
+    } else {
+        ShapeDescriptor::gpu::array<ShapeDescriptor::RICIDescriptor> riciDescriptors =
+                ShapeDescriptor::gpu::generateRadialIntersectionCountImages(gpuMesh, descriptorOrigins, supportRadius);
+        descriptors = convertRICIToModifiedQUICCI(riciDescriptors);
+        ShapeDescriptor::free::array(riciDescriptors);
+    }
 
     //ShapeDescriptor::cpu::array<ShapeDescriptor::QUICCIDescriptor> tempDescriptors = ShapeDescriptor::copy::deviceArrayToHost(descriptors);
     //tempDescriptors.length = 5000;
