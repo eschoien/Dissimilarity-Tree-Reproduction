@@ -163,9 +163,6 @@ int main(int argc, const char** argv) {
 
     std::unordered_map<std::string, size_t> fileImageBaseIndexMap;
 
-    unsigned int correctCount = 0;
-    unsigned int wrongCount = 0;
-
     unsigned int nextDatasetImageID = 0;
     for(unsigned int fileID = 0; fileID < queryFiles.size(); fileID++) {
         std::cout << "\rProcessing file " << (fileID + 1) << "/" << queryFiles.size() << ".." << std::flush;
@@ -241,9 +238,6 @@ int main(int argc, const char** argv) {
 #else
         ProjectSymmetry::utilities::HammingWeights queryWeights = ProjectSymmetry::utilities::computeWeightedHammingWeights(queryImage);
 #endif
-        std::cout << "Hamming weights: " << queryWeights.missingSetBitPenalty << ", " << queryWeights.missingUnsetBitPenalty << std::endl;
-        //ShapeDescriptor::print::quicciDescriptor(queryImage);
-        std::cout << "Query details: " << queryFiles.at(query.fileID) << ", " << query.imageID << std::endl;
 
         for(unsigned int imageID = 0; imageID < cluster->images.size(); imageID++) {
 #if enableReference
@@ -297,14 +291,6 @@ int main(int argc, const char** argv) {
         result.bestMatchScore = results.at(0).score;
         result.nodesVisited = cluster->images.size();
         result.result = results;
-
-        std::cout << "Best result: " << queryFiles.at(results.at(0).entry.fileID) << std::endl;
-        if(results.at(0).entry.fileID == result.queryFileID) {
-            correctCount++;
-        } else {
-            wrongCount++;
-        }
-        std::cout << "Got " << correctCount << " correct and " << wrongCount << " wrong." << std::endl;
 
         queryResults.push_back(result);
 
