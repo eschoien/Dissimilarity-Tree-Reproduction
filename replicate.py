@@ -871,15 +871,9 @@ def runPipelineEvaluation():
         if choice == 8:
             pass
         if choice == 9:
-            _, _, bestCaseHistogram = evaluatePipelineResults(computePipelineEvaluationAuthorReferenceFileName('Best Case', '10', '64x64'))
-            _, _, remeshedHistogram = evaluatePipelineResults(computePipelineEvaluationAuthorReferenceFileName('Remeshed', '10', '64x64'))
-
-            with open('output/Figure_14_and_15_Pipeline_Evaluation/Figure_15_queryTimes_authors.csv', 'w') as outFile:
-                outFile.write('Time (s), Count (Best Case Queries), Count (Remeshed Queries)\n')
-                for i in range(0, len(bestCaseHistogram)):
-                    outFile.write(str(bestCaseHistogram[i][0]) + ', ' +
-                                  str(bestCaseHistogram[i][1]) + ', ' +
-                                  str(remeshedHistogram[i][1]) + '\n')
+            _, _, figure15_bestCase = evaluatePipelineResults(computePipelineEvaluationAuthorReferenceFileName('Best Case', '10', '64x64'))
+            _, _, figure15_remeshed = evaluatePipelineResults(computePipelineEvaluationAuthorReferenceFileName('Remeshed', '10', '64x64'))
+            figure15_outputFile = 'output/Figure_14_and_15_Pipeline_Evaluation/Figure_15_queryTimes_authors.csv'
 
         if choice == 10:
             if not os.path.exists(computePipelineEvaluationOutputFileName('Best Case', '10', '64x64')):
@@ -905,6 +899,25 @@ def runPipelineEvaluation():
                 print()
                 continue
 
+                _, _, figure15_bestCase = evaluatePipelineResults(computePipelineEvaluationOutputFileName('Best Case', '10', '64x64'))
+                _, _, figure15_remeshed = evaluatePipelineResults(computePipelineEvaluationOutputFileName('Remeshed', '10', '64x64'))
+                figure15_outputFile = 'output/Figure_14_and_15_Pipeline_Evaluation/Figure_15_queryTimes_replicated.csv'
+
+        if choice == 9 or choice == 10:
+
+
+            with open(figure15_outputFile, 'w') as outFile:
+                outFile.write('Time (s), Count (Best Case Queries), Count (Remeshed Queries)\n')
+                for i in range(0, len(figure15_bestCase)):
+                    outFile.write(str(figure15_bestCase[i][0]) + ', ' +
+                                  str(figure15_bestCase[i][1]) + ', ' +
+                                  str(figure15_remeshed[i][1]) + '\n')
+
+            print()
+            print('Complete.')
+            print('The output file has been written to:')
+            print('    ' + figure15_outputFile)
+            print()
 
         if choice == 11:
             return
