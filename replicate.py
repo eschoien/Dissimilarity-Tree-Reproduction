@@ -778,12 +778,13 @@ def runQuerySet(randomBatchSize):
     print(outputTable)
     print()
 
-def evaluatePipelineResults(inputFile, outputFile):
+def evaluatePipelineResults(inputFile):
     correctCount = 0
 
     maxTimeSeconds = 600
     histogramPrecision = 1
     timeHistogram = (histogramPrecision * maxTimeSeconds) * [0]
+    processedTimeSlices = []
 
     with open(inputFile, 'r') as inFile:
         fileContents = json.loads(inFile.read())
@@ -795,18 +796,10 @@ def evaluatePipelineResults(inputFile, outputFile):
             timeHistogramIndex = int(executionTime * histogramPrecision)
             timeHistogram[timeHistogramIndex] += 1
 
-    print()
-    print('Correct count:', correctCount, '/', len(fileContents['results']))
-    print()
-
-    with open(outputFile, 'w') as outFile:
-        outFile.write('Time (s), Count')
         for i in range(0, maxTimeSeconds * histogramPrecision):
-            outFile.write(str(float(i) / histogramPrecision) + ',' + str(timeHistogram[i]))
+            processedTimeSlices.append((float(i) / histogramPrecision, timeHistogram[i]))
 
-    print('Execution times have been written to:')
-    print('    ' + outputFile)
-    print()
+    return correctCount, len(fileContents['results']), processedTimeSlices
 
 def runPipelineEvaluation():
     global pipelineEvaluation_resolution
@@ -878,26 +871,40 @@ def runPipelineEvaluation():
         if choice == 8:
             pass
         if choice == 9:
-            pass
+            _, _, bestCaseHistogram = evaluatePipelineResults(computePipelineEvaluationAuthorReferenceFileName('Best Case', '10', '64x64'))
+            _, _, remeshedHistogram = evaluatePipelineResults(computePipelineEvaluationAuthorReferenceFileName('Remeshed', '10', '64x64'))
+
+            with open('output/Figure_14_and_15_Pipeline_Evaluation/Figure_15_queryTimes_authors.csv', 'w') as outFile:
+                outFile.write('Time (s), Count (Best Case Queries), Count (Remeshed Queries)\n')
+                for i in range(0, len(bestCaseHistogram)):
+                    outFile.write(str(bestCaseHistogram[i][0]) + ', ' +
+                                  str(bestCaseHistogram[i][1]) + ', ' +
+                                  str(remeshedHistogram[i][1]) + '\n')
+
         if choice == 10:
             if not os.path.exists(computePipelineEvaluationOutputFileName('Best Case', '10', '64x64')):
                 print()
                 print('It looks like you have not generated the prerequisite Best Case search results.')
-                print('No worries, I\'ll generate them for you! Hang tight.')
+                if ask_for_confirmation("Would you like me to apply the settings you need?"):
+                    pipelineEvaluation_queryMode = 'Best Case'
+                    pipelineEvaluation_consensusThreshold = '10'
+                    pipelineEvaluation_resolution = '64x64'
+                    print()
+                    print('Done. Pick any of the top three run options to compute results.')
                 print()
-                pipelineEvaluation_queryMode = 'Best Case'
-                pipelineEvaluation_consensusThreshold = '10'
-                pipelineEvaluation_resolution = '64x64'
-                runQuerySet(len(os.listdir('input/SHREC2016_partial_retrieval/complete_objects')))
+                continue
             if not os.path.exists(computePipelineEvaluationOutputFileName('Remeshed', '10', '64x64')):
                 print()
                 print('It looks like you have not generated the prerequisite Remeshed search results.')
-                print('No worries, I\'ll generate them for you! Hang tight.')
+                if ask_for_confirmation("Would you like me to apply the settings you need?"):
+                    pipelineEvaluation_queryMode = 'Remeshed'
+                    pipelineEvaluation_consensusThreshold = '10'
+                    pipelineEvaluation_resolution = '64x64'
+                    print()
+                    print('Done. Pick any of the top three run options to compute results.')
                 print()
-                pipelineEvaluation_queryMode = 'Remeshed'
-                pipelineEvaluation_consensusThreshold = '10'
-                pipelineEvaluation_resolution = '64x64'
-                runQuerySet(len(os.listdir('input/SHREC2016_partial_retrieval/complete_objects')))
+                continue
+
 
         if choice == 11:
             return
