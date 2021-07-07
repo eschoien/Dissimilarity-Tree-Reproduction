@@ -69,7 +69,7 @@ def downloadDatasetsMenu():
 
         if choice == 1 or choice == 2:
            downloadFile('https://ntnu.box.com/shared/static/zb2co430vdcpao7gwco3vaxsf7ahz09u.7z', 'SHREC2016.7z',
-                        'input/SHREC2016_partial_retrieval', 'SHREC 2016 Partial Retrieval Dataset')
+                        'input', 'SHREC 2016 Partial Retrieval Dataset')
 
         if choice == 1 or choice == 3:
             pass
