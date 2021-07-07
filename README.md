@@ -50,15 +50,15 @@ OS   | Ubuntu 16 or higher. Project has been tested on 18 and 20.
 - Development and implementation: Bart Iver van Blokland, [NTNU Visual Computing Lab](https://www.idi.ntnu.no/grupper/vis/)
 - Supervision: Theoharis Theoharis, [NTNU Visual Computing Lab](https://www.idi.ntnu.no/grupper/vis/)
 
-If you use (parts of) this library in your research, we kindly ask you reference the papers on which this project is based:
+If you use (parts of) this project in your research, we kindly ask you reference the papers on which this project is based:
 
-    @article{van2020radial,
-      title={Radial intersection count image: A clutter resistant 3D shape descriptor},
+    @article{van2021dissimilarity,
+      title={Partial 3D Object Retrieval using Local Binary QUICCI Descriptors and Dissimilarity Tree Indexing},
       author={van Blokland, Bart Iver and Theoharis, Theoharis},
       journal={Computers \& Graphics},
-      volume="91",
-      pages="118--128",
-      year={2020},
+      volume="TBD",
+      pages="TBD--TBD",
+      year={2021},
       publisher={Elsevier}
     }
     

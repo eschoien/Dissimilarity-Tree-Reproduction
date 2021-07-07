@@ -57,10 +57,10 @@ def downloadFile(fileURL, tempFile, extractInDirectory, name):
 def downloadDatasetsMenu():
     download_menu = TerminalMenu([
         "Download all",
-        "Download SHREC 2016 partial 3D shape dataset ()",
+        "Download SHREC 2016 partial 3D shape dataset (260MB download, 1.2GB uncompressed)",
         #'Download augmented SHREC\'16 query dataset',
         'Download precomputed descriptors',
-        "Download precomputed dissimilarity tree indexes",
+        "Download precomputed dissimilarity tree indexes (12GB download, 72GB uncompressed)",
         "back"], title='------------------ Download Datasets ------------------')
 
     while True:
@@ -208,8 +208,8 @@ def computeDescriptors():
 
     while True:
         run_menu = TerminalMenu([
-            "Generate all descriptors (will take several hours)",
-            "Copy all descriptors precomputed by authors",
+            "Generate all descriptors",
+            "Copy all descriptors precomputed by authors (if you downloaded them)",
             "Generate descriptors for one random object from each set and verify against authors",
             "back"], title='-- Compute descriptors --')
         choice = run_menu.show() + 1
