@@ -195,11 +195,7 @@ descriptorInputDirectories = ['input/SHREC2016_partial_retrieval/complete_object
                               'input/SHREC2016_partial_retrieval/queries_artificial/Q40']
 
 def getDescriptorDirectoriesByResolution(resolution):
-    outputDirectories = ['output/descriptors/complete_objects_' + resolution + 'x' + resolution,
-                         'output/descriptors/augmented_dataset_original_' + resolution + 'x' + resolution,
-                         'output/descriptors/augmented_dataset_remeshed_' + resolution + 'x' + resolution,
-                         'output/descriptors/shrec2016_25partiality_' + resolution + 'x' + resolution,
-                         'output/descriptors/shrec2016_40partiality_' + resolution + 'x' + resolution]
+    outputDirectories = ['output/descriptors/complete_objects_' + resolution + 'x' + resolution]
     return outputDirectories
 
 def computeDescriptorBatch(batchIndex, resolution):
@@ -209,10 +205,6 @@ def computeDescriptorBatch(batchIndex, resolution):
 def computeDescriptors():
     for descriptorwidth in ['32', '64', '96']:
         os.makedirs('output/descriptors/complete_objects_' + descriptorwidth + 'x' + descriptorwidth, exist_ok=True)
-        os.makedirs('output/descriptors/augmented_dataset_original_' + descriptorwidth + 'x' + descriptorwidth, exist_ok=True)
-        os.makedirs('output/descriptors/augmented_dataset_remeshed_' + descriptorwidth + 'x' + descriptorwidth, exist_ok=True)
-        os.makedirs('output/descriptors/shrec2016_25partiality_' + descriptorwidth + 'x' + descriptorwidth, exist_ok=True)
-        os.makedirs('output/descriptors/shrec2016_40partiality_' + descriptorwidth + 'x' + descriptorwidth, exist_ok=True)
 
     while True:
         run_menu = TerminalMenu([
@@ -236,7 +228,7 @@ def computeDescriptors():
                 computeDescriptorBatch(4, descriptorwidth)
         if choice == 2:
             print('Copying precomputed descriptors..')
-            shutil.copytree('input/descriptors', 'output/descriptors', dirs_exist_ok=True)
+            shutil.copytree('input/precomputed_descriptors', 'output/descriptors', dirs_exist_ok=True)
         if choice == 3:
             os.makedirs('output/descriptors/temp', exist_ok=True)
             for index, descriptorwidth in enumerate(['32', '64', '96']):
