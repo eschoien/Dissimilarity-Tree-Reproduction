@@ -215,17 +215,8 @@ def computeDescriptors():
         choice = run_menu.show() + 1
         if choice == 1:
             for index, descriptorwidth in enumerate(['32', '64', '96']):
-                changeDescriptorWidth(int(descriptorwidth))
-                print('Processing batch 1/5 in resolution ' + str(index + 1) + '/3 (' + descriptorwidth + 'x' + descriptorwidth + ')')
+                print('Processing resolution ' + str(index + 1) + '/3 (' + descriptorwidth + 'x' + descriptorwidth + ')')
                 computeDescriptorBatch(0, descriptorwidth)
-                print('Processing batch 2/5 in resolution ' + str(index + 1) + '/3 (' + descriptorwidth + 'x' + descriptorwidth + ')')
-                computeDescriptorBatch(1, descriptorwidth)
-                print('Processing batch 3/5 in resolution ' + str(index + 1) + '/3 (' + descriptorwidth + 'x' + descriptorwidth + ')')
-                computeDescriptorBatch(2, descriptorwidth)
-                print('Processing batch 4/5 in resolution ' + str(index + 1) + '/3 (' + descriptorwidth + 'x' + descriptorwidth + ')')
-                computeDescriptorBatch(3, descriptorwidth)
-                print('Processing batch 5/5 in resolution ' + str(index + 1) + '/3 (' + descriptorwidth + 'x' + descriptorwidth + ')')
-                computeDescriptorBatch(4, descriptorwidth)
         if choice == 2:
             print('Copying precomputed descriptors..')
             shutil.copytree('input/precomputed_descriptors', 'output/descriptors', dirs_exist_ok=True)
