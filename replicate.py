@@ -597,6 +597,13 @@ def runModifiedQuicciEvaluation():
     print('           And create a chart from its contents.')
     print()
 
+def computeAllToAllReferenceDirectory(remeshed, disableModifiedQUICCI):
+    referenceFileBaseDirectory = 'input/misc_precomputed_results/figure13_and_table1/'
+    referenceDirectoryName = ('alltoall_remeshed_' if remeshed else 'alltoall_bestcase_') + \
+                             ('originalquicci_64x64/' if disableModifiedQUICCI else 'modifiedquicci_64x64/')
+    referenceDirectory = referenceFileBaseDirectory + referenceDirectoryName
+    return referenceDirectory
+
 def runSingleAllToAll(queryMesh, remeshed, disableModifiedQUICCI):
     if remeshed:
         outputBasePathPart = 'output/Figure_13_and_Table_1_AllToAllSearch/results_augmentedremeshed_'
@@ -621,10 +628,7 @@ def runSingleAllToAll(queryMesh, remeshed, disableModifiedQUICCI):
     with open(outputFile, 'r') as inFile:
         replicatedFileContents = json.loads(inFile.read())
 
-    referenceFileBaseDirectory = 'input/misc_precomputed_results/figure13_and_table1/'
-    referenceDirectoryName = ('alltoall_remeshed_' if remeshed else 'alltoall_bestcase_') + \
-                             ('originalquicci_64x64/' if disableModifiedQUICCI else 'modifiedquicci_64x64/')
-    referenceFilePath = referenceFileBaseDirectory + referenceDirectoryName + os.path.basename(outputFile)
+    referenceFilePath = computeAllToAllReferenceDirectory(remeshed, disableModifiedQUICCI) + os.path.basename(outputFile)
 
     with open(referenceFilePath, 'r') as inFile:
         referenceFileContents = json.loads(inFile.read())
@@ -642,6 +646,23 @@ def runSingleAllToAll(queryMesh, remeshed, disableModifiedQUICCI):
     print()
     print(outputTable)
     print()
+
+
+def processAllToAllResultsDirectory(inputDir):
+    with open(os.path.join(inputDir, os.listdir(inputDir)[0]), 'r') as inputFile:
+        firstFileContents = json.loads(inputFile.read())
+    resultCount = len(firstFileContents['results'])
+    histogram = [0] * resultCount
+    for file in os.listdir(inputDir):
+        with open(os.path.join(inputDir, file), 'r') as inputFile:
+            fileContents = json.loads(inputFile.read())
+        fileToFind = file.replace('.json', '.dat')
+        for i in range(0, resultCount):
+            if fileToFind == fileContents['results'][i]['name']:
+                histogram[i] += 1
+                break
+
+    return float(histogram[0]) / float(resultCount)
 
 
 def runAllToAllObjectSearch():
@@ -680,9 +701,26 @@ def runAllToAllObjectSearch():
             if choice == 4:
                 runSingleAllToAll(queryMesh, True, False)
         if choice == 5:
-            pass
+            outputTable = PrettyTable(['QUICCI', 'AUGMENTED_Best', 'AUGMENTED_Rem'])
+            outputTable.align = "l"
+            outputTable.add_row(['Original', processAllToAllResultsDirectory(computeAllToAllReferenceDirectory(False, True)),
+                                             processAllToAllResultsDirectory(computeAllToAllReferenceDirectory(True, True))])
+            outputTable.add_row(['Modified', processAllToAllResultsDirectory(computeAllToAllReferenceDirectory(False, False)),
+                                             processAllToAllResultsDirectory(computeAllToAllReferenceDirectory(True, False))])
+            print()
+            print('Table 1:')
+            print()
+            print(outputTable)
+            print()
         if choice == 6:
-            pass
+            for inputBasePath in ['output/augmented_dataset_original', 'output/augmented_dataset_remeshed']:
+                for file in os.listdir(inputBasePath):
+                    runSingleAllToAll(os.path.join(inputBasePath, file), False, True)
+                    runSingleAllToAll(os.path.join(inputBasePath, file), False, False)
+                    runSingleAllToAll(os.path.join(inputBasePath, file), True, True)
+                    runSingleAllToAll(os.path.join(inputBasePath, file), True, False)
+
+
         if choice == 7:
             return
 
