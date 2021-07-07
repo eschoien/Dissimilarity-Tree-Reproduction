@@ -37,13 +37,13 @@ def ask_for_confirmation(message):
     choice = confirmation_menu.show()
     return choice == 0
 
-def downloadFile(fileURL, tempFile, extractInDirectiry, name):
+def downloadFile(fileURL, tempFile, extractInDirectory, name):
     if not os.path.isfile('input/download/' + tempFile) or ask_for_confirmation('It appears the ' + name + ' archive file has already been downloaded. Would you like to download it again?'):
         print('Downloading the ' + name + ' archive file..')
         run_command_line_command('wget --output-document ' + tempFile + ' ' + fileURL, 'input/download/')
     print()
-    os.makedirs(extractInDirectiry, exist_ok=True)
-    run_command_line_command('p7zip -k -d ../download/' + tempFile, extractInDirectiry)
+    os.makedirs(extractInDirectory, exist_ok=True)
+    run_command_line_command('p7zip -k -d ' + os.path.join(os.path.relpath('input/download', extractInDirectory), tempFile), extractInDirectory)
     if ask_for_confirmation('Download and extraction complete. Would you like to delete the compressed archive to save disk space?'):
         os.remove('input/download/' + tempFile)
     print()
@@ -58,7 +58,7 @@ def downloadDatasetsMenu():
     download_menu = TerminalMenu([
         "Download all",
         "Download SHREC 2016 partial 3D shape dataset ()",
-        'Download augmented SHREC\'16 query dataset',
+        #'Download augmented SHREC\'16 query dataset',
         'Download precomputed descriptors',
         "Download precomputed dissimilarity tree indexes",
         "back"], title='------------------ Download Datasets ------------------')
@@ -68,14 +68,15 @@ def downloadDatasetsMenu():
         os.makedirs('input/download/', exist_ok=True)
 
         if choice == 1 or choice == 2:
-           downloadFile('https://ntnu.box.com/shared/static/zb2co430vdcpao7gwco3vaxsf7ahz09u.7z', 'SHREC2016.7z', 'SHREC2016_partial_retrieval', 'SHREC 2016 Partial Retrieval Dataset')
+           downloadFile('https://ntnu.box.com/shared/static/zb2co430vdcpao7gwco3vaxsf7ahz09u.7z', 'SHREC2016.7z',
+                        'input/SHREC2016_partial_retrieval', 'SHREC 2016 Partial Retrieval Dataset')
 
         if choice == 1 or choice == 3:
-            downloadFile('https://ntnu.box.com/shared/static/e57v52moxf3g0fx394cs7bhfo6oto4mr.7z', 'SHREC2016_augmented.7z', 'precomputed_augmented_dataset', 'Augmented SHREC 2016 Query Dataset')
+            pass
+            #downloadFile('https://ntnu.box.com/shared/static/e57v52moxf3g0fx394cs7bhfo6oto4mr.7z', 'SHREC2016_augmented.7z',
+            #             'input/precomputed_augmented_dataset', 'Augmented SHREC 2016 Query Dataset')
 
         if choice == 1 or choice == 4:
-            pass
-        if choice == 1 or choice == 5:
             downloadFile('https://ntnu.box.com/shared/static/q1blnwzrq8g0cuh3pl3f0av3v4n4qqi6.7z', 'index_96x96.7z',
                          'input/precomputed_dissimilarity_trees/index_96x96', 'Precomputed Dissimilarity Tree for Descriptors of resolution 96x96')
             downloadFile('https://ntnu.box.com/shared/static/cv4h14yqy9tx5llyc4t2tbbpr1nak52r.7z', 'index_64x64.7z',
@@ -309,13 +310,13 @@ def computeDissimilarityTree():
                                        ' --quicci-dump-directory=output/descriptors/complete_objects_96x96')
         if choice == 5:
             print('Copying precomputed index of 32x32 images..')
-            shutil.copy('input/dissimilarity_tree_32x32/index.dat', 'output/dissimilarity_tree/index32x32/index.dat')
+            shutil.copy('input/precomputed_dissimilarity_trees/index_32x32/index.dat', 'output/dissimilarity_tree/index32x32/index.dat')
         if choice == 6:
             print('Copying precomputed index of 64x64 images..')
-            shutil.copy('input/dissimilarity_tree_64x64/index.dat', 'output/dissimilarity_tree/index64x64/index.dat')
+            shutil.copy('input/precomputed_dissimilarity_trees/index_64x64/index.dat', 'output/dissimilarity_tree/index64x64/index.dat')
         if choice == 7:
             print('Copying precomputed index of 96x96 images..')
-            shutil.copy('input/dissimilarity_tree_96x96/index.dat', 'output/dissimilarity_tree/index96x96/index.dat')
+            shutil.copy('input/precomputed_dissimilarity_trees/index_96x96/index.dat', 'output/dissimilarity_tree/index96x96/index.dat')
         if choice == 8:
             return
 
