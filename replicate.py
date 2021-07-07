@@ -58,8 +58,8 @@ def downloadDatasetsMenu():
     download_menu = TerminalMenu([
         "Download all",
         "Download SHREC 2016 partial 3D shape dataset (260MB download, 1.2GB uncompressed)",
-        #'Download augmented SHREC\'16 query dataset',
         'Download precomputed descriptors',
+        'Download precomputed augmented SHREC\'16 query dataset',
         "Download precomputed dissimilarity tree indexes (12GB download, 72GB uncompressed)",
         "back"], title='------------------ Download Datasets ------------------')
 
@@ -73,17 +73,18 @@ def downloadDatasetsMenu():
 
         if choice == 1 or choice == 3:
             pass
-            #downloadFile('https://ntnu.box.com/shared/static/e57v52moxf3g0fx394cs7bhfo6oto4mr.7z', 'SHREC2016_augmented.7z',
-            #             'input/precomputed_augmented_dataset', 'Augmented SHREC 2016 Query Dataset')
-
         if choice == 1 or choice == 4:
+            downloadFile('https://ntnu.box.com/shared/static/e57v52moxf3g0fx394cs7bhfo6oto4mr.7z', 'SHREC2016_augmented.7z',
+                         'input/precomputed_augmented_dataset', 'Augmented SHREC 2016 Query Dataset')
+
+        if choice == 1 or choice == 5:
             downloadFile('https://ntnu.box.com/shared/static/q1blnwzrq8g0cuh3pl3f0av3v4n4qqi6.7z', 'index_96x96.7z',
                          'input/precomputed_dissimilarity_trees/index_96x96', 'Precomputed Dissimilarity Tree for Descriptors of resolution 96x96')
             downloadFile('https://ntnu.box.com/shared/static/cv4h14yqy9tx5llyc4t2tbbpr1nak52r.7z', 'index_64x64.7z',
                          'input/precomputed_dissimilarity_trees/index_64x64', 'Precomputed Dissimilarity Tree for Descriptors of resolution 64x64')
             downloadFile('https://ntnu.box.com/shared/static/g5ckpzuqilcx2oknvytbh8l4uyv08ifv.7z', 'index_32x32.7z',
                          'input/precomputed_dissimilarity_trees/index_32x32', 'Precomputed Dissimilarity Tree for Descriptors of resolution 32x32')
-        if choice == 5:
+        if choice == 6:
             return
 
 def installDependenciesMenu():
