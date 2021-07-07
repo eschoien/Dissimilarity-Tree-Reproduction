@@ -738,7 +738,8 @@ def runQuerySet(randomBatchSize):
     startIndex = random.randint(0, len(os.listdir('input/SHREC2016_partial_retrieval/complete_objects')) - randomBatchSize)
     endIndex = startIndex + randomBatchSize
 
-    queryPath = 'input/augmented_best' if pipelineEvaluation_queryMode == 'Best Case' else 'input/augmented_remeshed'
+
+    queryPath = 'output/augmented_dataset_original' if pipelineEvaluation_queryMode == 'Best Case' else 'output/augmented_dataset_remeshed'
     resolution = pipelineEvaluation_resolution
     consensusThreshold = pipelineEvaluation_consensusThreshold
 
@@ -800,6 +801,24 @@ def evaluatePipelineResults(inputFile):
             processedTimeSlices.append((float(i) / histogramPrecision, timeHistogram[i]))
 
     return correctCount, len(fileContents['results']), processedTimeSlices
+
+def notifyMissingPipelineResults(queryMode, threshold, resolution):
+    global pipelineEvaluation_resolution
+    global pipelineEvaluation_consensusThreshold
+    global pipelineEvaluation_queryMode
+    print()
+    print('It looks like you have missing prerequisite search results.')
+    if ask_for_confirmation("Would you like me to apply the settings you need for the next missing set?"):
+        pipelineEvaluation_queryMode = queryMode
+        pipelineEvaluation_consensusThreshold = threshold
+        pipelineEvaluation_resolution = resolution
+        print()
+        print('Done. Pick any of the top three run options to compute results.')
+    print()
+
+class MissingInputFileException(BaseException):
+    pass
+
 
 def runPipelineEvaluation():
     global pipelineEvaluation_resolution
@@ -867,45 +886,72 @@ def runPipelineEvaluation():
             if configure_choice == 2:
                 pipelineEvaluation_queryMode = 'Remeshed'
         if choice == 7:
-            pass
+            chart = [['', 'Threshold 10', 'Threshold 25', 'Threshold 50'], ['', 0, 0, 0], ['', 0, 0, 0], ['', 0, 0, 0], ['', 0, 0, 0], ['', 0, 0, 0], ['', 0, 0, 0]]
+            for thresholdIndex, threshold in enumerate(['10', '25', '50']):
+                for resolutionIndex, resolution in enumerate(['32x32', '64x64', '96x96']):
+                    for queryModeIndex, queryMode in enumerate(['Best Case', 'Remeshed']):
+                        correctCount, totalObjectCount, _ = evaluatePipelineResults(
+                            computePipelineEvaluationAuthorReferenceFileName(queryMode, threshold, resolution))
+                        correctFraction = float(correctCount) / float(totalObjectCount)
+                        chart[queryModeIndex + 2 * resolutionIndex + 1][0] = queryMode + ' (' + resolution + ')'
+                        chart[queryModeIndex + 2 * resolutionIndex + 1][thresholdIndex + 1] = str(correctFraction)
+
+            figure14_outputFile = 'output/Figure_14_and_15_Pipeline_Evaluation/Figure_14_precision_authors.csv'
+            with open(figure14_outputFile, 'w') as outFile:
+                for row in chart:
+                    outFile.write(','.join(row) + '\n')
+
+            print()
+            print('Complete.')
+            print('The output file has been written to:')
+            print('    ' + figure14_outputFile)
+            print()
+
         if choice == 8:
-            pass
+            chart = [['', 'Threshold 10', 'Threshold 25', 'Threshold 50'], ['', 0, 0, 0], ['', 0, 0, 0], ['', 0, 0, 0],
+                     ['', 0, 0, 0], ['', 0, 0, 0], ['', 0, 0, 0]]
+            try:
+                for thresholdIndex, threshold in enumerate(['10', '25', '50']):
+                    for resolutionIndex, resolution in enumerate(['32x32', '64x64', '96x96']):
+                        for queryModeIndex, queryMode in enumerate(['Best Case', 'Remeshed']):
+                            outputFilename = computePipelineEvaluationOutputFileName(queryMode, threshold, resolution)
+                            if not os.path.exists(outputFilename):
+                                notifyMissingPipelineResults(queryMode, threshold, resolution)
+                                raise MissingInputFileException()
+                            correctCount, totalObjectCount, _ = evaluatePipelineResults(outputFilename)
+                            correctFraction = float(correctCount) / float(totalObjectCount)
+                            chart[queryModeIndex + 2 * resolutionIndex + 1][0] = queryMode + ' (' + resolution + ')'
+                            chart[queryModeIndex + 2 * resolutionIndex + 1][thresholdIndex + 1] = str(correctFraction)
+            except MissingInputFileException:
+                continue
+            figure14_outputFile = 'output/Figure_14_and_15_Pipeline_Evaluation/Figure_14_precision_replicated.csv'
+            with open(figure14_outputFile, 'w') as outFile:
+                for row in chart:
+                    outFile.write(','.join(row) + '\n')
+
+            print()
+            print('Complete.')
+            print('The output file has been written to:')
+            print('    ' + figure14_outputFile)
+            print()
         if choice == 9:
-            _, _, figure15_bestCase = evaluatePipelineResults(computePipelineEvaluationAuthorReferenceFileName('Best Case', '10', '64x64'))
-            _, _, figure15_remeshed = evaluatePipelineResults(computePipelineEvaluationAuthorReferenceFileName('Remeshed', '10', '64x64'))
+            _, _, figure15_bestCase = evaluatePipelineResults(computePipelineEvaluationAuthorReferenceFileName('Best Case', '10', '64x64').replace('results_', 'timings/results_'))
+            _, _, figure15_remeshed = evaluatePipelineResults(computePipelineEvaluationAuthorReferenceFileName('Remeshed', '10', '64x64').replace('results_', 'timings/results_'))
             figure15_outputFile = 'output/Figure_14_and_15_Pipeline_Evaluation/Figure_15_queryTimes_authors.csv'
 
         if choice == 10:
             if not os.path.exists(computePipelineEvaluationOutputFileName('Best Case', '10', '64x64')):
-                print()
-                print('It looks like you have not generated the prerequisite Best Case search results.')
-                if ask_for_confirmation("Would you like me to apply the settings you need?"):
-                    pipelineEvaluation_queryMode = 'Best Case'
-                    pipelineEvaluation_consensusThreshold = '10'
-                    pipelineEvaluation_resolution = '64x64'
-                    print()
-                    print('Done. Pick any of the top three run options to compute results.')
-                print()
+                notifyMissingPipelineResults('Best Case', '10', '64x64')
                 continue
             if not os.path.exists(computePipelineEvaluationOutputFileName('Remeshed', '10', '64x64')):
-                print()
-                print('It looks like you have not generated the prerequisite Remeshed search results.')
-                if ask_for_confirmation("Would you like me to apply the settings you need?"):
-                    pipelineEvaluation_queryMode = 'Remeshed'
-                    pipelineEvaluation_consensusThreshold = '10'
-                    pipelineEvaluation_resolution = '64x64'
-                    print()
-                    print('Done. Pick any of the top three run options to compute results.')
-                print()
+                notifyMissingPipelineResults('Remeshed', '10', '64x64')
                 continue
 
-                _, _, figure15_bestCase = evaluatePipelineResults(computePipelineEvaluationOutputFileName('Best Case', '10', '64x64'))
-                _, _, figure15_remeshed = evaluatePipelineResults(computePipelineEvaluationOutputFileName('Remeshed', '10', '64x64'))
-                figure15_outputFile = 'output/Figure_14_and_15_Pipeline_Evaluation/Figure_15_queryTimes_replicated.csv'
+            _, _, figure15_bestCase = evaluatePipelineResults(computePipelineEvaluationOutputFileName('Best Case', '10', '64x64'))
+            _, _, figure15_remeshed = evaluatePipelineResults(computePipelineEvaluationOutputFileName('Remeshed', '10', '64x64'))
+            figure15_outputFile = 'output/Figure_14_and_15_Pipeline_Evaluation/Figure_15_queryTimes_replicated.csv'
 
         if choice == 9 or choice == 10:
-
-
             with open(figure15_outputFile, 'w') as outFile:
                 outFile.write('Time (s), Count (Best Case Queries), Count (Remeshed Queries)\n')
                 for i in range(0, len(figure15_bestCase)):
