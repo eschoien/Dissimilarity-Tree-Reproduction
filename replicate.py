@@ -44,8 +44,8 @@ def downloadFile(fileURL, tempFile, extractInDirectory, name):
     print()
     os.makedirs(extractInDirectory, exist_ok=True)
     run_command_line_command('p7zip -k -d ' + os.path.join(os.path.relpath('input/download', extractInDirectory), tempFile), extractInDirectory)
-    if ask_for_confirmation('Download and extraction complete. Would you like to delete the compressed archive to save disk space?'):
-        os.remove('input/download/' + tempFile)
+    #if ask_for_confirmation('Download and extraction complete. Would you like to delete the compressed archive to save disk space?'):
+    #    os.remove('input/download/' + tempFile)
     print()
 
 # SHREC2016: https://ntnu.box.com/shared/static/zb2co430vdcpao7gwco3vaxsf7ahz09u.7z (1.2GB uncompressed, 258MB compressed)
