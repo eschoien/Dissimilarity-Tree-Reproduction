@@ -606,7 +606,7 @@ def computeAllToAllReferenceDirectory(remeshed, disableModifiedQUICCI):
     referenceDirectory = referenceFileBaseDirectory + referenceDirectoryName
     return referenceDirectory
 
-def runSingleAllToAll(queryMesh, remeshed, disableModifiedQUICCI):
+def computeAllToAllReplicatedDirectory(remeshed, disableModifiedQUICCI):
     if remeshed:
         outputBasePathPart = 'output/Figure_13_and_Table_1_AllToAllSearch/results_augmentedremeshed_'
     else:
@@ -616,6 +616,11 @@ def runSingleAllToAll(queryMesh, remeshed, disableModifiedQUICCI):
         outputBasePath = outputBasePathPart + 'originalquicci'
     else:
         outputBasePath = outputBasePathPart + 'modifiedquicci'
+
+    return outputBasePath
+
+def runSingleAllToAll(queryMesh, remeshed, disableModifiedQUICCI):
+    outputBasePath = computeAllToAllReplicatedDirectory(remeshed, disableModifiedQUICCI)
 
     os.makedirs(outputBasePath, exist_ok=True)
     outputFile = os.path.join(outputBasePath, os.path.basename(queryMesh).replace('.obj', '.json'))
@@ -769,7 +774,21 @@ def runAllToAllObjectSearch():
                     runSingleAllToAll(os.path.join(inputBasePath, file), True, True)
                     runSingleAllToAll(os.path.join(inputBasePath, file), True, False)
 
-
+            outputTable = PrettyTable(['QUICCI', 'AUGMENTED_Best', 'AUGMENTED_Rem'])
+            outputTable.align = "l"
+            outputTable.add_row(
+                ['Original', processAllToAllResultsDirectory(computeAllToAllReplicatedDirectory(False, True)),
+                             processAllToAllResultsDirectory(computeAllToAllReplicatedDirectory(True, True))])
+            outputTable.add_row(
+                ['Modified', processAllToAllResultsDirectory(computeAllToAllReplicatedDirectory(False, False)),
+                             processAllToAllResultsDirectory(computeAllToAllReplicatedDirectory(True, False))])
+            print()
+            print('Table 1:')
+            print()
+            print(outputTable)
+            print()
+            computeHeatmaps(computeAllToAllReplicatedDirectory(False, False),
+                            computeAllToAllReplicatedDirectory(True, False))
         if choice == 7:
             return
 
@@ -1163,7 +1182,7 @@ def runMainMenu():
             runIndexEvaluation()
         if choice == 12:  # Done
             runModifiedQuicciEvaluation()
-        if choice == 13:  # TODO
+        if choice == 13:  # Done
             runAllToAllObjectSearch()
         if choice == 14:  # Done
             runPipelineEvaluation()
