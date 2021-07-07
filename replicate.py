@@ -6,6 +6,8 @@ import random
 import sys
 import multiprocessing
 import hashlib
+import matplotlib.pyplot as plt
+import numpy as np
 
 from scripts.simple_term_menu import TerminalMenu
 
@@ -664,6 +666,51 @@ def processAllToAllResultsDirectory(inputDir):
 
     return float(histogram[0]) / float(resultCount)
 
+def computeHeatmaps(bestCaseResultsDirectory, remeshedResultsDirectory):
+    fileCount = len(os.listdir(bestCaseResultsDirectory))
+
+    def computeConfusionMatrix(inputDir):
+        confusionMatrix = np.zeros((fileCount, fileCount))
+        for fileIndex, file in enumerate(os.listdir(inputDir)):
+            # filter out number from file name (example: T50.json -> 50)
+            fileID = int(file[1:-5])
+            with open(os.path.join(inputDir, file), 'r') as inputFile:
+                fileContents = json.loads(inputFile.read())
+
+            for i in range(0, fileCount):
+                resultName = fileContents['results'][i]['name']
+                resultScore = fileContents['results'][i]['score']
+                # Also filter out file number, though this one will have a .dat extension instead
+                resultIndex = int(resultName[1:-4])
+
+                # register score
+                confusionMatrix[fileID - 1, resultIndex - 1] = resultScore
+
+            rowMin = min(confusionMatrix[fileID - 1])
+            for i in range(0, fileCount):
+                confusionMatrix[fileID - 1, i] -= rowMin
+            rowMax = max(confusionMatrix[fileID - 1])
+            for i in range(0, fileCount):
+                confusionMatrix[fileID - 1, i] /= rowMax
+        return confusionMatrix
+
+    originalMatrix = computeConfusionMatrix(bestCaseResultsDirectory)
+    remeshedMatrix = computeConfusionMatrix(remeshedResultsDirectory)
+
+    globalMin = min(originalMatrix.min(), remeshedMatrix.min())
+    globalMax = max(originalMatrix.max(), remeshedMatrix.max())
+
+    print('Confusion matrices are shown. Close both windows to continue.')
+    print()
+
+    plt.title("AUGMENTED_Best")
+    heatmap = plt.imshow(originalMatrix, cmap='hot', interpolation='nearest', vmin=globalMin, vmax=globalMax)
+
+    plt.figure(2)
+    plt.title("AUGMENTED_Rem")
+    plt.imshow(remeshedMatrix, cmap='hot', interpolation='nearest', vmin=globalMin, vmax=globalMax)
+    plt.colorbar(heatmap)  # , format=ticker.FuncFormatter(fmt))
+    plt.show()
 
 def runAllToAllObjectSearch():
     while True:
@@ -712,6 +759,8 @@ def runAllToAllObjectSearch():
             print()
             print(outputTable)
             print()
+            computeHeatmaps(computeAllToAllReferenceDirectory(False, False),
+                            computeAllToAllReferenceDirectory(True, False))
         if choice == 6:
             for inputBasePath in ['output/augmented_dataset_original', 'output/augmented_dataset_remeshed']:
                 for file in os.listdir(inputBasePath):
