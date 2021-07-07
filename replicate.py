@@ -83,7 +83,7 @@ def downloadDatasetsMenu():
                          'input/precomputed_dissimilarity_trees/index_64x64', 'Precomputed Dissimilarity Tree for Descriptors of resolution 64x64')
             downloadFile('https://ntnu.box.com/shared/static/g5ckpzuqilcx2oknvytbh8l4uyv08ifv.7z', 'index_32x32.7z',
                          'input/precomputed_dissimilarity_trees/index_32x32', 'Precomputed Dissimilarity Tree for Descriptors of resolution 32x32')
-        if choice == 6:
+        if choice == 5:
             return
 
 def installDependenciesMenu():
