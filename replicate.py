@@ -597,21 +597,52 @@ def runModifiedQuicciEvaluation():
     print('           And create a chart from its contents.')
     print()
 
-def runRandomSingleAllToAll(queryMesh, remeshed, disableModifiedQUICCI):
+def runSingleAllToAll(queryMesh, remeshed, disableModifiedQUICCI):
     if remeshed:
-        outputBasePath = 'output/Figure_13_and_Table_1_AllToAllSearch/remeshedResults'
+        outputBasePathPart = 'output/Figure_13_and_Table_1_AllToAllSearch/results_augmentedremeshed_'
     else:
-        outputBasePath = 'output/Figure_13_and_Table_1_AllToAllSearch/nonRemeshedResults'
+        outputBasePathPart = 'output/Figure_13_and_Table_1_AllToAllSearch/results_augmentedbestcase_'
+
+    if disableModifiedQUICCI:
+        outputBasePath = outputBasePathPart + 'originalquicci'
+    else:
+        outputBasePath = outputBasePathPart + 'modifiedquicci'
 
     os.makedirs(outputBasePath, exist_ok=True)
     outputFile = os.path.join(outputBasePath, os.path.basename(queryMesh).replace('.obj', '.json'))
-
 
     run_command_line_command('bin/build64x64/simplesearch '
                              '--haystack-directory=output/descriptors/complete_objects_64x64 '
                              '--query-mesh=' + queryMesh + ' '
                              '--force-gpu=' + str(gpuID) + ' '
-                             '--output-file=' + outputFile)
+                             '--output-file=' + outputFile + ' ' +
+                            ('--disable-modified-quicci' if disableModifiedQUICCI else ''))
+
+    with open(outputFile, 'r') as inFile:
+        replicatedFileContents = json.loads(inFile.read())
+
+    referenceFileBaseDirectory = 'input/misc_precomputed_results/figure13_and_table1/'
+    referenceDirectoryName = ('alltoall_remeshed_' if remeshed else 'alltoall_bestcase_') + \
+                             ('originalquicci_64x64/' if disableModifiedQUICCI else 'modifiedquicci_64x64/')
+    referenceFilePath = referenceFileBaseDirectory + referenceDirectoryName + os.path.basename(outputFile)
+
+    with open(referenceFilePath, 'r') as inFile:
+        referenceFileContents = json.loads(inFile.read())
+
+    outputTable = PrettyTable(['Rank', 'Search Result (computed)', 'Execution Time (computed)', 'Summed Distance (computed)', '',
+                               'Search Result (authors)', 'Execution Time (authors)', 'Summed Distance (authors)'])
+    outputTable.align = "l"
+    for i in range(0, len(replicatedFileContents['results'])):
+        outputTable.add_row([i + 1, replicatedFileContents['results'][i]['name'],
+                                    replicatedFileContents['results'][i]['executionTimeSeconds'],
+                                    replicatedFileContents['results'][i]['score'], '',
+                                    replicatedFileContents['results'][i]['name'],
+                                    replicatedFileContents['results'][i]['executionTimeSeconds'],
+                                    replicatedFileContents['results'][i]['score']])
+    print()
+    print(outputTable)
+    print()
+
 
 def runAllToAllObjectSearch():
     while True:
@@ -641,13 +672,13 @@ def runAllToAllObjectSearch():
             print()
 
             if choice == 1:
-                runRandomSingleAllToAll(queryMesh, False, False)
+                runSingleAllToAll(queryMesh, False, True)
             if choice == 2:
-                runRandomSingleAllToAll(queryMesh, False, True)
+                runSingleAllToAll(queryMesh, False, False)
             if choice == 3:
-                runRandomSingleAllToAll(queryMesh, True, False)
+                runSingleAllToAll(queryMesh, True, True)
             if choice == 4:
-                runRandomSingleAllToAll(queryMesh, True, True)
+                runSingleAllToAll(queryMesh, True, False)
         if choice == 5:
             pass
         if choice == 6:
@@ -1047,7 +1078,7 @@ def runMainMenu():
             runModifiedQuicciEvaluation()
         if choice == 13:  # TODO
             runAllToAllObjectSearch()
-        if choice == 14:  # TODO
+        if choice == 14:  # Done
             runPipelineEvaluation()
         if choice == 15:  # Done
             runShrec16Queries()
