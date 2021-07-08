@@ -59,7 +59,7 @@ def downloadDatasetsMenu():
         "Download all",
         "Download SHREC 2016 partial 3D shape dataset (260MB download, 1.2GB uncompressed)",
         'Download precomputed descriptors',
-        'Download precomputed augmented SHREC\'16 query dataset',
+        'Download precomputed augmented SHREC\'16 query dataset (190MB download, 720MB uncompressed)',
         "Download precomputed dissimilarity tree indexes (12GB download, 72GB uncompressed)",
         "back"], title='------------------ Download Datasets ------------------')
 
@@ -321,7 +321,7 @@ def runVoteCountProgressionExperiment():
                              '--progression-iteration-limit=1000')
 
     print()
-    print('Done! You can now open the file output/Figure_3_voteCountProgression/input/T103.obj, and create a chart of all columns.')
+    print('Done! You can now open the file output/Figure_3_voteCountProgression/query_progression.csv, and create a chart of all columns.')
     print('It should exactly match the one shown in the paper.')
     print()
 
@@ -352,7 +352,8 @@ def computeAverageScoreChart():
             print()
             print('Randomly selected query image #', (objectIndexToTest + 1))
             print()
-            run_command_line_command(runCommand + ' --single-query-index=' + str(objectIndexToTest))
+            run_command_line_command(runCommand + ' --subset-start-index=' + str(objectIndexToTest) +
+                                                  ' --subset-end-index=' + str(objectIndexToTest + 1))
             print()
             with open('output/Figure_4_averageRelativeDistance/measurements.json', 'r') as inFile:
                 computedResults = json.loads(inFile.read())
