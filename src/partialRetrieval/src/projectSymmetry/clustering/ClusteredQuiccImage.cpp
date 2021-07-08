@@ -1,4 +1,5 @@
 #include "ClusteredQuiccImage.h"
+#include <stdexcept>
 
 #if spinImageWidthPixels == 64
 

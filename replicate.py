@@ -17,7 +17,7 @@ gpuID = 0
 mainEvaluationRandomSeed = '725948161'
 shrec2016_support_radius = '100'
 descriptorWidthBits = 64
-indexGenerationMode = 'GPU'
+indexGenerationMode = 'CPU'
 pipelineEvaluation_queryMode = 'Best Case'
 pipelineEvaluation_consensusThreshold = '10'
 pipelineEvaluation_resolution = '32x32'
@@ -74,7 +74,7 @@ def downloadDatasetsMenu():
     download_menu = TerminalMenu([
         "Download all",
         "Download SHREC 2016 partial 3D shape dataset (260MB download, 1.2GB uncompressed)",
-        'Download precomputed descriptors',
+        'Download precomputed descriptors (10GB download, 10GB uncompressed)',
         'Download precomputed augmented SHREC\'16 query dataset (190MB download, 720MB uncompressed)',
         "Download precomputed dissimilarity tree indexes (12GB download, 72GB uncompressed)",
         "back"], title='------------------ Download Datasets ------------------')
@@ -86,13 +86,12 @@ def downloadDatasetsMenu():
         if choice == 1 or choice == 2:
            downloadFile('https://ntnu.box.com/shared/static/zb2co430vdcpao7gwco3vaxsf7ahz09u.7z', 'SHREC2016.7z',
                         'input', 'SHREC 2016 Partial Retrieval Dataset')
-
         if choice == 1 or choice == 3:
-            pass
+            downloadFile('https://ntnu.box.com/shared/static/y29rpwz5n9dj6ljaghr40uj34njs3s4j.7z',
+                         'precomputed_descriptors.7z', 'input/', 'Precomputed QUICCI Descriptors')
         if choice == 1 or choice == 4:
             downloadFile('https://ntnu.box.com/shared/static/e57v52moxf3g0fx394cs7bhfo6oto4mr.7z', 'SHREC2016_augmented.7z',
                          'input/precomputed_augmented_dataset', 'Augmented SHREC 2016 Query Dataset')
-
         if choice == 1 or choice == 5:
             downloadFile('https://ntnu.box.com/shared/static/q1blnwzrq8g0cuh3pl3f0av3v4n4qqi6.7z', 'index_96x96.7z',
                          'input/precomputed_dissimilarity_trees/index_96x96', 'Precomputed Dissimilarity Tree for Descriptors of resolution 96x96')
@@ -206,11 +205,7 @@ def computeDescriptorsFromDirectory(inputDirectory, outputDirectory, descriptorW
         computeDescriptorsFromFile(inputFilePath, dumpFilePath, descriptorWidth)
 
 
-descriptorInputDirectories = ['input/SHREC2016_partial_retrieval/complete_objects',
-                              'output/augmented_dataset_original',
-                              'output/augmented_dataset_remeshed',
-                              'input/SHREC2016_partial_retrieval/queries_artificial/Q25',
-                              'input/SHREC2016_partial_retrieval/queries_artificial/Q40']
+descriptorInputDirectories = ['input/SHREC2016_partial_retrieval/complete_objects']
 
 def getDescriptorDirectoriesByResolution(resolution):
     outputDirectories = ['output/descriptors/complete_objects_' + resolution + 'x' + resolution]
@@ -228,7 +223,6 @@ def computeDescriptors():
         run_menu = TerminalMenu([
             "Generate all descriptors",
             "Copy all descriptors precomputed by authors (if you downloaded them)",
-            "Generate descriptors for one random object from each set and verify against authors",
             "back"], title='-- Compute descriptors --')
         choice = run_menu.show() + 1
         if choice == 1:
@@ -239,23 +233,6 @@ def computeDescriptors():
             print('Copying precomputed descriptors..')
             shutil.copytree('input/precomputed_descriptors', 'output/descriptors', dirs_exist_ok=True)
         if choice == 3:
-            os.makedirs('output/descriptors/temp', exist_ok=True)
-            for index, descriptorwidth in enumerate(['32', '64', '96']):
-                for directoryIndex, inputDirectory in enumerate(descriptorInputDirectories):
-                    chosenFile = random.choice(os.listdir(inputDirectory))
-                    print('Processing directory', str(directoryIndex+1) + '/' + str(len(descriptorInputDirectories)),
-                          'at resolution', str(index+1) + '/3 (' + descriptorwidth + 'x' + descriptorwidth + '):',
-                          'chose file', chosenFile)
-                    computeDescriptorsFromFile(os.path.join(inputDirectory, chosenFile),
-                                               'output/descriptors/temp/descriptors.dat', descriptorwidth)
-                    computedHash = fileMD5('output/descriptors/temp/descriptors.dat')
-
-                    outputDirectories = getDescriptorDirectoriesByResolution(descriptorwidth)
-                    referenceHash = fileMD5(os.path.join(outputDirectories[directoryIndex].replace('output', 'input'), chosenFile.replace('.obj', '.dat')))
-
-                    print('  File hashes - computed:', computedHash, 'authors:', referenceHash,
-                          '- MATCHES' if computedHash == referenceHash else "- !!! DOES NOT MATCH !!!")
-        if choice == 4:
             return
 
 def configureIndexGeneration():
@@ -583,9 +560,9 @@ def runModifiedQuicciEvaluation():
     print()
     print('All done!')
     print('To create the figures shown in the paper:')
-    print('Figure 11: Open output/Figure_11_and_12_unwantedBitEvaluation/unwanted_bit_reductions.csv')
+    print('Figure 11: Open output/Figure_11_and_12_unwantedBitEvaluation/Figure_11_unwanted_bit_reductions.csv')
     print('           Then create a chart from its contents.')
-    print('Figure 12: Open output/Figure_11_and_12_unwantedBitEvaluation/overlap_with_reference.csv')
+    print('Figure 12: Open output/Figure_11_and_12_unwantedBitEvaluation/Figure_12_overlap_with_reference.csv')
     print('           And create a chart from its contents.')
     print()
 
