@@ -463,7 +463,7 @@ def runIndexEvaluation():
             "Compute random batch of 10 sequential searches",
             "Compute chart based on search results computed by authors",
             "Compute entire chart from scratch",
-            "back"], title='-- Reproduce Figure 10: Dissimilarity Tree Query Times --')
+            "back"], title='-- Reproduce Figure 10 and 17: Dissimilarity Tree Query Times --')
 
         choice = run_menu.show() + 1
 
