@@ -29,6 +29,8 @@ python3 replicate.py
 
 From the root of the repository.
 
+Should the script fail due to missing dependencies, you can find shell scripts installing all necessary packages in the scripts/ directory.
+
 Refer to the included Manual PDF for further instructions.
 
 ## System Requirements
