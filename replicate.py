@@ -6,8 +6,7 @@ import random
 import sys
 import multiprocessing
 import hashlib
-import matplotlib.pyplot as plt
-import numpy as np
+
 
 from scripts.simple_term_menu import TerminalMenu
 
@@ -22,6 +21,23 @@ indexGenerationMode = 'GPU'
 pipelineEvaluation_queryMode = 'Best Case'
 pipelineEvaluation_consensusThreshold = '10'
 pipelineEvaluation_resolution = '32x32'
+
+# Execution times:
+# Generating all descriptors: 50m
+# Construct 32x32 index: 20m
+# Construct 64x64 index: 1h5m
+# Construct 96x96 index: 2h15m
+# Figure 3: 8m, second number needs to get to 1000
+# Figure 4: single entry: less than a minute
+# Figure 6: 2m
+# Figure 10 + 17: indexed 3m, sequential 3m
+# Figure 11 and 12: 6m
+# Table 1 and Figure 14: 6-8m per single query
+# Figure 14 and 15:
+#   32x32, 10: 2m
+#   64x64, 10: 3m, 6m for remeshed
+#   96x96, 10: 12m, 18m for remeshed
+
 
 if not (sys.version_info.major == 3 and sys.version_info.minor >= 8):
     print("This script requires Python 3.8 or higher.")
@@ -97,8 +113,8 @@ def installDependenciesMenu():
         choice = install_menu.show()
 
         if choice == 0:
-            run_command_line_command('sudo apt install cmake python3 python3-pip libpcl-dev g++ gcc build-essential wget p7zip')
-            run_command_line_command('sudo pip3 install simple-term-menu xlwt xlrd numpy matplotlib pillow PyQt5')
+            run_command_line_command('sudo apt install cmake python3 python3-pip libpcl-dev g++ gcc build-essential wget p7zip libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev')
+            run_command_line_command('pip3 install simple-term-menu xlwt xlrd numpy matplotlib pillow PyQt5 wcwidth')
             print()
         if choice == 1:
             run_command_line_command('sudo apt install nvidia-cuda-toolkit nvidia-cuda-dev')
@@ -169,6 +185,7 @@ def generateAugmentedDataset():
                              '--output-directory=output/augmented_dataset_remeshed '
                              '--redistribute-triangles '
                              '--random-seed=' + mainEvaluationRandomSeed)
+    print()
 
 def computeDescriptorsFromFile(inputFile, outputFile, descriptorWidth):
     run_command_line_command('bin/build' + descriptorWidth + 'x' + descriptorWidth + '/descriptorDumper'
@@ -360,7 +377,8 @@ def computeAverageScoreChart():
             with open('input/precomputed_results/figure4_results_authors.json', 'r') as inFile:
                 referenceResults = json.loads(inFile.read())
 
-            outputTable = PrettyTable(['Score (computed)', 'File ID (computed)', 'Image ID (computed)', '', 'Score (authors)', 'File ID (authors)', 'Image ID (authors)'])
+            outputTable = PrettyTable(['Score (computed)', 'File ID (computed)', 'Image ID (computed)', '',
+                                       'Score (authors)', 'File ID (authors)', 'Image ID (authors)'])
             outputTable.align = "l"
             for i in range(0, 50):
                 outputTable.add_row([computedResults['results'][0]['searchResultFileIDs'][i]['score'],
@@ -369,7 +387,7 @@ def computeAverageScoreChart():
                                      '',
                                      referenceResults['results'][objectIndexToTest]['searchResultFileIDs'][i]['score'],
                                      referenceResults['results'][objectIndexToTest]['searchResultFileIDs'][i]['fileID'],
-                                    referenceResults['results'][objectIndexToTest]['searchResultFileIDs'][i]['imageID']])
+                                     referenceResults['results'][objectIndexToTest]['searchResultFileIDs'][i]['imageID']])
             print(outputTable)
 
         if choice == 2:
@@ -395,6 +413,7 @@ def computeBitsHeatmap():
                              '--output-file=output/Figure_6_OccurrenceCountHeatmap/shrec16_occurrence_counts.txt')
     run_command_line_command('python3 src/partialRetrieval/tools/shrec2016-runner/heatmap.py '
                              'output/Figure_6_OccurrenceCountHeatmap/shrec16_occurrence_counts.txt')
+    print()
 
 def collateIndexEvaluationResults(indexedInputFile, sequentialInputFile, outputFile):
     factor = 10
@@ -492,7 +511,9 @@ def runIndexEvaluation():
                                      chartExecutionTimes['results'][startIndex + i]['executionTimeSeconds'],
                                      'File ' + str(chartExecutionTimes['results'][startIndex + i]['bestSearchResultFileID']) + ', image '
                                      + str(chartExecutionTimes['results'][startIndex + i]['bestSearchResultImageID'])])
+            print()
             print(outputTable)
+            print()
 
         if choice == 2:
             resultsToCompute = 10
@@ -515,7 +536,9 @@ def runIndexEvaluation():
                                      chartExecutionTimes['results'][startIndex + i]['executionTimeSeconds'],
                                      'File ' + str(chartExecutionTimes['results'][startIndex + i]['bestSearchResultFileID']) + ', image '
                                      + str(chartExecutionTimes['results'][startIndex + i]['bestSearchResultImageID'])])
+            print()
             print(outputTable)
+            print()
 
         if choice == 3:
             indexedResultsFile = 'input/precomputed_results/figure10_indexed_search_100000.json'
@@ -639,6 +662,9 @@ def processAllToAllResultsDirectory(inputDir):
     return float(histogram[0]) / float(resultCount)
 
 def computeHeatmaps(bestCaseResultsDirectory, remeshedResultsDirectory):
+    import matplotlib.pyplot as plt
+    import numpy as np
+
     fileCount = len(os.listdir(bestCaseResultsDirectory))
 
     def computeConfusionMatrix(inputDir):
@@ -1123,7 +1149,7 @@ def runMainMenu():
 
         if choice == 1:  # Done
             installDependenciesMenu()
-        if choice == 2:  # TODO
+        if choice == 2:  # Done
             downloadDatasetsMenu()
         if choice == 3:  # Done
             compileProject()
