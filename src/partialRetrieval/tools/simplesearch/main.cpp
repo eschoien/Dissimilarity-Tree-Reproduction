@@ -71,13 +71,11 @@ int main(int argc, const char** argv) {
     const auto &queryMesh = parser.add<std::string>(
             "query-mesh", "The mesh which should be found in the haystack objects.", '\0', arrrgh::Required, "");
     const auto &disableModifiedQUICCI = parser.add<bool>(
-            "disable-modified-quicci", "By default, the search generates QUICCI query descriptors using the proposed modification for partial retrieval. Disabling this will use the original algorithm.", '\0', arrrgh::Optional, "");
+            "disable-modified-quicci", "By default, the search generates QUICCI query descriptors using the proposed modification for partial retrieval. Disabling this will use the original algorithm.", '\0', arrrgh::Optional, false);
     const auto &forceGPU = parser.add<int>(
             "force-gpu", "Index of the GPU device to use for search kernels.", '\0', arrrgh::Optional, -1);
     const auto &outputFile = parser.add<std::string>(
             "output-file", "Path to a CSV file to which to write the search results.", '\0', arrrgh::Optional, "NONE_SELECTED");
-
-
     const auto &showHelp = parser.add<bool>(
             "help", "Show this help message.", 'h', arrrgh::Optional, false);
 
