@@ -92,6 +92,7 @@ def downloadDatasetsMenu():
         if choice == 1 or choice == 4:
             downloadFile('https://ntnu.box.com/shared/static/e57v52moxf3g0fx394cs7bhfo6oto4mr.7z', 'SHREC2016_augmented.7z',
                          'input/precomputed_augmented_dataset', 'Augmented SHREC 2016 Query Dataset')
+            shutil.copytree('input/precomputed_augmented_dataset', 'output', dirs_exist_ok=True)
         if choice == 1 or choice == 5:
             downloadFile('https://ntnu.box.com/shared/static/q1blnwzrq8g0cuh3pl3f0av3v4n4qqi6.7z', 'index_96x96.7z',
                          'input/precomputed_dissimilarity_trees/index_96x96', 'Precomputed Dissimilarity Tree for Descriptors of resolution 96x96')
