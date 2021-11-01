@@ -58,8 +58,8 @@ If you use (parts of) this project in your research, we kindly ask you reference
       title={Partial 3D Object Retrieval using Local Binary QUICCI Descriptors and Dissimilarity Tree Indexing},
       author={van Blokland, Bart Iver and Theoharis, Theoharis},
       journal={Computers \& Graphics},
-      volume="TBD",
-      pages="TBD--TBD",
+      volume="100",
+      pages="32--42",
       year={2021},
       publisher={Elsevier}
     }
