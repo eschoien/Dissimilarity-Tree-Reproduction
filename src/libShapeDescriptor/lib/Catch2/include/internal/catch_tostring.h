@@ -15,6 +15,7 @@
 #include <string>
 #include "catch_compiler_capabilities.h"
 #include "catch_stream.h"
+#include "catch_interfaces_enum_values_registry.h"
 
 #ifdef CATCH_CONFIG_CPP17_STRING_VIEW
 #include <string_view>
@@ -43,9 +44,9 @@ namespace Catch {
 
         template<typename T>
         class IsStreamInsertable {
-            template<typename SS, typename TT>
+            template<typename Stream, typename U>
             static auto test(int)
-                -> decltype(std::declval<SS&>() << std::declval<TT>(), std::true_type());
+                -> decltype(std::declval<Stream&>() << std::declval<U>(), std::true_type());
 
             template<typename, typename>
             static auto test(...)->std::false_type;
@@ -209,6 +210,12 @@ namespace Catch {
         }
     };
 
+#if defined(CATCH_CONFIG_CPP17_BYTE)
+    template<>
+    struct StringMaker<std::byte> {
+        static std::string convert(std::byte value);
+    };
+#endif // defined(CATCH_CONFIG_CPP17_BYTE)
     template<>
     struct StringMaker<int> {
         static std::string convert(int value);
@@ -260,10 +267,13 @@ namespace Catch {
     template<>
     struct StringMaker<float> {
         static std::string convert(float value);
+        static int precision;
     };
+
     template<>
     struct StringMaker<double> {
         static std::string convert(double value);
+        static int precision;
     };
 
     template <typename T>
@@ -299,8 +309,8 @@ namespace Catch {
 #endif
 
     namespace Detail {
-        template<typename InputIterator>
-        std::string rangeToString(InputIterator first, InputIterator last) {
+        template<typename InputIterator, typename Sentinel = InputIterator>
+        std::string rangeToString(InputIterator first, Sentinel last) {
             ReusableStringStream rss;
             rss << "{ ";
             if (first != last) {
@@ -459,20 +469,27 @@ namespace Catch {
 #endif // CATCH_CONFIG_ENABLE_VARIANT_STRINGMAKER
 
 namespace Catch {
-    struct not_this_one {}; // Tag type for detecting which begin/ end are being selected
-
-    // Import begin/ end from std here so they are considered alongside the fallback (...) overloads in this namespace
+    // Import begin/ end from std here
     using std::begin;
     using std::end;
 
-    not_this_one begin( ... );
-    not_this_one end( ... );
+    namespace detail {
+        template <typename...>
+        struct void_type {
+            using type = void;
+        };
+
+        template <typename T, typename = void>
+        struct is_range_impl : std::false_type {
+        };
+
+        template <typename T>
+        struct is_range_impl<T, typename void_type<decltype(begin(std::declval<T>()))>::type> : std::true_type {
+        };
+    } // namespace detail
 
     template <typename T>
-    struct is_range {
-        static const bool value =
-            !std::is_same<decltype(begin(std::declval<T>())), not_this_one>::value &&
-            !std::is_same<decltype(end(std::declval<T>())), not_this_one>::value;
+    struct is_range : detail::is_range_impl<T> {
     };
 
 #if defined(_MANAGED) // Managed types are never ranges
@@ -639,6 +656,17 @@ struct ratio_string<std::milli> {
 }
 #endif // CATCH_CONFIG_ENABLE_CHRONO_STRINGMAKER
 
+#define INTERNAL_CATCH_REGISTER_ENUM( enumName, ... ) \
+namespace Catch { \
+    template<> struct StringMaker<enumName> { \
+        static std::string convert( enumName value ) { \
+            static const auto& enumInfo = ::Catch::getMutableRegistryHub().getMutableEnumValuesRegistry().registerEnum( #enumName, #__VA_ARGS__, { __VA_ARGS__ } ); \
+            return static_cast<std::string>(enumInfo.lookup( static_cast<int>( value ) )); \
+        } \
+    }; \
+}
+
+#define CATCH_REGISTER_ENUM( enumName, ... ) INTERNAL_CATCH_REGISTER_ENUM( enumName, __VA_ARGS__ )
 
 #ifdef _MSC_VER
 #pragma warning(pop)

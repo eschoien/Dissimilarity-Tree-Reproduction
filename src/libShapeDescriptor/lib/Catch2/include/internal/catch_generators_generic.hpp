@@ -8,6 +8,7 @@
 #define TWOBLUECUBES_CATCH_GENERATORS_GENERIC_HPP_INCLUDED
 
 #include "catch_generators.hpp"
+#include "catch_meta.hpp"
 
 namespace Catch {
 namespace Generators {
@@ -62,7 +63,7 @@ namespace Generators {
             if (!m_predicate(m_generator.get())) {
                 // It might happen that there are no values that pass the
                 // filter. In that case we throw an exception.
-                auto has_initial_value = next();
+                auto has_initial_value = nextImpl();
                 if (!has_initial_value) {
                     Catch::throw_exception(GeneratorException("No valid value found in filtered generator"));
                 }
@@ -74,6 +75,11 @@ namespace Generators {
         }
 
         bool next() override {
+            return nextImpl();
+        }
+
+    private:
+        bool nextImpl() {
             bool success = m_generator.next();
             if (!success) {
                 return false;
@@ -91,6 +97,9 @@ namespace Generators {
 
     template <typename T>
     class RepeatGenerator : public IGenerator<T> {
+        static_assert(!std::is_same<T, bool>::value,
+            "RepeatGenerator currently does not support bools"
+            "because of std::vector<bool> specialization");
         GeneratorWrapper<T> m_generator;
         mutable std::vector<T> m_returned;
         size_t m_target_repeats;
@@ -169,16 +178,17 @@ namespace Generators {
         }
     };
 
-    template <typename T, typename U, typename Func>
+    template <typename Func, typename U, typename T = FunctionReturnType<Func, U>>
     GeneratorWrapper<T> map(Func&& function, GeneratorWrapper<U>&& generator) {
         return GeneratorWrapper<T>(
             pf::make_unique<MapGenerator<T, U, Func>>(std::forward<Func>(function), std::move(generator))
         );
     }
-    template <typename T, typename Func>
-    GeneratorWrapper<T> map(Func&& function, GeneratorWrapper<T>&& generator) {
+
+    template <typename T, typename U, typename Func>
+    GeneratorWrapper<T> map(Func&& function, GeneratorWrapper<U>&& generator) {
         return GeneratorWrapper<T>(
-            pf::make_unique<MapGenerator<T, T, Func>>(std::forward<Func>(function), std::move(generator))
+            pf::make_unique<MapGenerator<T, U, Func>>(std::forward<Func>(function), std::move(generator))
         );
     }
 
@@ -193,12 +203,14 @@ namespace Generators {
             m_chunk_size(size), m_generator(std::move(generator))
         {
             m_chunk.reserve(m_chunk_size);
-            m_chunk.push_back(m_generator.get());
-            for (size_t i = 1; i < m_chunk_size; ++i) {
-                if (!m_generator.next()) {
-                    Catch::throw_exception(GeneratorException("Not enough values to initialize the first chunk"));
-                }
+            if (m_chunk_size != 0) {
                 m_chunk.push_back(m_generator.get());
+                for (size_t i = 1; i < m_chunk_size; ++i) {
+                    if (!m_generator.next()) {
+                        Catch::throw_exception(GeneratorException("Not enough values to initialize the first chunk"));
+                    }
+                    m_chunk.push_back(m_generator.get());
+                }
             }
         }
         std::vector<T> const& get() const override {
