@@ -1,7 +1,5 @@
 #cmake_policy(SET CMP0048 NEW)
 
-set(CMAKE_CUDA_HOST_COMPILER /usr/bin/g++-8)
-
 set(CMAKE_CXX_STANDARD 14)
 
 cmake_minimum_required(VERSION 3.0)
