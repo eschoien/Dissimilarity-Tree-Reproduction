@@ -10,3 +10,7 @@ output/**/*.dat
 output/**/*.txt
 output/**/*.csv
 output/**/*.json
+
+input/
+build/
+.vscode/

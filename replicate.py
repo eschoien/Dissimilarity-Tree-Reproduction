@@ -137,8 +137,8 @@ def compileProject():
     run_command_line_command('rm -rf bin/*')
 
     os.makedirs('bin/build32x32', exist_ok=True)
-    os.makedirs('bin/build64x64', exist_ok=True)
-    os.makedirs('bin/build96x96', exist_ok=True)
+    #os.makedirs('bin/build64x64', exist_ok=True)
+    #os.makedirs('bin/build96x96', exist_ok=True)
 
     threadCount = str(multiprocessing.cpu_count() - 1)
 
@@ -146,13 +146,13 @@ def compileProject():
     run_command_line_command('cmake ../../src/partialRetrieval -DCMAKE_BUILD_TYPE=Release', 'bin/build32x32')
     run_command_line_command('make -j ' + threadCount, 'bin/build32x32')
 
-    changeDescriptorWidth(64)
-    run_command_line_command('cmake ../../src/partialRetrieval -DCMAKE_BUILD_TYPE=Release', 'bin/build64x64')
-    run_command_line_command('make -j ' + threadCount, 'bin/build64x64')
+    #changeDescriptorWidth(64)
+    #run_command_line_command('cmake ../../src/partialRetrieval -DCMAKE_BUILD_TYPE=Release', 'bin/build64x64')
+    #run_command_line_command('make -j ' + threadCount, 'bin/build64x64')
 
-    changeDescriptorWidth(96)
-    run_command_line_command('cmake ../../src/partialRetrieval -DCMAKE_BUILD_TYPE=Release', 'bin/build96x96')
-    run_command_line_command('make -j ' + threadCount, 'bin/build96x96')
+    #changeDescriptorWidth(96)
+    #run_command_line_command('cmake ../../src/partialRetrieval -DCMAKE_BUILD_TYPE=Release', 'bin/build96x96')
+    #run_command_line_command('make -j ' + threadCount, 'bin/build96x96')
 
     print()
     print('Complete.')
@@ -440,8 +440,8 @@ def collateIndexEvaluationResults(indexedInputFile, sequentialInputFile, outputF
 def runIndexEvaluation():
     os.makedirs('output/Figure_10_and_17_indexQueryTimes', exist_ok=True)
 
-    baseIndexedSearchCommand = 'bin/build64x64/indexedSearchBenchmark ' \
-                               '--index-directory=output/dissimilarity_tree/index64x64 ' \
+    baseIndexedSearchCommand = 'bin/build32x32/indexedSearchBenchmark ' \
+                               '--index-directory=output/dissimilarity_tree/index32x32 ' \
                                '--query-directory=output/augmented_dataset_original ' \
                                '--output-file=output/Figure_10_and_17_indexQueryTimes/measurements_indexed.json ' \
                                '--search-results-per-query=1 ' \
@@ -450,8 +450,8 @@ def runIndexEvaluation():
                                '--sample-count=100000 ' \
                                '--force-gpu=' + str(gpuID) + ' '
 
-    baseSequentialSearchCommand = 'bin/build64x64/sequentialSearchBenchmark ' \
-                                  '--index-directory=output/dissimilarity_tree/index64x64 ' \
+    baseSequentialSearchCommand = 'bin/build32x32/sequentialSearchBenchmark ' \
+                                  '--index-directory=output/dissimilarity_tree/index32x32 ' \
                                   '--query-directory=output/augmented_dataset_original ' \
                                   '--random-seed=' + mainEvaluationRandomSeed + ' ' \
                                   '--output-file=output/Figure_10_and_17_indexQueryTimes/measurements_sequential.json ' \
