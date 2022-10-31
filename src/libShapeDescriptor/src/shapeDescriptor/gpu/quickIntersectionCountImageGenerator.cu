@@ -247,9 +247,63 @@ __device__ __inline__ void rasteriseTriangle(
         }
     }
 }
+__device__ void writeQUICCImageHorizontal(
+        ShapeDescriptor::QUICCIDescriptor* descriptorArray,
+        radialIntersectionCountImagePixelType* RICIDescriptor) {
 
+    const int laneIndex = threadIdx.x % 32;
+    static_assert(spinImageWidthPixels % 32 == 0, "Implementation assumes images are multiples of warps wide");
 
-__device__ void writeQUICCImage(
+    // col 0 turns into bottom row, should be leftmost col
+
+    for(int row = 0; col < spinImageWidthPixels; col++) {
+        radialIntersectionCountImagePixelType previousWarpLastNeedlePixelValue = 0;
+
+        for (int pixel = laneIndex; pixel < spinImageWidthPixels; pixel += warpSize) {
+            radialIntersectionCountImagePixelType currentNeedlePixelValue =
+                    RICIDescriptor[row * spinImageWidthPixels + pixel];
+
+            int targetThread;
+            if (laneIndex > 0) {
+                targetThread = laneIndex - 1;
+            }
+            else if (pixel > 0) {
+                targetThread = 31;
+            } else {
+                targetThread = 0;
+            }
+
+            radialIntersectionCountImagePixelType threadNeedleValue = 0;
+
+            if (laneIndex == 31) {
+                threadNeedleValue = previousWarpLastNeedlePixelValue;
+            } else {
+                threadNeedleValue = currentNeedlePixelValue;
+            }
+
+            radialIntersectionCountImagePixelType previousNeedlePixelValue = __shfl_sync(0xFFFFFFFF, threadNeedleValue, targetThread);
+
+            int imageDelta = int(currentNeedlePixelValue) - int(previousNeedlePixelValue);
+
+            bool didIntersectionCountsChange = imageDelta != 0;
+
+            unsigned int changeOccurredCombined = __brev(__ballot_sync(0xFFFFFFFF, didIntersectionCountsChange));
+
+            if(laneIndex == 0) {
+                size_t chunkIndex = (row * (spinImageWidthPixels / 32)) + (pixel / 32);
+                descriptorArray[blockIdx.x].contents[chunkIndex] = changeOccurredCombined | descriptorArray[blockIdx.x].contents[chunkIndex];
+            }
+
+            // This only matters for thread 31, so no need to broadcast it using a shuffle instruction
+            previousWarpLastNeedlePixelValue = currentNeedlePixelValue;
+        }
+
+    }
+
+    __syncthreads();
+}
+
+__device__ void writeQUICCImageVertical(
         ShapeDescriptor::QUICCIDescriptor* descriptorArray,
         radialIntersectionCountImagePixelType* RICIDescriptor) {
 
@@ -293,7 +347,7 @@ __device__ void writeQUICCImage(
 
             if(laneIndex == 0) {
                 size_t chunkIndex = (col * (spinImageWidthPixels / 32)) + (pixel / 32);
-                descriptorArray[blockIdx.x].contents[chunkIndex] = changeOccurredCombined;
+                descriptorArray[blockIdx.x].contents[chunkIndex] = changeOccurredCombined | descriptorArray[blockIdx.x].contents[chunkIndex];
             }
 
             // This only matters for thread 31, so no need to broadcast it using a shuffle instruction
@@ -377,7 +431,17 @@ __launch_bounds__(RASTERISATION_WARP_SIZE, 2) __global__ void generateQuickInter
 
 	__syncthreads();
 	// Image finished. Copying into main memory
-	writeQUICCImage(descriptors, descriptorArrayPointer);
+    if (QUCCIDirection == 1) {
+        writeQUICCImageHorizontal(descriptors, descriptorArrayPointer);
+    }
+    else if (QUCCIDirection == 2) {
+        writeQUICCImageVertical(descriptors, descriptorArrayPointer);
+    }
+    else {
+        writeQUICCImageVertical(descriptors, descriptorArrayPointer);
+        writeQUICCImageHorizontal(descriptors, descriptorArrayPointer);
+    }
+    
 }
 
 __global__ void scaleQUICCIMesh(ShapeDescriptor::gpu::Mesh mesh, float scaleFactor) {

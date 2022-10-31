@@ -16,6 +16,11 @@
 // Limitation: can not be more than 255 due to the array of bytes
 #define spinImageWidthPixels 32
 
+// Horizontal = 1
+// Vertical = 2
+// Both = 3
+#define QUICCIDirection 1
+
 // In a few places we need to check for equivalence between floating point numbers.
 // This is the maximum difference between two floating numbers such that they are considered equal.
 #define MAX_EQUIVALENCE_ROUNDING_ERROR 0.0001
