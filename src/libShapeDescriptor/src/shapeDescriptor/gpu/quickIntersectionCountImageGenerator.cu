@@ -427,10 +427,10 @@ __launch_bounds__(RASTERISATION_WARP_SIZE, 2) __global__ void generateQuickInter
 
 	__syncthreads();
 	// Image finished. Copying into main memory
-    if (QUCCIDirection == 1) {
+    if (QUICCIDirection == 1) {
         writeQUICCImageHorizontal(descriptors, descriptorArrayPointer);
     }
-    else if (QUCCIDirection == 2) {
+    else if (QUICCIDirection == 2) {
         writeQUICCImageVertical(descriptors, descriptorArrayPointer);
     }
     else {
