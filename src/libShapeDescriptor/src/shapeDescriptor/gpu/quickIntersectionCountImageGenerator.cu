@@ -254,9 +254,7 @@ __device__ void writeQUICCImageHorizontal(
     const int laneIndex = threadIdx.x % 32;
     static_assert(spinImageWidthPixels % 32 == 0, "Implementation assumes images are multiples of warps wide");
 
-    // col 0 turns into bottom row, should be leftmost col
-
-    for(int row = 0; col < spinImageWidthPixels; col++) {
+    for(int row = 0; row < spinImageWidthPixels; row++) {
         radialIntersectionCountImagePixelType previousWarpLastNeedlePixelValue = 0;
 
         for (int pixel = laneIndex; pixel < spinImageWidthPixels; pixel += warpSize) {
@@ -299,8 +297,6 @@ __device__ void writeQUICCImageHorizontal(
         }
 
     }
-
-    __syncthreads();
 }
 
 __device__ void writeQUICCImageVertical(
