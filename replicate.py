@@ -16,7 +16,7 @@ from scripts.prettytable import PrettyTable
 gpuID = 0
 mainEvaluationRandomSeed = '725948161'
 shrec2016_support_radius = '100'
-descriptorWidthBits = 64
+descriptorWidthBits = 32
 indexGenerationMode = 'CPU'
 pipelineEvaluation_queryMode = 'Best Case'
 pipelineEvaluation_consensusThreshold = '10'
@@ -303,8 +303,8 @@ def runVoteCountProgressionExperiment():
     os.makedirs('output/Figure_3_voteCountProgression/input', exist_ok=True)
     shutil.copy('output/augmented_dataset_remeshed/T103.obj',
                 'output/Figure_3_voteCountProgression/input/T103.obj')
-    run_command_line_command('bin/build64x64/objectSearch '
-                             '--index-directory=output/dissimilarity_tree/index64x64 '
+    run_command_line_command('bin/build32x32/objectSearch '
+                             '--index-directory=output/dissimilarity_tree/index32x32 '
                              '--haystack-directory=input/SHREC2016_partial_retrieval/complete_objects '
                              '--query-directory=output/Figure_3_voteCountProgression/input '
                              '--resultsPerQueryImage=1 '
@@ -332,8 +332,8 @@ def computeAverageScoreChart():
 
         choice = run_menu.show() + 1
         resultsFileToProcess = ''
-        runCommand = 'bin/build64x64/indexedSearchBenchmark ' \
-                     '--index-directory=output/dissimilarity_tree/index64x64 ' \
+        runCommand = 'bin/build32x32/indexedSearchBenchmark ' \
+                     '--index-directory=output/dissimilarity_tree/index32x32 ' \
                      '--query-directory=output/augmented_dataset_original ' \
                      '--output-file=output/Figure_4_averageRelativeDistance/measurements.json ' \
                      '--search-results-per-query=50 ' \
@@ -386,8 +386,8 @@ def computeAverageScoreChart():
 
 def computeBitsHeatmap():
     os.makedirs('output/Figure_6_OccurrenceCountHeatmap', exist_ok=True)
-    run_command_line_command('bin/build64x64/occurrenceCounter '
-                             '--index-directory=output/dissimilarity_tree/index64x64 '
+    run_command_line_command('bin/build32x32/occurrenceCounter '
+                             '--index-directory=output/dissimilarity_tree/index32x32 '
                              '--output-file=output/Figure_6_OccurrenceCountHeatmap/shrec16_occurrence_counts.txt')
     run_command_line_command('python3 src/partialRetrieval/tools/shrec2016-runner/heatmap.py '
                              'output/Figure_6_OccurrenceCountHeatmap/shrec16_occurrence_counts.txt')
@@ -548,7 +548,7 @@ def runIndexEvaluation():
 def runModifiedQuicciEvaluation():
     os.makedirs('output/Figure_11_and_12_unwantedBitEvaluation', exist_ok=True)
 
-    run_command_line_command('bin/build64x64/edgeRemovalExperiment '
+    run_command_line_command('bin/build32x32/edgeRemovalExperiment '
                              '--query-directory=output/augmented_dataset_original '
                              '--reference-object-directory=input/SHREC2016_partial_retrieval/complete_objects '
                              '--output-file=output/Figure_11_and_12_unwantedBitEvaluation/output.json '
@@ -570,7 +570,7 @@ def runModifiedQuicciEvaluation():
 def computeAllToAllReferenceDirectory(remeshed, disableModifiedQUICCI):
     referenceFileBaseDirectory = 'input/precomputed_results/figure13_and_table1/'
     referenceDirectoryName = ('alltoall_remeshed_' if remeshed else 'alltoall_bestcase_') + \
-                             ('originalquicci_64x64/' if disableModifiedQUICCI else 'modifiedquicci_64x64/')
+                             ('originalquicci_32x32/' if disableModifiedQUICCI else 'modifiedquicci_32x32/')
     referenceDirectory = referenceFileBaseDirectory + referenceDirectoryName
     return referenceDirectory
 
@@ -593,8 +593,8 @@ def runSingleAllToAll(queryMesh, remeshed, disableModifiedQUICCI):
     os.makedirs(outputBasePath, exist_ok=True)
     outputFile = os.path.join(outputBasePath, os.path.basename(queryMesh).replace('.obj', '.json'))
 
-    run_command_line_command('bin/build64x64/simplesearch '
-                             '--haystack-directory=output/descriptors/complete_objects_64x64 '
+    run_command_line_command('bin/build32x32/simplesearch '
+                             '--haystack-directory=output/descriptors/complete_objects_32x32 '
                              '--query-mesh=' + queryMesh + ' '
                              '--force-gpu=' + str(gpuID) + ' '
                              '--output-file=' + outputFile + ' ' +
@@ -1039,20 +1039,20 @@ def runPipelineEvaluation():
             print('    ' + figure14_outputFile)
             print()
         if choice == 9:
-            _, _, figure15_bestCase = evaluatePipelineResults(computePipelineEvaluationAuthorReferenceFileName('Best Case', '10', '64x64').replace('results_', 'timings/results_'))
-            _, _, figure15_remeshed = evaluatePipelineResults(computePipelineEvaluationAuthorReferenceFileName('Remeshed', '10', '64x64').replace('results_', 'timings/results_'))
+            _, _, figure15_bestCase = evaluatePipelineResults(computePipelineEvaluationAuthorReferenceFileName('Best Case', '10', '32x32').replace('results_', 'timings/results_'))
+            _, _, figure15_remeshed = evaluatePipelineResults(computePipelineEvaluationAuthorReferenceFileName('Remeshed', '10', '32x32').replace('results_', 'timings/results_'))
             figure15_outputFile = 'output/Figure_14_and_15_Pipeline_Evaluation/Figure_15_queryTimes_authors.csv'
 
         if choice == 10:
-            if not os.path.exists(computePipelineEvaluationOutputFileName('Best Case', '10', '64x64')):
-                notifyMissingPipelineResults('Best Case', '10', '64x64')
+            if not os.path.exists(computePipelineEvaluationOutputFileName('Best Case', '10', '32x32')):
+                notifyMissingPipelineResults('Best Case', '10', '32x32')
                 continue
-            if not os.path.exists(computePipelineEvaluationOutputFileName('Remeshed', '10', '64x64')):
-                notifyMissingPipelineResults('Remeshed', '10', '64x64')
+            if not os.path.exists(computePipelineEvaluationOutputFileName('Remeshed', '10', '32x32')):
+                notifyMissingPipelineResults('Remeshed', '10', '32x32')
                 continue
 
-            _, _, figure15_bestCase = evaluatePipelineResults(computePipelineEvaluationOutputFileName('Best Case', '10', '64x64'))
-            _, _, figure15_remeshed = evaluatePipelineResults(computePipelineEvaluationOutputFileName('Remeshed', '10', '64x64'))
+            _, _, figure15_bestCase = evaluatePipelineResults(computePipelineEvaluationOutputFileName('Best Case', '10', '32x32'))
+            _, _, figure15_remeshed = evaluatePipelineResults(computePipelineEvaluationOutputFileName('Remeshed', '10', '32x32'))
             figure15_outputFile = 'output/Figure_14_and_15_Pipeline_Evaluation/Figure_15_queryTimes_replicated.csv'
 
         if choice == 9 or choice == 10:
