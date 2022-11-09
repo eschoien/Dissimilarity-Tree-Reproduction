@@ -448,6 +448,7 @@ def runIndexEvaluation():
                                '--random-seed=' + mainEvaluationRandomSeed + ' ' \
                                '--support-radius=' + shrec2016_support_radius + ' ' \
                                '--sample-count=100000 ' \
+                               '--subset-end-index=100000 ' \
                                '--force-gpu=' + str(gpuID) + ' '
 
     baseSequentialSearchCommand = 'bin/build32x32/sequentialSearchBenchmark ' \
@@ -456,6 +457,7 @@ def runIndexEvaluation():
                                   '--random-seed=' + mainEvaluationRandomSeed + ' ' \
                                   '--output-file=output/Figure_10_and_17_indexQueryTimes/measurements_sequential.json ' \
                                   '--sample-count=2500 ' \
+                                  '--subset-end-index=2500 ' \
                                   '--force-gpu=' + str(gpuID) + ' '
 
     while True:
