@@ -39,10 +39,11 @@ merged_df['horizontal_normalized'] = merged_df['mean_horizontal'] - normalized_b
 print(merged_df)
 #merged_df.sort_values(by=['vertical_normalized'], inplace=True)
 
-plt.scatter(x=merged_df['queryFile'],y=merged_df['horizontal_normalized'], label="horizontal")
-plt.scatter(x=merged_df['queryFile'],y=merged_df['vertical_normalized'], label="vertical")
-plt.scatter(x=merged_df['queryFile'],y=merged_df['combined_normalized'], label="combined")
+plt.scatter(x=merged_df['queryFile'],y=merged_df['horizontal_normalized'], label="Horizontal", color="b")
+plt.scatter(x=merged_df['queryFile'],y=merged_df['vertical_normalized'], label="Vertical", color="r")
+plt.scatter(x=merged_df['queryFile'],y=merged_df['combined_normalized'], label="Combined", color="y")
 plt.legend(loc="upper left")
+plt.xticks([])
 plt.show()
 
 

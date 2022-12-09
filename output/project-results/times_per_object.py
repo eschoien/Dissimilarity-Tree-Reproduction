@@ -32,10 +32,11 @@ merged_df = pd.merge(pd.merge(horizontal_df,vertical_df,on='queryFile'),combined
 # Change by= below to sort by different direction
 merged_df.sort_values(by=['mean_combined'], inplace=True)
 
-plt.scatter(x=merged_df['queryFile'],y=merged_df['mean_horizontal'], label="horizontal")
-plt.scatter(x=merged_df['queryFile'],y=merged_df['mean_vertical'], label="vertical")
-plt.scatter(x=merged_df['queryFile'],y=merged_df['mean_combined'], label="combined")
+plt.scatter(x=merged_df['queryFile'],y=merged_df['mean_horizontal'], label="Horizontal", color="b")
+plt.scatter(x=merged_df['queryFile'],y=merged_df['mean_vertical'], label="Vertical", color="r")
+plt.scatter(x=merged_df['queryFile'],y=merged_df['mean_combined'], label="Combined", color="y")
 plt.legend(loc="upper left")
+plt.xticks([])
 plt.show()
 
 
