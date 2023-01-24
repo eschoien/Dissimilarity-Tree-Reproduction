@@ -125,3 +125,6 @@ add_executable(edgeRemovalExperiment
         tools/edgeRemovalExperiment/Histogram.cpp
         tools/edgeRemovalExperiment/Histogram.h)
 target_link_libraries(edgeRemovalExperiment glfw projectsymmetry ShapeDescriptor stdc++fs fast-lzma2 pmp gitinfo)
+
+add_executable(lshMatching tools/lshMatching/main.cpp)
+target_link_libraries(lshMatching glfw projectsymmetry ShapeDescriptor stdc++fs fast-lzma2 pmp gitinfo)
