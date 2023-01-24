@@ -260,6 +260,16 @@ int main(int argc, const char** argv) {
 
             outJson["queryDirectory"] = cluster::path(queryDirectory.value()).string();
             outJson["indexDirectory"] = cluster::path(indexDirectory.value()).string();
+            if (QUICCIDirection == 1) {
+                outJson["descriptorDirection"] = "Horizontal";
+            }
+            if (QUICCIDirection == 2) {
+                outJson["descriptorDirection"] = "Vertical";
+            }
+            if (QUICCIDirection == 3) {
+                outJson["descriptorDirection"] = "Combined";
+            }
+            outJson["descripterResolution"] = spinImageWidthPixels;
 
             outJson["results"] = {};
 
