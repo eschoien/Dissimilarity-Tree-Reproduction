@@ -1104,6 +1104,10 @@ def runShrec16Queries():
         if choice == 7:
             return
 
+def runMinhashGeneration():
+    run_command_line_command('bin/build32x32/lshMatching '
+                             '--quicci-dump-directory=output/descriptors/complete_objects_32x32')
+    print()
 
 def runMainMenu():
     while True:
@@ -1123,7 +1127,8 @@ def runMainMenu():
             "13. Run all to all object search (Table 1 and Figure 13)",
             "14. Run partial retrieval pipeline evaluation (Figures 14 and 15)",
             "15. Run SHREC'16 artificial benchmark (Figure 16)",
-            "16. exit"], title='---------------------- Main Menu ----------------------')
+            "16. Run MinHash algorithm",
+            "17. exit"], title='---------------------- Main Menu ----------------------')
 
         choice = main_menu.show() + 1
 
@@ -1158,6 +1163,8 @@ def runMainMenu():
         if choice == 15:  # Done
             runShrec16Queries()
         if choice == 16:
+            runMinhashGeneration()
+        if choice == 17:
             return
 
 def runIntroSequence():
