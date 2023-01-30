@@ -19,7 +19,7 @@
 // Horizontal = 1
 // Vertical = 2
 // Both = 3
-#define QUICCIDirection 3
+#define QUICCIDirection 1
 
 // In a few places we need to check for equivalence between floating point numbers.
 // This is the maximum difference between two floating numbers such that they are considered equal.
