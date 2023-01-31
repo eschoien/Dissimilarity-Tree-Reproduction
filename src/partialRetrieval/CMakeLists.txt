@@ -14,7 +14,7 @@ find_package(OpenMP)
 if(OPENMP_FOUND)
     message("OPENMP FOUND")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -g")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif()
 
@@ -126,5 +126,5 @@ add_executable(edgeRemovalExperiment
         tools/edgeRemovalExperiment/Histogram.h)
 target_link_libraries(edgeRemovalExperiment glfw projectsymmetry ShapeDescriptor stdc++fs fast-lzma2 pmp gitinfo)
 
-add_executable(lshMatching tools/lshMatching/main.cpp)
-target_link_libraries(lshMatching glfw projectsymmetry ShapeDescriptor stdc++fs fast-lzma2 pmp gitinfo)
+add_executable(signatureBuilder tools/signatureBuilder/main.cpp)
+target_link_libraries(signatureBuilder glfw projectsymmetry ShapeDescriptor stdc++fs fast-lzma2 pmp gitinfo)

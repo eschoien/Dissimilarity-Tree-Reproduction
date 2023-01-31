@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <vector>
 #include <atomic>
+#include <string> 
 #include <shapeDescriptor/common/types/methods/RICIDescriptor.h>
 #include <shapeDescriptor/utilities/read/QUICCIDescriptors.h>
 #include <shapeDescriptor/utilities/fileutils.h>
@@ -10,10 +11,9 @@
 #include <shapeDescriptor/utilities/print/QuicciDescriptor.h>
 #include <projectSymmetry/descriptors/quicciStats.h>
 #include <projectSymmetry/descriptors/quicciStatsCPU.h>
-#include "DescriptorSignature.h"
-
-
-// Function for creating n number of permuations of integers 1-1024.
+#include "Signature.h"
+#include "SignatureIO.h"
+#include "SignatureBuilder.h"
 
 std::vector<std::vector<int>> create_permutations(int numberOfPermutations) {
 
@@ -23,7 +23,7 @@ std::vector<std::vector<int>> create_permutations(int numberOfPermutations) {
 
         std::vector<int> numbers;
 
-        for (int i=1; i <= 1024; i++) {
+        for (int i=0; i <= 1023; i++) {
             numbers.push_back(i);
         }
 
@@ -35,7 +35,7 @@ std::vector<std::vector<int>> create_permutations(int numberOfPermutations) {
     return permutations;
 }
 
-std::vector<DescriptorSignature> buildSignaturesFromDumpDirectory(const std::experimental::filesystem::path &imageDumpDirectory, const unsigned int number_of_permutations) {
+std::vector<DescriptorSignature> buildSignaturesFromDumpDirectory(const std::experimental::filesystem::path &imageDumpDirectory, const std::experimental::filesystem::path &outputDirectory, const unsigned int number_of_permutations) {
     
     std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now();
 
@@ -67,11 +67,11 @@ std::vector<DescriptorSignature> buildSignaturesFromDumpDirectory(const std::exp
 
         // array of descriptors for object
         ShapeDescriptor::cpu::array<ShapeDescriptor::QUICCIDescriptor> descriptors = ShapeDescriptor::read::QUICCIDescriptors(haystackFiles.at(i));
-        
+        ObjectSignature* oSig = new ObjectSignature;
+        oSig->file_id = i;
         // loop through descriptors for current object
         for(unsigned int j = 0; j < descriptors.length; j++) {
             DescriptorSignature dSig;
-            dSig.file_id = i;
             dSig.descriptor_id = j;
 
             // ShapeDescriptor::print::quicciDescriptor(descriptors.content[j]);
@@ -85,20 +85,23 @@ std::vector<DescriptorSignature> buildSignaturesFromDumpDirectory(const std::exp
 
                 unsigned int m = 0;
 
-                while (true) {
+                while (m < 1024) {
+                    // std::cout << j << " " << m << " " << (permutation[m] / 32) << std::endl;
                     if (descriptors.content[j].contents[(permutation[m] / 32)] & (1 << (permutation[m] % 32))) {
                         break;
                     }   
                     m++;
 
                 }
-                //m is now the signature of th50is descriptor for the current permutation
+                //m is now the signature of this descriptor for the current permutation
                 dSig.signatures.push_back(m);
             }
-
-            descriptorSignatures.push_back(dSig);
+            oSig->descriptorSignatures.push_back(dSig);
+            // delete dSig;
         }
-
+        writeSignatures(*oSig, outputDirectory);
+        std::cout << oSig->file_id << std::endl;
+        delete oSig;
         ShapeDescriptor::free::array(descriptors);
     }
 
@@ -109,61 +112,4 @@ std::vector<DescriptorSignature> buildSignaturesFromDumpDirectory(const std::exp
     std::cout << "Total execution time: " << float(duration.count()) / 1000.0f << " seconds" << std::endl;
 
     return descriptorSignatures;
-}
-
-int main(int argc, const char** argv) {
-    arrrgh::parser parser("clusterbuilder", "Create indexes for QUICCI images.");
-    const auto& indexDirectory = parser.add<std::string>(
-            "index-directory", "The directory where the signature file should be stored.", '\0', arrrgh::Optional, "");
-    const auto& sourceDirectory = parser.add<std::string>(
-            "quicci-dump-directory", "The directory where binary dump files of QUICCI images are stored that should be indexed.", '\0', arrrgh::Optional, "");
-    const auto& showHelp = parser.add<bool>(
-            "help", "Show this help message.", 'h', arrrgh::Optional, false);
-
-    try
-    {
-        parser.parse(argc, argv);
-    }
-    catch (const std::exception& e)
-    {
-        std::cerr << "Error parsing arguments: " << e.what() << std::endl;
-        parser.show_usage(std::cerr);
-        exit(1);
-    }
-
-    // Show help if desired
-    if(showHelp.value())
-    {
-        return 0;
-    }
-
-    std::cout << "Computing signatures from files in " << sourceDirectory.value() << "..." << std::endl;
-
-    // Cluster* cluster = buildClusterFromDumpDirectory(sourceDirectory.value(), indexDirectory.value(), 32, forceCPU.value());
-    // TODO: Generate the signatures ...
-
-    unsigned int number_of_permutations = 10;
-
-    std::vector<DescriptorSignature> descriptorSignatures = buildSignaturesFromDumpDirectory(sourceDirectory.value(), number_of_permutations);
-
-    // print signatures
-
-    // works but gives segfault for too many descriptors?
-    for (int i = 0; i < descriptorSignatures.size(); i++) {
-
-        std::cout << descriptorSignatures[i].file_id << "-";
-        std::cout << descriptorSignatures[i].descriptor_id << ": ";
-
-        for (int j = 0; j < number_of_permutations; j++) {
-            std::cout << descriptorSignatures[i].signatures[j] << " ";
-        }
-        std::cout << " " << std::endl;
-    }
-
-    std::cout << "Writing cluster file.." << std::endl;
-
-    // writeCluster(cluster, cluster::path(indexDirectory.value()) / "index.dat");
-    // TODO: Write signature file ... (not implemented)
-
-    std::cout << std::endl << "Done." << std::endl;
 }
