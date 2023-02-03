@@ -128,3 +128,6 @@ target_link_libraries(edgeRemovalExperiment glfw projectsymmetry ShapeDescriptor
 
 add_executable(signatureBuilder tools/signatureBuilder/main.cpp)
 target_link_libraries(signatureBuilder glfw projectsymmetry ShapeDescriptor stdc++fs fast-lzma2 pmp gitinfo)
+
+add_executable(descriptorSignatureTest tools/descriptorSignatureTest/main.cpp)
+target_link_libraries(descriptorSignatureTest glfw projectsymmetry ShapeDescriptor stdc++fs fast-lzma2 pmp gitinfo)

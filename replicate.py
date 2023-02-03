@@ -1111,6 +1111,15 @@ def runMinhashGeneration():
                              '--quicci-dump-directory=output/descriptors/complete_objects_32x32')
     print()
 
+
+def runDescriptorSignatureTest():
+    run_command_line_command('bin/build32x32/descriptorSignatureTest '
+                             '--file-id=0 '
+                             '--descriptor-id=0 '
+                             '--permutation-count=10 '
+                             '--quicci-dump-directory=output/descriptors/complete_objects_32x32')
+    print()
+
 def runMainMenu():
     while True:
         main_menu = TerminalMenu([
@@ -1130,7 +1139,8 @@ def runMainMenu():
             "14. Run partial retrieval pipeline evaluation (Figures 14 and 15)",
             "15. Run SHREC'16 artificial benchmark (Figure 16)",
             "16. Run MinHash algorithm",
-            "17. exit"], title='---------------------- Main Menu ----------------------')
+            "17. Run descriptor signature test",
+            "18. exit"], title='---------------------- Main Menu ----------------------')
 
         choice = main_menu.show() + 1
 
@@ -1167,6 +1177,8 @@ def runMainMenu():
         if choice == 16:
             runMinhashGeneration()
         if choice == 17:
+            runDescriptorSignatureTest()
+        if choice == 18:
             return
 
 def runIntroSequence():
