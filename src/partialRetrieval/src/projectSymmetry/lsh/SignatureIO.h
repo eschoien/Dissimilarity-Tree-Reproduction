@@ -11,5 +11,5 @@
 #include <string> 
 #include <experimental/filesystem>
 
-void writeSignatures(ObjectSignature objectSig, const std::experimental::filesystem::path outputDirectory);
-// ObjectSignature* readSignature(std::experimental::filesystem::path outputFile);
+void writeSignatures(ObjectSignature objectSig, const std::experimental::filesystem::path outputDirectory, const unsigned int number_of_permutations);
+ObjectSignature *readSignature(const std::experimental::filesystem::path indexFile, const unsigned int number_of_permutations);
