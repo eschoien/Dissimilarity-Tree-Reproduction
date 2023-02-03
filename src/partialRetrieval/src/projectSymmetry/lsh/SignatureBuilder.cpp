@@ -14,29 +14,13 @@
 #include "Signature.h"
 #include "SignatureIO.h"
 #include "SignatureBuilder.h"
+#include "Permutation.h"
 
-std::vector<std::vector<int>> create_permutations(int numberOfPermutations) {
-
-    std::vector<std::vector<int>> permutations;
-
-    for (int n = 0; n < numberOfPermutations; n++) {
-
-        std::vector<int> numbers;
-
-        for (int i=0; i <= 1023; i++) {
-            numbers.push_back(i);
-        }
-
-        std::random_shuffle(&numbers[0], &numbers[1024]);
-
-        permutations.push_back(numbers);
-    }
-
-    return permutations;
-}
-
-std::vector<DescriptorSignature> buildSignaturesFromDumpDirectory(const std::experimental::filesystem::path &imageDumpDirectory, const std::experimental::filesystem::path &outputDirectory, const unsigned int number_of_permutations) {
+SignatureIndex buildSignaturesFromDumpDirectory(const std::experimental::filesystem::path &imageDumpDirectory, const std::experimental::filesystem::path &outputDirectory, const unsigned int number_of_permutations) {
     
+    SignatureIndex signatureIndex;
+    signatureIndex.objectSignatures = {};
+    // this vector currently remains empty
     std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now();
 
     std::vector<std::experimental::filesystem::path> haystackFiles = ShapeDescriptor::utilities::listDirectory(imageDumpDirectory);
@@ -56,52 +40,50 @@ std::vector<DescriptorSignature> buildSignaturesFromDumpDirectory(const std::exp
 
     // generate minhash permutations
     std::vector<std::vector<int>> permutations = create_permutations(number_of_permutations);
+    signatureIndex.permutations = permutations;
 
-    // vector for all signatures
-    std::vector<DescriptorSignature> descriptorSignatures;
-
-    std::cout << "Loading descriptors.." << std::endl;
+    std::cout << "Processing descriptors.." << std::endl;
 
     // loop through all objects
     for(unsigned int i = 0; i < haystackFiles.size(); i++) {
 
-        // array of descriptors for object
+        std::chrono::steady_clock::time_point objectStartTime = std::chrono::steady_clock::now();
+
+        // loads all the descriptors for current object
         ShapeDescriptor::cpu::array<ShapeDescriptor::QUICCIDescriptor> descriptors = ShapeDescriptor::read::QUICCIDescriptors(haystackFiles.at(i));
-        ObjectSignature* oSig = new ObjectSignature;
-        oSig->file_id = i;
+
+        ObjectSignature* objectSignature = new ObjectSignature;
+
+        objectSignature->file_id = i;
+        
         // loop through descriptors for current object
         for(unsigned int j = 0; j < descriptors.length; j++) {
-            DescriptorSignature dSig;
-            dSig.descriptor_id = j;
+            DescriptorSignature descriptorSignature;
+            descriptorSignature.descriptor_id = j;
 
-            // ShapeDescriptor::print::quicciDescriptor(descriptors.content[j]);
+            // computes descriptor signatures and inserts in place
+            computeDescriptorSignature(descriptors.content[j], &(descriptorSignature.signatures), permutations);
 
-            // perform minhash
-
-            // loop through the different permutations
-            for (unsigned int p = 0; p < number_of_permutations; p++) {
-
-                std::vector<int> permutation = permutations[p];
-
-                unsigned int m = 0;
-
-                while (m < 1024) {
-                    // std::cout << j << " " << m << " " << (permutation[m] / 32) << std::endl;
-                    if (descriptors.content[j].contents[(permutation[m] / 32)] & (1 << (permutation[m] % 32))) {
-                        break;
-                    }   
-                    m++;
-
-                }
-                //m is now the signature of this descriptor for the current permutation
-                dSig.signatures.push_back(m);
-            }
-            oSig->descriptorSignatures.push_back(dSig);
-            // delete dSig;
+            // verify that signatures are computed and placed correctly in vector
+            std::cout << descriptorSignature.signatures[0] << " " << descriptorSignature.signatures[1] << " " << descriptorSignature.signatures[2] << std::endl; 
+            
+            objectSignature->descriptorSignatures.push_back(descriptorSignature);
+            //delete descriptorSignature;
         }
-        writeSignatures(*oSig, outputDirectory);
-        std::cout << oSig->file_id << std::endl;
-        delete oSig;
+
+        // Writing currently disabled
+        // writeSignatures(*objectSignature, outputDirectory);
+
+        std::chrono::steady_clock::time_point objectEndTime = std::chrono::steady_clock::now();
+        auto objectDuration = std::chrono::duration_cast<std::chrono::milliseconds>(objectEndTime - objectStartTime);
+
+        std::cout << "ObjectFileId: " << objectSignature->file_id << std::endl;
+        std::cout << descriptors.length << " descriptors" << std::endl;
+        std::cout << objectSignature->descriptorSignatures.size() << " signatures" << std::endl;
+        std::cout << float(objectDuration.count()) / 1000.0f << " seconds" << std::endl;
+        std::cout << std::endl;
+
+        delete objectSignature;
         ShapeDescriptor::free::array(descriptors);
     }
 
@@ -111,5 +93,5 @@ std::vector<DescriptorSignature> buildSignaturesFromDumpDirectory(const std::exp
     std::cout << std::endl << "MinHash signature construction complete. " << std::endl;
     std::cout << "Total execution time: " << float(duration.count()) / 1000.0f << " seconds" << std::endl;
 
-    return descriptorSignatures;
+    return signatureIndex;
 }
