@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <vector>
 #include <atomic>
-#include <string> 
+#include <string>
 #include <shapeDescriptor/common/types/methods/RICIDescriptor.h>
 #include <shapeDescriptor/utilities/read/QUICCIDescriptors.h>
 #include <shapeDescriptor/utilities/fileutils.h>
@@ -16,13 +16,13 @@
 #include <projectSymmetry/lsh/SignatureBuilder.h>
 
 int main(int argc, const char** argv) {
-    arrrgh::parser parser("clusterbuilder", "Create indexes for QUICCI images.");
+    arrrgh::parser parser("signatureBuilder", "Create indexes for QUICCI images.");
     const auto& indexDirectory = parser.add<std::string>(
-            "index-directory", "The directory where the signature file should be stored.", '\0', arrrgh::Optional, "");
+        "index-directory", "The directory where the signature file should be stored.", '\0', arrrgh::Optional, "");
     const auto& sourceDirectory = parser.add<std::string>(
-            "quicci-dump-directory", "The directory where binary dump files of QUICCI images are stored that should be indexed.", '\0', arrrgh::Optional, "");
+        "quicci-dump-directory", "The directory where binary dump files of QUICCI images are stored that should be indexed.", '\0', arrrgh::Optional, "");
     const auto& showHelp = parser.add<bool>(
-            "help", "Show this help message.", 'h', arrrgh::Optional, false);
+        "help", "Show this help message.", 'h', arrrgh::Optional, false);
 
     try
     {
@@ -46,7 +46,7 @@ int main(int argc, const char** argv) {
 
     unsigned int number_of_permutations = 10;
 
-    std::vector<DescriptorSignature> descriptorSignatures = buildSignaturesFromDumpDirectory(sourceDirectory.value(), indexDirectory.value(), number_of_permutations);
+    SignatureIndex signatureIndex = buildSignaturesFromDumpDirectory(sourceDirectory.value(), indexDirectory.value(), number_of_permutations);
 
     // print signatures
 
@@ -62,7 +62,9 @@ int main(int argc, const char** argv) {
     //     std::cout << " " << std::endl;
     // }
 
-    std::cout << "Writing cluster file.." << std::endl;
+    std::cout << "(not implemented) Writing cluster file.." << std::endl;
+
+    // TODO: This should perhaps write the single SignatureIndex file, containing permutations and other info
 
     // writeCluster(cluster, cluster::path(indexDirectory.value()) / "index.dat");
     // TODO: Write signature file ... (not implemented)
