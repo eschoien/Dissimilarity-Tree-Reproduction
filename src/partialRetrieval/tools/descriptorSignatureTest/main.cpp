@@ -49,28 +49,19 @@ int main(int argc, const char **argv) {
 
     std::vector<std::vector<int>> permutations = create_permutations(numberOfPermutations.value());
 
-    std::vector<int> signatures;
-    computeDescriptorSignature(testDescriptor, &signatures, permutations);
+    std::vector<int> signature;
+    computeDescriptorSignature(testDescriptor, &signature, permutations);
 
-    // ---OUTPUT
+    // ----- OUTPUT -----
     std::cout << "Object# " << fileID.value() << " Descriptor# " << descriptorID.value() << std::endl;
     ShapeDescriptor::print::quicciDescriptor(testDescriptor);
 
     std::cout << "Signature: " << std::endl;
-    for (int s = 0; s < signatures.size(); s++) {
-        std::cout << signatures[s] << ' ';
-    }
-    std::cout << std::endl;
+    lsh::print::signature(signature);
 
     std::cout << "Permutations: " << std::endl;
-    for (int p = 0; p < permutations.size(); p++) {
-        std::cout << p << ": ";
-        for (int i = 0; i < 100; i++) {
-            std::cout << permutations[p][i] << " ";
-        }
-        std::cout << std::endl;
-    }
-    // ---
+    lsh::print::permutations(permutations, 50);
+    // ------------------
 
     return 0;
 }

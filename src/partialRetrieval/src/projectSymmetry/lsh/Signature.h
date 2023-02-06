@@ -1,7 +1,22 @@
 #pragma once
 
+#include <iostream>
 #include <vector>
 #include <shapeDescriptor/common/types/methods/QUICCIDescriptor.h>
+
+namespace lsh {
+    namespace print {
+        inline void signature(std::vector<int> signature) {
+            for (int s = 0; s < signature.size(); s++) {
+                std::cout << signature[s];
+                if (s < signature.size()-1) {
+                    std::cout << " "; 
+                }
+            }
+            std::cout << std::endl;
+        }
+    }
+}
 
 struct DescriptorSignature {
     unsigned int descriptor_id;
