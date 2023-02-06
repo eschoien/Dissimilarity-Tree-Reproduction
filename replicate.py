@@ -1105,9 +1105,9 @@ def runShrec16Queries():
             return
 
 def runMinhashGeneration():
-    os.makedirs('output/minhash_signatures', exist_ok=True)
+    os.makedirs('output/lsh/minhash_signatures', exist_ok=True)
     run_command_line_command('bin/build32x32/signatureBuilder '
-                             '--index-directory=output/minhash_signatures/ '
+                             '--index-directory=output/lsh '
                              '--quicci-dump-directory=output/descriptors/complete_objects_32x32')
     print()
 

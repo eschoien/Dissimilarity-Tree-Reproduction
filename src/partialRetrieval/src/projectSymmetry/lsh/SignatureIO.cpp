@@ -7,7 +7,7 @@ void writeSignatures(ObjectSignature objectSig, const std::experimental::filesys
     std::cout << outputFile << std::endl;
     std::ofstream outStream(outputFile.string(), std::ios::out | std::ios::binary);
 
-    const char headerString[4] = "SIF";
+    const char headerString[4] = "OSF";
     outStream.write(headerString, 4);
 
     // std::string commitFingerprint = GitMetadata::CommitSHA1();
@@ -38,7 +38,7 @@ ObjectSignature *readSignature(const std::experimental::filesystem::path indexFi
     char headerString[4];
     inStream.read(headerString, 4);
 
-    assert(std::string(headerString) == "SIF");
+    assert(std::string(headerString) == "OSF");
 
     // char commitFingerprint[40];
     // inStream.read(commitFingerprint, 40);
@@ -72,4 +72,61 @@ ObjectSignature *readSignature(const std::experimental::filesystem::path indexFi
     }
 
     return objectSig;
+}
+
+void writeSignatureIndex(SignatureIndex sigIndex, const std::experimental::filesystem::path outputFile) {
+
+    std::ofstream outStream(outputFile.string(), std::ios::out | std::ios::binary);
+
+    const char headerString[4] = "SIF";
+    outStream.write(headerString, 4);
+
+    unsigned long long fileCount = sigIndex.objectCount;
+    outStream.write((const char*) &fileCount, sizeof(unsigned long long));
+
+    unsigned long long numPermutations = sigIndex.permutations.size();
+    outStream.write((const char*) &numPermutations, sizeof(unsigned long long));
+
+    for (int i = 0; i < numPermutations; i++) {
+        unsigned int permutation_id = i + 1;
+        outStream.write((const char*) &permutation_id, sizeof(unsigned int));
+
+        unsigned long long permutationCount = sigIndex.permutations[i].size();
+        outStream.write((const char*) &permutationCount, sizeof(unsigned long long));
+
+        outStream.write((const char*) sigIndex.permutations[i].data(), permutationCount * sizeof(int));
+    }
+}
+
+SignatureIndex *readSignatureIndex(const std::experimental::filesystem::path indexFile) {
+    std::ifstream inStream(indexFile, std::ios::in | std::ios::binary);
+
+    SignatureIndex* sigIndex = new SignatureIndex;
+
+    char headerString[4];
+    inStream.read(headerString, 4);
+
+    assert(std::string(headerString) == "SIF");
+
+    unsigned long long fileCount;
+    inStream.read((char*) &fileCount, sizeof(unsigned long long));
+    sigIndex->objectCount = fileCount;
+
+    unsigned long long numPermutations;
+    inStream.read((char*) &numPermutations, sizeof(unsigned long long));
+
+    sigIndex->permutations.resize(numPermutations);
+
+    for (int i = 0; i < numPermutations; i++) {
+        unsigned int permutation_id;
+        inStream.read((char*) &permutation_id, sizeof(unsigned int));
+
+        unsigned long long permutationCount;
+        inStream.read((char*) &permutationCount, sizeof(unsigned long long));
+        sigIndex->permutations[i].resize(permutationCount);
+
+        inStream.read((char*) sigIndex->permutations[i].data(), permutationCount * sizeof(int));
+    }
+
+    return sigIndex;
 }

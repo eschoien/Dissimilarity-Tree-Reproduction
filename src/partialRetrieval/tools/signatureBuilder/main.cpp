@@ -46,7 +46,7 @@ int main(int argc, const char** argv) {
 
     unsigned int number_of_permutations = 10;
 
-    SignatureIndex signatureIndex = buildSignaturesFromDumpDirectory(sourceDirectory.value(), indexDirectory.value(), number_of_permutations);
+    SignatureIndex signatureIndex = buildSignaturesFromDumpDirectory(sourceDirectory.value(), std::experimental::filesystem::path(indexDirectory.value()) / "minhash_signatures/", number_of_permutations);
 
     // print signatures
 
@@ -64,11 +64,7 @@ int main(int argc, const char** argv) {
 
     std::cout << "(not implemented) Writing cluster file.." << std::endl;
 
-    // TODO: This should perhaps write the single SignatureIndex file, containing permutations and other info
-
-    // writeCluster(cluster, cluster::path(indexDirectory.value()) / "index.dat");
-    // TODO: Write signature file ... (not implemented)
-    // written to file during buildSignatures
+    writeSignatureIndex(signatureIndex, std::experimental::filesystem::path(indexDirectory.value()) / "index.dat");
 
     std::cout << std::endl << "Done." << std::endl;
 }

@@ -19,7 +19,7 @@
 SignatureIndex buildSignaturesFromDumpDirectory(const std::experimental::filesystem::path &imageDumpDirectory, const std::experimental::filesystem::path &outputDirectory, const unsigned int number_of_permutations) {
     
     SignatureIndex signatureIndex;
-    signatureIndex.objectSignatures = {};
+    signatureIndex.objectCount = 0;
     // this vector currently remains empty
     std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now();
 
@@ -55,6 +55,7 @@ SignatureIndex buildSignaturesFromDumpDirectory(const std::experimental::filesys
         ObjectSignature* objectSignature = new ObjectSignature;
 
         objectSignature->file_id = i + 1;
+        signatureIndex.objectCount++;
         
         // loop through descriptors for current object
         for(unsigned int j = 0; j < descriptors.length; j++) {
@@ -70,9 +71,7 @@ SignatureIndex buildSignaturesFromDumpDirectory(const std::experimental::filesys
             objectSignature->descriptorSignatures.push_back(descriptorSignature);
             //delete descriptorSignature;
         }
-
-        // Writing currently disabled
-        // writeSignatures(*objectSignature, outputDirectory);
+        writeSignatures(*objectSignature, outputDirectory, number_of_permutations);
 
         std::chrono::steady_clock::time_point objectEndTime = std::chrono::steady_clock::now();
         auto objectDuration = std::chrono::duration_cast<std::chrono::milliseconds>(objectEndTime - objectStartTime);
@@ -82,7 +81,6 @@ SignatureIndex buildSignaturesFromDumpDirectory(const std::experimental::filesys
         std::cout << objectSignature->descriptorSignatures.size() << " signatures" << std::endl;
         std::cout << float(objectDuration.count()) / 1000.0f << " seconds" << std::endl;
         std::cout << std::endl;
-        writeSignatures(*objectSignature, outputDirectory, number_of_permutations);
         delete objectSignature;
         ShapeDescriptor::free::array(descriptors);
     }

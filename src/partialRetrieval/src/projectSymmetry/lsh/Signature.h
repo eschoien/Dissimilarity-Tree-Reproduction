@@ -15,7 +15,7 @@ struct ObjectSignature {
 
 /* Signature metadata, minhash permutations etc. (add more here) */
 struct SignatureIndex {
-    std::vector<ObjectSignature> objectSignatures;
+    int objectCount;
     std::vector<std::vector<int>> permutations;
 };
 
