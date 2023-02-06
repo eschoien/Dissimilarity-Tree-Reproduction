@@ -9,33 +9,51 @@
 #include <projectSymmetry/lsh/Signature.h>
 #include <atomic>
 #include <shapeDescriptor/common/types/methods/RICIDescriptor.h>
-#include <shapeDescriptor/utilities/free/array.h>
 #include <projectSymmetry/descriptors/quicciStats.h>
 #include <projectSymmetry/descriptors/quicciStatsCPU.h>
 
+int main(int argc, const char **argv) {
+    arrrgh::parser parser("descriptorSignatureTest", "Print Minhash signature and permutations for QUICCI descriptor.");
+    const auto& sourceDirectory = parser.add<std::string>(
+        "quicci-dump-directory", "The directory of binary dump files of QUICCI images that should be used.", '\0', arrrgh::Required, "output/descriptors/complete_objects_32x32");
+    const auto& fileID = parser.add<int>(
+        "file-id", "Object file id", '\0', arrrgh::Optional, 0);
+    const auto& descriptorID = parser.add<int>(
+        "descriptor-id", "Descriptor id", '\0', arrrgh::Optional, 0);
+    const auto& numberOfPermutations = parser.add<int>(
+        "permutation-count", "Number of Minhash functions (signature length)", '\0', arrrgh::Optional, 10);
 
-void testDescriptorSignature(const std::experimental::filesystem::path &sourceDirectory, const int fileID, const int descriptorID, const int numberOfPermutations) {
+    const auto& showHelp = parser.add<bool>(
+        "help", "Show this help message.", 'h', arrrgh::Optional, false);
 
-    // vector for signatures
-    std::vector<int> signatures;
-    std::vector<int>* signaturesPtr = &signatures;
+    try {
+        parser.parse(argc, argv);
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Error parsing arguments: " << e.what() << std::endl;
+        parser.show_usage(std::cerr);
+        exit(1);
+    }
 
-    std::cout << "Reading files from: " << sourceDirectory << std::endl;
-    std::cout << "Permutations#: " << numberOfPermutations << std::endl;
+    // Show help if desired
+    if (showHelp.value()) {
+        return 0;
+    }
 
-    std::vector<std::vector<int>> permutations = create_permutations(numberOfPermutations);
-
-    std::vector<std::experimental::filesystem::path> haystackFiles = ShapeDescriptor::utilities::listDirectory(sourceDirectory);
+    std::cout << "Reading files from directory: " << sourceDirectory.value() << std::endl;
 
     // Get the specified descriptor
-    ShapeDescriptor::cpu::array<ShapeDescriptor::QUICCIDescriptor> descriptors = ShapeDescriptor::read::QUICCIDescriptors(haystackFiles.at(fileID));
-    ShapeDescriptor::QUICCIDescriptor testDescriptor = descriptors.content[descriptorID];
+    std::vector<std::experimental::filesystem::path> haystackFiles = ShapeDescriptor::utilities::listDirectory(sourceDirectory.value());
+    ShapeDescriptor::cpu::array<ShapeDescriptor::QUICCIDescriptor> descriptors = ShapeDescriptor::read::QUICCIDescriptors(haystackFiles.at(fileID.value()));
+    ShapeDescriptor::QUICCIDescriptor testDescriptor = descriptors.content[descriptorID.value()];
 
-    // Compute and place signatures into vector
+    std::vector<std::vector<int>> permutations = create_permutations(numberOfPermutations.value());
 
-    computeDescriptorSignature(testDescriptor, signaturesPtr, permutations);
+    std::vector<int> signatures;
+    computeDescriptorSignature(testDescriptor, &signatures, permutations);
 
-    std::cout << "Object# " << fileID << " Descriptor# " << descriptorID << std::endl;
+    // ---OUTPUT
+    std::cout << "Object# " << fileID.value() << " Descriptor# " << descriptorID.value() << std::endl;
     ShapeDescriptor::print::quicciDescriptor(testDescriptor);
 
     std::cout << "Signature: " << std::endl;
@@ -52,29 +70,7 @@ void testDescriptorSignature(const std::experimental::filesystem::path &sourceDi
         }
         std::cout << std::endl;
     }
-}
-    
-
-int main(int argc, const char **argv) {
-    arrrgh::parser parser("descriptorSignatureTest", "Create indexes for QUICCI images.");
-    const auto& sourceDirectory = parser.add<std::string>(
-        "quicci-dump-directory", "The directory where binary dump files of QUICCI images are stored that should be indexed.", '\0', arrrgh::Required, "output/descriptors/complete_objects_32x32");
-    const auto& fileID = parser.add<int>(
-        "file-id", "Object file id", '\0', arrrgh::Optional, 0);
-    const auto& descriptorID = parser.add<int>(
-        "descriptor-id", "Descriptor id", '\0', arrrgh::Optional, 0);
-    const auto& numberOfPermutations = parser.add<int>(
-        "permutation-count", "Number of Minhash functions (signature length)", '\0', arrrgh::Optional, 10);
-
-    const auto &showHelp = parser.add<bool>(
-        "help", "Show this help message.", 'h', arrrgh::Optional, false);
-
-    // Show help if desired
-    if (showHelp.value()) {
-        return 0;
-    }
-    
-    testDescriptorSignature(sourceDirectory.value(), fileID.value(), descriptorID.value(), numberOfPermutations.value());
+    // ---
 
     return 0;
 }
