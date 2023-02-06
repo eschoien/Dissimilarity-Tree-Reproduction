@@ -84,7 +84,7 @@ void writeSignatureIndex(SignatureIndex sigIndex, const std::experimental::files
     unsigned long long fileCount = sigIndex.objectCount;
     outStream.write((const char*) &fileCount, sizeof(unsigned long long));
 
-    unsigned long long numPermutations = sigIndex.permutations.size();
+    unsigned long long numPermutations = sigIndex.numPermutations;
     outStream.write((const char*) &numPermutations, sizeof(unsigned long long));
 
     for (int i = 0; i < numPermutations; i++) {
@@ -115,6 +115,7 @@ SignatureIndex *readSignatureIndex(const std::experimental::filesystem::path ind
     unsigned long long numPermutations;
     inStream.read((char*) &numPermutations, sizeof(unsigned long long));
 
+    sigIndex->numPermutations = numPermutations;
     sigIndex->permutations.resize(numPermutations);
 
     for (int i = 0; i < numPermutations; i++) {

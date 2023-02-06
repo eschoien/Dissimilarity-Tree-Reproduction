@@ -62,7 +62,7 @@ int main(int argc, const char** argv) {
     //     std::cout << " " << std::endl;
     // }
 
-    std::cout << "(not implemented) Writing cluster file.." << std::endl;
+    std::cout << "Writing Signature index file.." << std::endl;
 
     writeSignatureIndex(signatureIndex, std::experimental::filesystem::path(indexDirectory.value()) / "index.dat");
 

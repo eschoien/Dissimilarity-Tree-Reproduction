@@ -20,6 +20,7 @@ SignatureIndex buildSignaturesFromDumpDirectory(const std::experimental::filesys
     
     SignatureIndex signatureIndex;
     signatureIndex.objectCount = 0;
+    signatureIndex.numPermutations = number_of_permutations;
     // this vector currently remains empty
     std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now();
 
