@@ -54,18 +54,18 @@ SignatureIndex buildSignaturesFromDumpDirectory(const std::experimental::filesys
 
         ObjectSignature* objectSignature = new ObjectSignature;
 
-        objectSignature->file_id = i;
+        objectSignature->file_id = i + 1;
         
         // loop through descriptors for current object
         for(unsigned int j = 0; j < descriptors.length; j++) {
             DescriptorSignature descriptorSignature;
-            descriptorSignature.descriptor_id = j;
+            descriptorSignature.descriptor_id = j + 1;
 
             // computes descriptor signatures and inserts in place
             computeDescriptorSignature(descriptors.content[j], &(descriptorSignature.signatures), permutations);
 
             // verify that signatures are computed and placed correctly in vector
-            std::cout << descriptorSignature.signatures[0] << " " << descriptorSignature.signatures[1] << " " << descriptorSignature.signatures[2] << std::endl; 
+            // std::cout << descriptorSignature.signatures[0] << " " << descriptorSignature.signatures[1] << " " << descriptorSignature.signatures[2] << std::endl; 
             
             objectSignature->descriptorSignatures.push_back(descriptorSignature);
             //delete descriptorSignature;
@@ -82,7 +82,7 @@ SignatureIndex buildSignaturesFromDumpDirectory(const std::experimental::filesys
         std::cout << objectSignature->descriptorSignatures.size() << " signatures" << std::endl;
         std::cout << float(objectDuration.count()) / 1000.0f << " seconds" << std::endl;
         std::cout << std::endl;
-
+        writeSignatures(*objectSignature, outputDirectory, number_of_permutations);
         delete objectSignature;
         ShapeDescriptor::free::array(descriptors);
     }
