@@ -1,16 +1,8 @@
 #include <arrrgh.hpp>
 #include <iostream>
-#include <algorithm>
-#include <vector>
 #include <atomic>
 #include <string>
-#include <shapeDescriptor/common/types/methods/RICIDescriptor.h>
-#include <shapeDescriptor/utilities/read/QUICCIDescriptors.h>
 #include <shapeDescriptor/utilities/fileutils.h>
-#include <shapeDescriptor/utilities/free/array.h>
-#include <shapeDescriptor/utilities/print/QuicciDescriptor.h>
-#include <projectSymmetry/descriptors/quicciStats.h>
-#include <projectSymmetry/descriptors/quicciStatsCPU.h>
 #include <projectSymmetry/lsh/Signature.h>
 #include <projectSymmetry/lsh/SignatureIO.h>
 #include <projectSymmetry/lsh/SignatureBuilder.h>
@@ -43,24 +35,11 @@ int main(int argc, const char** argv) {
 
     std::cout << "Computing signatures from files in " << sourceDirectory.value() << "..." << std::endl;
 
-
     unsigned int number_of_permutations = 10;
 
+    std::cout << "Number of Minhash functions / permutations: " << number_of_permutations << std::endl;
+
     SignatureIndex signatureIndex = buildSignaturesFromDumpDirectory(sourceDirectory.value(), std::experimental::filesystem::path(indexDirectory.value()) / "minhash_signatures/", number_of_permutations);
-
-    // print signatures
-
-    // works but gives segfault for too many descriptors?
-    // for (int i = 0; i < descriptorSignatures.size(); i++) {
-
-    //     std::cout << descriptorSignatures[i].file_id << "-";
-    //     std::cout << descriptorSignatures[i].descriptor_id << ": ";
-
-    //     for (int j = 0; j < number_of_permutations; j++) {
-    //         std::cout << descriptorSignatures[i].signatures[j] << " ";
-    //     }
-    //     std::cout << " " << std::endl;
-    // }
 
     std::cout << "Writing Signature index file.." << std::endl;
 
