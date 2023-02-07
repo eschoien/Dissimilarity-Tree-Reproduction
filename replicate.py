@@ -1120,6 +1120,16 @@ def runDescriptorSignatureTest():
                              '--quicci-dump-directory=output/descriptors/complete_objects_32x32')
     print()
 
+def runSignatureMatchingTest():
+    run_command_line_command('bin/build32x32/signatureMatchingTest '
+                             '--file-id=100 '
+                             '--descriptor-id=100 '
+                             '--quicci-dump-directory=output/descriptors/complete_objects_32x32 '
+                             '--signature-dump-directory=output/lsh/minhash_signatures'
+                             )
+    print()
+
+
 def runMainMenu():
     while True:
         main_menu = TerminalMenu([
@@ -1140,7 +1150,8 @@ def runMainMenu():
             "15. Run SHREC'16 artificial benchmark (Figure 16)",
             "16. Run MinHash algorithm",
             "17. Run descriptor signature test",
-            "18. exit"], title='---------------------- Main Menu ----------------------')
+            "18. Run descriptor signature matching test",
+            "19. exit"], title='---------------------- Main Menu ----------------------')
 
         choice = main_menu.show() + 1
 
@@ -1179,6 +1190,8 @@ def runMainMenu():
         if choice == 17:
             runDescriptorSignatureTest()
         if choice == 18:
+            runSignatureMatchingTest()
+        if choice == 19:
             return
 
 def runIntroSequence():

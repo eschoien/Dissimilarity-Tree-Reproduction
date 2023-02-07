@@ -131,3 +131,6 @@ target_link_libraries(signatureBuilder glfw projectsymmetry ShapeDescriptor stdc
 
 add_executable(descriptorSignatureTest tools/descriptorSignatureTest/main.cpp)
 target_link_libraries(descriptorSignatureTest glfw projectsymmetry ShapeDescriptor stdc++fs fast-lzma2 pmp gitinfo)
+
+add_executable(signatureMatchingTest tools/signatureMatchingTest/main.cpp)
+target_link_libraries(signatureMatchingTest glfw projectsymmetry ShapeDescriptor stdc++fs fast-lzma2 pmp gitinfo)
