@@ -5,4 +5,4 @@
 #include <shapeDescriptor/utilities/fileutils.h>
 #include "Signature.h"
 
-SignatureIndex buildSignaturesFromDumpDirectory(const std::experimental::filesystem::path &imageDumpDirectory, const std::experimental::filesystem::path &outputDirectory, const unsigned int number_of_permutations);
+SignatureIndex buildSignaturesFromDumpDirectory(const std::experimental::filesystem::path &imageDumpDirectory, const std::experimental::filesystem::path &outputDirectory, const unsigned int numberOfPermutations);

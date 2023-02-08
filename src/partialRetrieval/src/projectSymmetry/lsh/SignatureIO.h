@@ -11,8 +11,9 @@
 #include <string> 
 #include <experimental/filesystem>
 
-void writeSignatures(ObjectSignature objectSig, const std::experimental::filesystem::path outputDirectory, const unsigned int number_of_permutations);
-ObjectSignature *readSignature(const std::experimental::filesystem::path indexFile, const unsigned int number_of_permutations);
+// can we make read and write independent of number of permutations?
+void writeSignatures(ObjectSignature objectSig, const std::experimental::filesystem::path outputDirectory, const unsigned int numberOfPermutations);
+ObjectSignature *readSignature(const std::experimental::filesystem::path indexFile, const unsigned int numberOfPermutations);
 
 void writeSignatureIndex(SignatureIndex sigIndex, const std::experimental::filesystem::path outputFile);
 SignatureIndex *readSignatureIndex(const std::experimental::filesystem::path indexFile);

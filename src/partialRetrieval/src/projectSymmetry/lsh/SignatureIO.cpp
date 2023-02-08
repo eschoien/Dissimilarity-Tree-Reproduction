@@ -1,6 +1,6 @@
 #include "SignatureIO.h"
 
-void writeSignatures(ObjectSignature objectSig, const std::experimental::filesystem::path outputDirectory, const unsigned int number_of_permutations) {
+void writeSignatures(ObjectSignature objectSig, const std::experimental::filesystem::path outputDirectory, const unsigned int numberOfPermutations) {
 
     
     const std::experimental::filesystem::path outputFile = outputDirectory.string() + "T" + std::to_string(objectSig.file_id) + ".dat";
@@ -26,11 +26,11 @@ void writeSignatures(ObjectSignature objectSig, const std::experimental::filesys
         unsigned int descriptorID = descriptorSig.descriptor_id;
         outStream.write((const char*) &descriptorID, sizeof(unsigned int));
 
-        outStream.write((const char*) descriptorSig.signatures.data(), number_of_permutations * sizeof(int));
+        outStream.write((const char*) descriptorSig.signatures.data(), numberOfPermutations * sizeof(int));
     }
 }
 
-ObjectSignature *readSignature(const std::experimental::filesystem::path indexFile, const unsigned int number_of_permutations) {
+ObjectSignature *readSignature(const std::experimental::filesystem::path indexFile, const unsigned int numberOfPermutations) {
     std::ifstream inStream(indexFile, std::ios::in | std::ios::binary);
 
     ObjectSignature* objectSig = new ObjectSignature;
@@ -66,9 +66,9 @@ ObjectSignature *readSignature(const std::experimental::filesystem::path indexFi
         inStream.read((char*) &descriptorID, sizeof(unsigned int));
         objectSig->descriptorSignatures[i].descriptor_id = descriptorID;
 
-        objectSig->descriptorSignatures[i].signatures.resize(number_of_permutations);
+        objectSig->descriptorSignatures[i].signatures.resize(numberOfPermutations);
 
-        inStream.read((char*) objectSig->descriptorSignatures[i].signatures.data(), number_of_permutations * sizeof(int));
+        inStream.read((char*) objectSig->descriptorSignatures[i].signatures.data(), numberOfPermutations * sizeof(int));
     }
 
     return objectSig;

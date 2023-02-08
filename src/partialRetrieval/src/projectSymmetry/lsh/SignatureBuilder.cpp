@@ -15,11 +15,11 @@
 #include "SignatureBuilder.h"
 #include "Permutation.h"
 
-SignatureIndex buildSignaturesFromDumpDirectory(const std::experimental::filesystem::path &imageDumpDirectory, const std::experimental::filesystem::path &outputDirectory, const unsigned int number_of_permutations) {
+SignatureIndex buildSignaturesFromDumpDirectory(const std::experimental::filesystem::path &imageDumpDirectory, const std::experimental::filesystem::path &outputDirectory, const unsigned int numberOfPermutations) {
     
     SignatureIndex signatureIndex;
     signatureIndex.objectCount = 0;
-    signatureIndex.numPermutations = number_of_permutations;
+    signatureIndex.numPermutations = numberOfPermutations;
 
 
     std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now();
@@ -32,7 +32,7 @@ SignatureIndex buildSignaturesFromDumpDirectory(const std::experimental::filesys
     */
 
     // generate minhash permutations
-    signatureIndex.permutations = create_permutations(number_of_permutations);
+    signatureIndex.permutations = create_permutations(numberOfPermutations);
 
     std::cout << "Processing descriptors.." << std::endl;
 
@@ -60,7 +60,7 @@ SignatureIndex buildSignaturesFromDumpDirectory(const std::experimental::filesys
         }
 
         //Write object signature to file
-        writeSignatures(*objectSignature, outputDirectory, number_of_permutations);
+        writeSignatures(*objectSignature, outputDirectory, numberOfPermutations);
 
         // End time for current object
         std::chrono::steady_clock::time_point objectEndTime = std::chrono::steady_clock::now();
@@ -71,6 +71,7 @@ SignatureIndex buildSignaturesFromDumpDirectory(const std::experimental::filesys
         std::cout << descriptors.length << " descriptors" << std::endl;
         std::cout << objectSignature->descriptorSignatures.size() << " signatures" << std::endl;        
         std::cout << float(objectDuration.count()) / 1000.0f << " seconds" << std::endl;
+        std::cout << "Descriptors per second: " << descriptors.length / (float(objectDuration.count()) / 1000.0f) << std::endl;
         std::cout << std::endl;
         // ------------------
 

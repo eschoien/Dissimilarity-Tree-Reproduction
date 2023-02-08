@@ -221,9 +221,9 @@ int main(int argc, const char** argv) {
     // Cluster* cluster = buildClusterFromDumpDirectory(sourceDirectory.value(), indexDirectory.value(), 32, forceCPU.value());
     // TODO: Generate the signatures ...
 
-    unsigned int number_of_permutations = 10;
+    unsigned int numberOfPermutations = 10;
 
-    std::vector<DescriptorSignature> descriptorSignatures = buildSignaturesFromDumpDirectory(sourceDirectory.value(), indexDirectory.value(), number_of_permutations);
+    std::vector<DescriptorSignature> descriptorSignatures = buildSignaturesFromDumpDirectory(sourceDirectory.value(), indexDirectory.value(), numberOfPermutations);
 
     // print signatures
 
@@ -233,7 +233,7 @@ int main(int argc, const char** argv) {
     //     std::cout << descriptorSignatures[i].file_id << "-";
     //     std::cout << descriptorSignatures[i].descriptor_id << ": ";
 
-    //     for (int j = 0; j < number_of_permutations; j++) {
+    //     for (int j = 0; j < numberOfPermutations; j++) {
     //         std::cout << descriptorSignatures[i].signatures[j] << " ";
     //     }
     //     std::cout << " " << std::endl;
