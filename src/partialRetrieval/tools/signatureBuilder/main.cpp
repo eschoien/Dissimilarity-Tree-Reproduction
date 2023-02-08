@@ -13,6 +13,8 @@ int main(int argc, const char** argv) {
         "index-directory", "The directory where the signature file should be stored.", '\0', arrrgh::Optional, "");
     const auto& sourceDirectory = parser.add<std::string>(
         "quicci-dump-directory", "The directory where binary dump files of QUICCI images are stored that should be indexed.", '\0', arrrgh::Optional, "");
+    const auto& numberOfPermutations = parser.add<int>(
+        "permutation-count", "The number of MInhash permutations / signature length", '\0', arrrgh::Optional, 10);
     const auto& showHelp = parser.add<bool>(
         "help", "Show this help message.", 'h', arrrgh::Optional, false);
 
@@ -35,11 +37,9 @@ int main(int argc, const char** argv) {
 
     std::cout << "Computing signatures from files in " << sourceDirectory.value() << "..." << std::endl;
 
-    unsigned int number_of_permutations = 10;
+    std::cout << "Number of Minhash functions / permutations: " << numberOfPermutations.value() << std::endl;
 
-    std::cout << "Number of Minhash functions / permutations: " << number_of_permutations << std::endl;
-
-    SignatureIndex signatureIndex = buildSignaturesFromDumpDirectory(sourceDirectory.value(), std::experimental::filesystem::path(indexDirectory.value()) / "minhash_signatures/", number_of_permutations);
+    SignatureIndex signatureIndex = buildSignaturesFromDumpDirectory(sourceDirectory.value(), std::experimental::filesystem::path(indexDirectory.value()) / "minhash_signatures/", numberOfPermutations.value());
 
     std::cout << "Writing Signature index file.." << std::endl;
 
