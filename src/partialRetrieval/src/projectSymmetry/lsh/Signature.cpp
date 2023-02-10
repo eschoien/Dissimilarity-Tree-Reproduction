@@ -28,3 +28,16 @@ void computeDescriptorSignature(ShapeDescriptor::QUICCIDescriptor descriptor, st
         signaturePtr->push_back(m);
     }
 }
+
+double computeJaccardSimilarity(std::vector<int> signature1, std::vector<int> signature2) {
+
+    unsigned int matchScore = 0;
+
+    for (unsigned int k = 0; k < signature1.size(); k++) {
+        if (signature1[k] == signature2[k]) {
+            matchScore++;
+        }
+    }
+
+    return (double) matchScore / signature1.size();
+}

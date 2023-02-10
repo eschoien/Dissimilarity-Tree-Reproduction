@@ -1109,7 +1109,7 @@ def computeSignatures():
     run_command_line_command('bin/build32x32/signatureBuilder '
                              '--index-directory=output/lsh '
                              '--quicci-dump-directory=output/descriptors/complete_objects_32x32 '
-                             '--permutation-count=20')
+                             '--permutation-count=10')
     print()
 
 
@@ -1123,11 +1123,10 @@ def runDescriptorSignatureTest():
 
 def runSignatureMatchingTest():
     run_command_line_command('bin/build32x32/signatureMatchingTest '
-                             '--file-id=100 '
-                             '--descriptor-id=100 '
+                             '--file-id=50 '
+                             '--descriptor-id=80 '
                              '--quicci-dump-directory=output/descriptors/complete_objects_32x32 '
-                             '--signature-dump-directory=output/lsh/minhash_signatures'
-                             )
+                             '--signature-dump-directory=output/lsh/minhash_signatures')
     print()
 
 
