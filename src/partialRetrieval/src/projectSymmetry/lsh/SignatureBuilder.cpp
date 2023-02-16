@@ -47,7 +47,11 @@ SignatureIndex buildSignaturesFromDumpDirectory(const std::experimental::filesys
 
         ObjectSignature* objectSignature = new ObjectSignature;
 
-        objectSignature->file_id = i + 1;
+        // objectSignature->file_id = i + 1;
+        std::string path_string = haystackFiles.at(i);
+        std::size_t pos = path_string.find("/T");
+        objectSignature->file_id = std::stoi(path_string.substr(pos));
+        std::cout << objectSignature->file_id << std::endl;
         signatureIndex.objectCount++;
         
         // loop through descriptors for current object
@@ -56,7 +60,6 @@ SignatureIndex buildSignaturesFromDumpDirectory(const std::experimental::filesys
             descriptorSignature.descriptor_id = j + 1;
             computeDescriptorSignature(descriptors.content[j], &(descriptorSignature.signatures), signatureIndex.permutations);
             objectSignature->descriptorSignatures.push_back(descriptorSignature);
-            //delete descriptorSignature;
         }
 
         //Write object signature to file
