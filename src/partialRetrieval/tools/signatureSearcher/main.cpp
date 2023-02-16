@@ -4,6 +4,19 @@
 #include <vector>
 #include <atomic>
 #include <string> 
+#include <shapeDescriptor/cpu/types/array.h>
+#include <shapeDescriptor/gpu/types/array.h>
+#include <shapeDescriptor/gpu/types/Mesh.h>
+#include <shapeDescriptor/gpu/radialIntersectionCountImageGenerator.cuh>
+#include <shapeDescriptor/common/types/OrientedPoint.h>
+#include <shapeDescriptor/utilities/read/MeshLoader.h>
+#include <shapeDescriptor/utilities/copy/mesh.h>
+#include <shapeDescriptor/utilities/copy/array.h>
+#include <shapeDescriptor/utilities/free/mesh.h>
+#include <shapeDescriptor/utilities/kernels/spinOriginBufferGenerator.h>
+#include <shapeDescriptor/utilities/CUDAContextCreator.h>
+#include <projectSymmetry/descriptors/binaryRICIConverter.h>
+#include <projectSymmetry/clustering/IndexQueryer.h>
 #include <shapeDescriptor/common/types/methods/RICIDescriptor.h>
 #include <shapeDescriptor/utilities/read/QUICCIDescriptors.h>
 #include <shapeDescriptor/utilities/fileutils.h>
@@ -14,6 +27,91 @@
 #include <projectSymmetry/lsh/Signature.h>
 #include <projectSymmetry/lsh/SignatureIO.h>
 #include <projectSymmetry/lsh/SignatureBuilder.h>
+
+void runSignatureQuery(
+        std::experimental::filesystem::path queryFile,
+        SignatureIndex *signatureIndex,
+        float supportRadius,
+        std::vector<std::experimental::filesystem::path> &haystackFiles
+        ) {
+
+  // --- load partial object and compute descriptors
+    ShapeDescriptor::cpu::Mesh mesh = ShapeDescriptor::utilities::loadMesh(queryFile, true);
+    ShapeDescriptor::gpu::Mesh gpuMesh = ShapeDescriptor::copy::hostMeshToDevice(mesh);
+
+    ShapeDescriptor::gpu::array<ShapeDescriptor::OrientedPoint> descriptorOrigins = ShapeDescriptor::utilities::generateSpinOriginBuffer(
+            gpuMesh);
+
+    // Compute the descriptor(s)
+    ShapeDescriptor::gpu::array<ShapeDescriptor::RICIDescriptor> riciDescriptors =
+            ShapeDescriptor::gpu::generateRadialIntersectionCountImages(gpuMesh, descriptorOrigins, supportRadius);
+
+    ShapeDescriptor::gpu::array<ShapeDescriptor::QUICCIDescriptor> descriptors = convertRICIToModifiedQUICCI(riciDescriptors);
+    ShapeDescriptor::cpu::array<ShapeDescriptor::QUICCIDescriptor> queryDescriptors = ShapeDescriptor::copy::deviceArrayToHost(descriptors);
+    // ----
+
+    /*
+    std::random_device rd("/dev/urandom");
+    size_t randomSeed = seed != 0 ? seed : rd();
+    std::minstd_rand0 generator{randomSeed};
+    std::uniform_real_distribution<float> distribution(0, 1);
+    */
+
+
+    unsigned int descriptorsPerObjectLimit = 2000;
+    double JACCARD_THRESHOLD = 0.5;
+
+    
+
+    std::vector<int> objectScores(haystackFiles.size(), 0);
+   
+    // Create partial object signatures
+    ObjectSignature* queryObjectSignature = new ObjectSignature;
+    queryObjectSignature->file_id = std::stoi(queryFile.string());
+
+    std::cout << "Partial object: " << queryObjectSignature->file_id << std::endl;
+
+    for(unsigned int i = 0; i < descriptorsPerObjectLimit; i++) {
+            DescriptorSignature descriptorSignature;
+            descriptorSignature.descriptor_id = i + 1;
+            computeDescriptorSignature(queryDescriptors.content[i], &(descriptorSignature.signatures), signatureIndex->permutations);
+            queryObjectSignature->descriptorSignatures.push_back(descriptorSignature);
+    }
+
+
+    // loop through signature index object signatures
+    for(unsigned int i = 0; i < haystackFiles.size(); i++) {
+        ObjectSignature* objectSignature = new ObjectSignature;
+        objectSignature = readSignature(haystackFiles.at(i), signatureIndex->numPermutations);
+
+        // loop through descripor signatures of signature index complete objects
+        for (unsigned int j = 0; j < descriptorsPerObjectLimit; j++) {
+
+            std::vector<int> candidateSignature =  objectSignature->descriptorSignatures[j].signatures;
+            
+            for(unsigned int k = 0; k < queryObjectSignature->descriptorSignatures.size(); k++) {
+
+                std::vector<int> querySignature = queryObjectSignature->descriptorSignatures[k].signatures;
+
+                double jaccardSimilarity = computeJaccardSimilarity(querySignature, candidateSignature);
+            
+                if (jaccardSimilarity >= JACCARD_THRESHOLD) {
+                    objectScores[objectSignature->file_id-1]++;        
+                }
+
+            }
+        delete objectSignature;
+        }
+    }   
+    delete queryObjectSignature;
+
+    // best matching object
+    // returns the object with the highest number of descriptor signatures with jaccard similarity greater than threshold
+    unsigned int bestMatch = std::distance(objectScores.begin(), std::max_element(objectScores.begin(), objectScores.end())) + 1;
+    std::cout << "Best matching object" << bestMatch << std::endl;
+
+
+}
 
 // modified from another object search, needs further changes
 int main(int argc, const char **argv) {
@@ -62,102 +160,29 @@ int main(int argc, const char **argv) {
         return 0;
     }
 
-    //std::vector<std::experimental::filesystem::path> queryFiles = ShapeDescriptor::utilities::listDirectory(queryDirectory.value());
-    //std::vector<std::experimental::filesystem::path> haystackFiles = ShapeDescriptor::utilities::listDirectory(haystackDirectory.value());
+    std::vector<std::experimental::filesystem::path> queryFiles = ShapeDescriptor::utilities::listDirectory(queryDirectory.value());
+    std::vector<std::experimental::filesystem::path> haystackFiles = ShapeDescriptor::utilities::listDirectory(signatureDirectory.value());
 
-    // TODO:
-    // load partial query objects
+    SignatureIndex *signatureIndex = readSignatureIndex("output/lsh/index.dat");
 
-        // generate quicci descriptors
-        
-        // generate descriptor signatures
+    std::vector<std::vector<int>> permutations = signatureIndex->permutations;
 
-    // should have a objectSignature for the partial object at this point
-
-        // loop through all descriptor signatures for object
-
-        // compute jaccard similarity
-
-        // keep the closest match
-
-
-
-
-    /* COPIED FOR REFERENCE
-
-    std::vector<ObjectQueryResult> searchResults;
-
-    unsigned int startIndex = subsetStartIndex.value();
-    unsigned int endIndex = subsetEndIndex.value() != -1 ? subsetEndIndex.value() : queryFiles.size();
-    for (unsigned int queryFile = startIndex; queryFile < endIndex; queryFile++)
-    {
-        std::cout << "Processing query " << (queryFile + 1) << "/" << endIndex << ": " << queryFiles.at(queryFile).string() << std::endl;
-
-        ObjectQueryResult queryResult = runObjectQuery(
-            queryFiles.at(queryFile), cluster, supportRadius.value(), seed.value(),
-            resultsPerQuery.value(), consensusThreshold.value(), haystackFiles, outputProgressionFile.value(), progressionIterationLimit.value());
-
-        searchResults.push_back(queryResult);
+    runSignatureQuery(queryFiles.at(0), signatureIndex, supportRadius, haystackFiles);
+   
+    // --- TODO: Loop and query partial objects -----
+    /*
+    ObjectQueryResult runSignatureQuery(
+        std::experimental::filesystem::path queryFile,
+        std::vector<std::vector<int>> permutations,
+        float supportRadius,
+        size_t seed,
+        unsigned int resultsPerQuery,
+        unsigned int consensusThreshold,
+        std::vector<std::experimental::filesystem::path> &haystackFiles,
+        std::string outputProgressionFile,
+        int progressionFileIterationLimit)
     */
-
-
-        /*
-                if(outputFile.value() != "NONE_SELECTED") {
-                    json outJson;
-
-        std::cout << std::endl << "Done." << std::endl;
-                    outJson["version"] = "v8";
-                    outJson["resultCount"] = resultsPerQuery.value();
-                    outJson["queryObjectSupportRadius"] = supportRadius.value();
-                    outJson["buildinfo"] = {};
-                    outJson["buildinfo"]["commit"] = GitMetadata::CommitSHA1();
-                    outJson["buildinfo"]["commit_author"] = GitMetadata::AuthorName();
-                    outJson["buildinfo"]["commit_date"] = GitMetadata::CommitDate();
-
-                    outJson["cluster"] = {};
-                    outJson["cluster"]["imageCount"] = c
-        std::cout << std::endl << "Done." << std::endl;luster->images.size();
-                    outJson["cluster"]["nodeCount"] = cluster->nodes.size();
-                    outJson["cluster"]["maxImagesPerLeafNode"] = cluster->maxImagesPerLeafNode;
-
-                    outJson["queryDirectory"] = cluster::path(queryDirectory.value()).string();
-                    outJson["haystackDirectory"] = cluster::path(haystackDirectory.value()).string();
-                    outJson["indexDirectory"] = cluster::path(indexDirectory.value()).string();
-                    outJson["resultsPerQuery"] = resultsPerQuery.value();
-                    outJson["dumpFilePath"] = cluster::path(outputFile.value()).string();
-                    outJson["randomSeed"] = seed.value();
-                    outJson["consensusThreshold"] = consensusThreshold.value();
-                    outJson["queryStartIndex"] = startIndex;
-                    outJson["queryEndIndex"] = endIndex;
-
-                    outJson["results"] = {};
-
-                    for(size_t resultIndex = 0; resultIndex < searchResults.size(); resultIndex++) {
-                        outJson["results"].emplace_back();
-                        outJson["results"][resultIndex] = {};
-                        outJson["results"][resultIndex]["executionTimeSeconds"] = searchResults.at(resultIndex).executionTimeSeconds;
-                        outJson["results"][resultIndex]["allTotalDistances"] = searchResults.at(resultIndex).allTotalDistances;
-                        outJson["results"][resultIndex]["allOccurrenceCounts"] = searchResults.at(resultIndex).allOccurrenceCounts;
-                        outJson["results"][resultIndex]["queryFile"] = queryFiles.at(startIndex + resultIndex).string();
-                        outJson["results"][resultIndex]["searchResults"] = {};
-                        for(unsigned int i = 0; i < searchResults.at(resultIndex).searchResults.size(); i++) {
-                            outJson["results"][resultIndex]["searchResults"].emplace_back();
-                            outJson["results"][resultIndex]["searchResults"][i]["score"] = searchResults.at(resultIndex).searchResults.at(i).score;
-                            outJson["results"][resultIndex]["searchResults"][i]["objectID"] = searchResults.at(resultIndex).searchResults.at(i).fileID;
-                            outJson["results"][resultInd
-        std::cout << std::endl << "Done." << std::endl;ex]["searchResults"][i]["objectFilePath"] = haystackFintersect
-                    outFile.close();
-                }
-
-                if(outputProgressionFile.value() != "NON
-        std::cout << std::endl << "Done." << std::endl;E_SELECTED") {
-                    // Only process one file if a progression file is generated.
-                    break;
-                }
-            }
-
-            delete cluster;
-        }*/
+   // -----------------------------------------------
 
     std::cout << "Done." << std::endl;
 }

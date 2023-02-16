@@ -1129,6 +1129,35 @@ def runSignatureMatchingTest():
                              '--signature-dump-directory=output/lsh/minhash_signatures')
     print()
 
+def runSignatureSearcher():
+    # global pipelineEvaluation_resolution
+    # global pipelineEvaluation_consensusThreshold
+    # global pipelineEvaluation_queryMode
+
+    # startIndex = random.randint(0, len(os.listdir('input/SHREC2016_partial_retrieval/complete_objects')) - randomBatchSize)
+    # endIndex = startIndex + randomBatchSize
+
+
+    queryPath = 'output/augmented_dataset_original'# if pipelineEvaluation_queryMode == 'Best Case' else 'output/augmented_dataset_remeshed'
+    # resolution = pipelineEvaluation_resolution
+    # consensusThreshold = pipelineEvaluation_consensusThreshold
+
+    # outputFile = computePipelineEvaluationOutputFileName(pipelineEvaluation_queryMode, consensusThreshold, resolution)
+
+    run_command_line_command('bin/build32x32/objectLshSearch '
+         '--signature-directory=output/lsh/minhash_signatures '
+        #  '--haystack-directory=input/SHREC2016_partial_retrieval/complete_objects '
+         '--query-directory=' + queryPath + ' '
+        #  '--resultsPerQueryImage=1 '
+        #  '--randomSeed=' + mainEvaluationRandomSeed + ' '
+         '--support-radius=' + shrec2016_support_radius + ' '
+        #  '--consensus-threshold=' + consensusThreshold + ' '
+        #  '--force-gpu=' + str(gpuID) + ' '
+        #  '--output-file=' + outputFile + ' '
+        #  '--subset-start-index=' + str(startIndex) + ' '
+        #  '--subset-end-index=' + str(endIndex)
+        )
+
 
 def runMainMenu():
     while True:
@@ -1151,7 +1180,8 @@ def runMainMenu():
             "16. Compute Minhash signatures",
             "17. Run descriptor signature test",
             "18. Run descriptor signature matching test",
-            "19. exit"], title='---------------------- Main Menu ----------------------')
+            "19. Run signature searcher",
+            "20. exit"], title='---------------------- Main Menu ----------------------')
 
         choice = main_menu.show() + 1
 
@@ -1192,6 +1222,8 @@ def runMainMenu():
         if choice == 18:
             runSignatureMatchingTest()
         if choice == 19:
+            runSignatureSearcher()
+        if choice == 20:
             return
 
 def runIntroSequence():
