@@ -1144,7 +1144,7 @@ def runSignatureSearcher():
 
     # outputFile = computePipelineEvaluationOutputFileName(pipelineEvaluation_queryMode, consensusThreshold, resolution)
 
-    run_command_line_command('bin/build32x32/objectLshSearch '
+    run_command_line_command('bin/build32x32/signatureSearcher '
          '--signature-directory=output/lsh/minhash_signatures '
         #  '--haystack-directory=input/SHREC2016_partial_retrieval/complete_objects '
          '--query-directory=' + queryPath + ' '

@@ -50,8 +50,7 @@ SignatureIndex buildSignaturesFromDumpDirectory(const std::experimental::filesys
         // objectSignature->file_id = i + 1;
         std::string path_string = haystackFiles.at(i);
         std::size_t pos = path_string.find("/T");
-        objectSignature->file_id = std::stoi(path_string.substr(pos));
-        std::cout << objectSignature->file_id << std::endl;
+        objectSignature->file_id = std::stoi(path_string.substr(pos+2));
         signatureIndex.objectCount++;
         
         // loop through descriptors for current object

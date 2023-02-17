@@ -67,7 +67,10 @@ void runSignatureQuery(
    
     // Create partial object signatures
     ObjectSignature* queryObjectSignature = new ObjectSignature;
-    queryObjectSignature->file_id = std::stoi(queryFile.string());
+    
+    std::string path_string = queryFile.string();
+    std::size_t pos = path_string.find("/T");
+    queryObjectSignature->file_id = std::stoi(path_string.substr(pos+2));
 
     std::cout << "Partial object: " << queryObjectSignature->file_id << std::endl;
 
