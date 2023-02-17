@@ -1109,7 +1109,7 @@ def computeSignatures():
     run_command_line_command('bin/build32x32/signatureBuilder '
                              '--index-directory=output/lsh '
                              '--quicci-dump-directory=output/descriptors/complete_objects_32x32 '
-                             '--permutation-count=10')
+                             '--permutation-count=5')
     print()
 
 
@@ -1134,9 +1134,8 @@ def runSignatureSearcher():
     # global pipelineEvaluation_consensusThreshold
     # global pipelineEvaluation_queryMode
 
-    # startIndex = random.randint(0, len(os.listdir('input/SHREC2016_partial_retrieval/complete_objects')) - randomBatchSize)
-    # endIndex = startIndex + randomBatchSize
-
+    startIndex = random.randint(0, len(os.listdir('input/SHREC2016_partial_retrieval/complete_objects')) - 50)
+    endIndex = startIndex + 50
 
     queryPath = 'output/augmented_dataset_original'# if pipelineEvaluation_queryMode == 'Best Case' else 'output/augmented_dataset_remeshed'
     # resolution = pipelineEvaluation_resolution
@@ -1146,17 +1145,17 @@ def runSignatureSearcher():
 
     run_command_line_command('bin/build32x32/signatureSearcher '
          '--signature-directory=output/lsh/minhash_signatures '
-        #  '--haystack-directory=input/SHREC2016_partial_retrieval/complete_objects '
          '--query-directory=' + queryPath + ' '
+         '--support-radius=' + shrec2016_support_radius + ' '
+         '--subset-start-index=' + str(startIndex) + ' '
+         '--subset-end-index=' + str(endIndex)
+        )
+        #  '--haystack-directory=input/SHREC2016_partial_retrieval/complete_objects '
         #  '--resultsPerQueryImage=1 '
         #  '--randomSeed=' + mainEvaluationRandomSeed + ' '
-         '--support-radius=' + shrec2016_support_radius + ' '
         #  '--consensus-threshold=' + consensusThreshold + ' '
         #  '--force-gpu=' + str(gpuID) + ' '
         #  '--output-file=' + outputFile + ' '
-        #  '--subset-start-index=' + str(startIndex) + ' '
-        #  '--subset-end-index=' + str(endIndex)
-        )
 
 
 def runMainMenu():

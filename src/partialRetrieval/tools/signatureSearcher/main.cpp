@@ -28,7 +28,7 @@
 #include <projectSymmetry/lsh/SignatureIO.h>
 #include <projectSymmetry/lsh/SignatureBuilder.h>
 
-void runSignatureQuery(
+int runSignatureQuery(
         std::experimental::filesystem::path queryFile,
         SignatureIndex *signatureIndex,
         float supportRadius,
@@ -58,8 +58,8 @@ void runSignatureQuery(
     */
 
 
-    unsigned int descriptorsPerObjectLimit = 2000;
-    double JACCARD_THRESHOLD = 0.5;
+    unsigned int descriptorsPerObjectLimit = 200;
+    double JACCARD_THRESHOLD = 0.7;
 
     
 
@@ -71,6 +71,7 @@ void runSignatureQuery(
     std::string path_string = queryFile.string();
     std::size_t pos = path_string.find("/T");
     queryObjectSignature->file_id = std::stoi(path_string.substr(pos+2));
+    unsigned int fileID = queryObjectSignature->file_id;
 
     std::cout << "Partial object: " << queryObjectSignature->file_id << std::endl;
 
@@ -86,14 +87,14 @@ void runSignatureQuery(
     for(unsigned int i = 0; i < haystackFiles.size(); i++) {
         ObjectSignature* objectSignature = new ObjectSignature;
         objectSignature = readSignature(haystackFiles.at(i), signatureIndex->numPermutations);
-
+        // std::cout << objectSignature->file_id << " " << objectSignature->descriptorSignatures.size() << std::endl; 
         // loop through descripor signatures of signature index complete objects
         for (unsigned int j = 0; j < descriptorsPerObjectLimit; j++) {
-
-            std::vector<int> candidateSignature =  objectSignature->descriptorSignatures[j].signatures;
+            // std::cout << j << std::endl;
+            std::vector<int> candidateSignature = objectSignature->descriptorSignatures[j].signatures;
             
             for(unsigned int k = 0; k < queryObjectSignature->descriptorSignatures.size(); k++) {
-
+                // std::cout << k << std::endl;
                 std::vector<int> querySignature = queryObjectSignature->descriptorSignatures[k].signatures;
 
                 double jaccardSimilarity = computeJaccardSimilarity(querySignature, candidateSignature);
@@ -103,22 +104,27 @@ void runSignatureQuery(
                 }
 
             }
-        delete objectSignature;
         }
+        delete objectSignature;
     }   
     delete queryObjectSignature;
 
     // best matching object
     // returns the object with the highest number of descriptor signatures with jaccard similarity greater than threshold
     unsigned int bestMatch = std::distance(objectScores.begin(), std::max_element(objectScores.begin(), objectScores.end())) + 1;
-    std::cout << "Best matching object" << bestMatch << std::endl;
+    std::cout << "Best matching object " << bestMatch << std::endl;
+    std::cout << std::endl;
 
-
+    if (bestMatch == fileID) {
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
 // modified from another object search, needs further changes
 int main(int argc, const char **argv) {
-    arrrgh::parser parser("objectLshSearch", "Search for similar objects using LSH.");
+    arrrgh::parser parser("signatureSearcher", "Search for similar objects using LSH.");
     const auto &signatureDirectory = parser.add<std::string>(
         "signature-directory", "The directory containing the signatures to be queried.", '\0', arrrgh::Required, "");
     const auto &queryDirectory = parser.add<std::string>(
@@ -156,13 +162,10 @@ int main(int argc, const char **argv) {
     }
 
     // Show help if desired
-    if (showHelp.value())
-        std::cout << std::endl
-                  << "Done." << std::endl;
-    {
+    if (showHelp.value()) {
         return 0;
     }
-
+    
     std::vector<std::experimental::filesystem::path> queryFiles = ShapeDescriptor::utilities::listDirectory(queryDirectory.value());
     std::vector<std::experimental::filesystem::path> haystackFiles = ShapeDescriptor::utilities::listDirectory(signatureDirectory.value());
 
@@ -170,8 +173,24 @@ int main(int argc, const char **argv) {
 
     std::vector<std::vector<int>> permutations = signatureIndex->permutations;
 
-    runSignatureQuery(queryFiles.at(0), signatureIndex, supportRadius, haystackFiles);
-   
+    std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now();
+
+    unsigned int startIndex = subsetStartIndex.value();
+    unsigned int endIndex = subsetEndIndex.value() != -1 ? subsetEndIndex.value() : queryFiles.size();
+    int corrects = 0;
+    for(unsigned int queryFile = startIndex; queryFile < endIndex; queryFile++) {
+        std::cout << "Processing query " << (queryFile + 1) << "/" << endIndex << ": " << queryFiles.at(queryFile).string() << std::endl;
+        corrects += runSignatureQuery(queryFiles.at(queryFile), signatureIndex, supportRadius.value(), haystackFiles);
+    }
+    // runSignatureQuery(queryFiles.at(0), signatureIndex, supportRadius, haystackFiles);
+    
+    // Measure total execution time
+    std::chrono::steady_clock::time_point endTime = std::chrono::steady_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+    std::cout << std::endl << "MinHash signature construction complete. " << std::endl;
+    std::cout << "Total execution time: " << float(duration.count()) / 1000.0f << " seconds" << std::endl;
+    std::cout << std::endl;
+    std::cout << corrects << "/" << endIndex-startIndex << std::endl;
     // --- TODO: Loop and query partial objects -----
     /*
     ObjectQueryResult runSignatureQuery(
