@@ -3,7 +3,8 @@
 #include <algorithm>
 #include <vector>
 #include <atomic>
-#include <string> 
+#include <string>
+#include <random>
 #include <shapeDescriptor/cpu/types/array.h>
 #include <shapeDescriptor/gpu/types/array.h>
 #include <shapeDescriptor/gpu/types/Mesh.h>
@@ -49,7 +50,8 @@ QueryResult runSignatureQuery(
         float supportRadius,
         std::vector<std::experimental::filesystem::path> &haystackFiles,
         unsigned int descriptorsPerObjectLimit,
-        double JACCARD_THRESHOLD
+        double JACCARD_THRESHOLD,
+        size_t seed
         ) {
 
   // --- load partial object and compute descriptors
@@ -67,12 +69,11 @@ QueryResult runSignatureQuery(
     ShapeDescriptor::cpu::array<ShapeDescriptor::QUICCIDescriptor> queryDescriptors = ShapeDescriptor::copy::deviceArrayToHost(descriptors);
     // ----
 
-    /*
     std::random_device rd("/dev/urandom");
     size_t randomSeed = seed != 0 ? seed : rd();
     std::minstd_rand0 generator{randomSeed};
     std::uniform_real_distribution<float> distribution(0, 1);
-    */
+    
     
     std::chrono::steady_clock::time_point queryStartTime = std::chrono::steady_clock::now();
     std::vector<int> objectScores(haystackFiles.size(), 0);
@@ -86,7 +87,7 @@ QueryResult runSignatureQuery(
     unsigned int fileID = queryObjectSignature->file_id;
 
     std::cout << "Partial object: " << queryObjectSignature->file_id << std::endl;
-
+    // TODO: add randomness
     for(unsigned int i = 0; i < descriptorsPerObjectLimit; i++) {
             DescriptorSignature descriptorSignature;
             descriptorSignature.descriptor_id = i + 1;
@@ -101,12 +102,20 @@ QueryResult runSignatureQuery(
         objectSignature = readSignature(haystackFiles.at(i), signatureIndex->numPermutations);
         // std::cout << objectSignature->file_id << " " << objectSignature->descriptorSignatures.size() << std::endl; 
         // loop through descripor signatures of signature index complete objects
+
+        std::vector<unsigned int> signatureOrder(objectSignature->descriptorSignatures.size()); // (queryDescriptors.length);
+        for(unsigned int s = 0; s < objectSignature->descriptorSignatures.size(); s++) {
+            signatureOrder.at(s) = s;
+        }
+        // Comment out line below to disable randomness?
+        std::shuffle(signatureOrder.begin(), signatureOrder.end(), generator);
+
         for (unsigned int j = 0; j < descriptorsPerObjectLimit; j++) {
-            // std::cout << j << std::endl;
-            std::vector<int> candidateSignature = objectSignature->descriptorSignatures[j].signatures;
+
+            std::vector<int> candidateSignature = objectSignature->descriptorSignatures[signatureOrder[j]].signatures;
             
             for(unsigned int k = 0; k < queryObjectSignature->descriptorSignatures.size(); k++) {
-                // std::cout << k << std::endl;
+
                 std::vector<int> querySignature = queryObjectSignature->descriptorSignatures[k].signatures;
 
                 double jaccardSimilarity = computeJaccardSimilarity(querySignature, candidateSignature);
@@ -201,7 +210,7 @@ int main(int argc, const char **argv) {
     unsigned int endIndex = subsetEndIndex.value() != -1 ? subsetEndIndex.value() : queryFiles.size();
     for(unsigned int queryFile = startIndex; queryFile < endIndex; queryFile++) {
         std::cout << "Processing query " << (queryFile + 1) << "/" << endIndex << ": " << queryFiles.at(queryFile).string() << std::endl;
-        QueryResult queryResult = runSignatureQuery(queryFiles.at(queryFile), signatureIndex, supportRadius.value(), haystackFiles, descriptorsPerObjectLimit.value(), JACCARD_THRESHOLD.value());
+        QueryResult queryResult = runSignatureQuery(queryFiles.at(queryFile), signatureIndex, supportRadius.value(), haystackFiles, descriptorsPerObjectLimit.value(), JACCARD_THRESHOLD.value(), seed.value());
         searchResults.push_back(queryResult);
 
         if(outputFile.value() != "NONE_SELECTED") {

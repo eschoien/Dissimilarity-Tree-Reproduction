@@ -1109,7 +1109,7 @@ def computeSignatures():
     run_command_line_command('bin/build32x32/signatureBuilder '
                              '--index-directory=output/lsh '
                              '--quicci-dump-directory=output/descriptors/complete_objects_32x32 '
-                             '--permutation-count=5')
+                             '--permutation-count=10')
     print()
 
 
@@ -1152,6 +1152,8 @@ def runSignatureSearcher():
          '--subset-end-index=' + str(endIndex) + ' '
          '--JACCARD_THRESHOLD=0.7 '
          '--descriptorsPerObjectLimit=200'
+         '--resultsPerQueryImage=1 '
+         '--randomSeed=' + mainEvaluationRandomSeed + ' '
         )
         #  '--haystack-directory=input/SHREC2016_partial_retrieval/complete_objects '
         #  '--resultsPerQueryImage=1 '
@@ -1159,6 +1161,7 @@ def runSignatureSearcher():
         #  '--consensus-threshold=' + consensusThreshold + ' '
         #  '--force-gpu=' + str(gpuID) + ' '
         #  '--output-file=' + outputFile + ' '
+    
 
 
 def runMainMenu():
