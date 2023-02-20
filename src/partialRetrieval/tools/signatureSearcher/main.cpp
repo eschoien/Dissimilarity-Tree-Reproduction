@@ -27,12 +27,29 @@
 #include <projectSymmetry/lsh/Signature.h>
 #include <projectSymmetry/lsh/SignatureIO.h>
 #include <projectSymmetry/lsh/SignatureBuilder.h>
+#include <json.hpp>
+#include <json/tsl/ordered_map.h>
 
-int runSignatureQuery(
+template<class Key, class T, class Ignore, class Allocator,
+        class Hash = std::hash<Key>, class KeyEqual = std::equal_to<Key>,
+        class AllocatorPair = typename std::allocator_traits<Allocator>::template rebind_alloc<std::pair<Key, T>>,
+        class ValueTypeContainer = std::vector<std::pair<Key, T>, AllocatorPair>>
+using ordered_map = tsl::ordered_map<Key, T, Hash, KeyEqual, AllocatorPair, ValueTypeContainer>;
+
+using json = nlohmann::basic_json<ordered_map>;
+struct QueryResult {
+    unsigned int queryFileID;
+    unsigned int bestMatchID;
+    float executionTimeSeconds;
+};
+
+QueryResult runSignatureQuery(
         std::experimental::filesystem::path queryFile,
         SignatureIndex *signatureIndex,
         float supportRadius,
-        std::vector<std::experimental::filesystem::path> &haystackFiles
+        std::vector<std::experimental::filesystem::path> &haystackFiles,
+        unsigned int descriptorsPerObjectLimit,
+        double JACCARD_THRESHOLD
         ) {
 
   // --- load partial object and compute descriptors
@@ -56,13 +73,8 @@ int runSignatureQuery(
     std::minstd_rand0 generator{randomSeed};
     std::uniform_real_distribution<float> distribution(0, 1);
     */
-
-
-    unsigned int descriptorsPerObjectLimit = 200;
-    double JACCARD_THRESHOLD = 0.7;
-
     
-
+    std::chrono::steady_clock::time_point queryStartTime = std::chrono::steady_clock::now();
     std::vector<int> objectScores(haystackFiles.size(), 0);
    
     // Create partial object signatures
@@ -113,13 +125,19 @@ int runSignatureQuery(
     // returns the object with the highest number of descriptor signatures with jaccard similarity greater than threshold
     unsigned int bestMatch = std::distance(objectScores.begin(), std::max_element(objectScores.begin(), objectScores.end())) + 1;
     std::cout << "Best matching object " << bestMatch << std::endl;
+
+    std::chrono::steady_clock::time_point endTime = std::chrono::steady_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - queryStartTime);
+    std::cout << "\tTotal execution time: " << float(duration.count()) / 1000.0f << " seconds" << std::endl;
     std::cout << std::endl;
 
-    if (bestMatch == fileID) {
-        return 1;
-    } else {
-        return 0;
-    }
+    
+    QueryResult result;
+    result.queryFileID = fileID;
+    result.bestMatchID = bestMatch;
+    result.executionTimeSeconds = float(duration.count()) / 1000.0f;
+
+    return result;
 }
 
 // modified from another object search, needs further changes
@@ -149,6 +167,10 @@ int main(int argc, const char **argv) {
         "subset-end-index", "Query index to end at. Must be equal or less than the --sample-count parameter.", '\0', arrrgh::Optional, -1);
     const auto &showHelp = parser.add<bool>(
         "help", "Show this help message.", 'h', arrrgh::Optional, false);
+    const auto &descriptorsPerObjectLimit = parser.add<int>(
+        "descriptorsPerObjectLimit", "descriptorsPerObjectLimit", '\0', arrrgh::Optional, 200);
+    const auto &JACCARD_THRESHOLD = parser.add<float>(
+        "JACCARD_THRESHOLD", "JACCARD_THRESHOLD", '\0', arrrgh::Optional, 0.5);
 
     try
     {
@@ -171,16 +193,46 @@ int main(int argc, const char **argv) {
 
     SignatureIndex *signatureIndex = readSignatureIndex("output/lsh/index.dat");
 
-    std::vector<std::vector<int>> permutations = signatureIndex->permutations;
-
     std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now();
+
+    std::vector<QueryResult> searchResults;
 
     unsigned int startIndex = subsetStartIndex.value();
     unsigned int endIndex = subsetEndIndex.value() != -1 ? subsetEndIndex.value() : queryFiles.size();
-    int corrects = 0;
     for(unsigned int queryFile = startIndex; queryFile < endIndex; queryFile++) {
         std::cout << "Processing query " << (queryFile + 1) << "/" << endIndex << ": " << queryFiles.at(queryFile).string() << std::endl;
-        corrects += runSignatureQuery(queryFiles.at(queryFile), signatureIndex, supportRadius.value(), haystackFiles);
+        QueryResult queryResult = runSignatureQuery(queryFiles.at(queryFile), signatureIndex, supportRadius.value(), haystackFiles, descriptorsPerObjectLimit.value(), JACCARD_THRESHOLD.value());
+        searchResults.push_back(queryResult);
+
+        if(outputFile.value() != "NONE_SELECTED") {
+            json outJson;
+
+            outJson["version"] = "v1";
+            outJson["queryObjectSupportRadius"] = supportRadius.value();
+
+            outJson["queryDirectory"] = cluster::path(queryDirectory.value()).string();
+            outJson["signatureDirectory"] = cluster::path(signatureDirectory.value()).string();
+            outJson["dumpFilePath"] = cluster::path(outputFile.value()).string();
+            outJson["randomSeed"] = seed.value();
+            outJson["queryStartIndex"] = startIndex;
+            outJson["queryEndIndex"] = endIndex;
+            outJson["descriptorsPerObjectLimit"] = descriptorsPerObjectLimit.value();
+            outJson["JACCARD_THRESHOLD"] = JACCARD_THRESHOLD.value();
+
+            outJson["results"] = {};
+
+            for(size_t resultIndex = 0; resultIndex < searchResults.size(); resultIndex++) {
+                outJson["results"].emplace_back();
+                outJson["results"][resultIndex] = {};
+                outJson["results"][resultIndex]["queryFileID"] = searchResults.at(resultIndex).queryFileID;
+                outJson["results"][resultIndex]["bestMatchID"] = searchResults.at(resultIndex).bestMatchID;
+                outJson["results"][resultIndex]["executionTimeSeconds"] = searchResults.at(resultIndex).executionTimeSeconds;
+            }
+
+            std::ofstream outFile(outputFile.value());
+            outFile << outJson.dump(4);
+            outFile.close();
+        }
     }
     // runSignatureQuery(queryFiles.at(0), signatureIndex, supportRadius, haystackFiles);
     
@@ -189,8 +241,6 @@ int main(int argc, const char **argv) {
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
     std::cout << std::endl << "MinHash signature construction complete. " << std::endl;
     std::cout << "Total execution time: " << float(duration.count()) / 1000.0f << " seconds" << std::endl;
-    std::cout << std::endl;
-    std::cout << corrects << "/" << endIndex-startIndex << std::endl;
     // --- TODO: Loop and query partial objects -----
     /*
     ObjectQueryResult runSignatureQuery(

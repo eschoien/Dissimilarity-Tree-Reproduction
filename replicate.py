@@ -1134,8 +1134,8 @@ def runSignatureSearcher():
     # global pipelineEvaluation_consensusThreshold
     # global pipelineEvaluation_queryMode
 
-    startIndex = random.randint(0, len(os.listdir('input/SHREC2016_partial_retrieval/complete_objects')) - 50)
-    endIndex = startIndex + 50
+    startIndex = random.randint(0, len(os.listdir('input/SHREC2016_partial_retrieval/complete_objects')) - 2)
+    endIndex = startIndex + 2
 
     queryPath = 'output/augmented_dataset_original'# if pipelineEvaluation_queryMode == 'Best Case' else 'output/augmented_dataset_remeshed'
     # resolution = pipelineEvaluation_resolution
@@ -1146,9 +1146,12 @@ def runSignatureSearcher():
     run_command_line_command('bin/build32x32/signatureSearcher '
          '--signature-directory=output/lsh/minhash_signatures '
          '--query-directory=' + queryPath + ' '
+         '--output-file=output/lsh/measurements.json '
          '--support-radius=' + shrec2016_support_radius + ' '
          '--subset-start-index=' + str(startIndex) + ' '
-         '--subset-end-index=' + str(endIndex)
+         '--subset-end-index=' + str(endIndex) + ' '
+         '--JACCARD_THRESHOLD=0.7 '
+         '--descriptorsPerObjectLimit=200'
         )
         #  '--haystack-directory=input/SHREC2016_partial_retrieval/complete_objects '
         #  '--resultsPerQueryImage=1 '
