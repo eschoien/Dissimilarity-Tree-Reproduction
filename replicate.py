@@ -1142,19 +1142,22 @@ def runSignatureSearcher():
     # consensusThreshold = pipelineEvaluation_consensusThreshold
 
     # outputFile = computePipelineEvaluationOutputFileName(pipelineEvaluation_queryMode, consensusThreshold, resolution)
+    JACCARD_THRESHOLD = '0.6'
+    descriptorsPerObjectLimit = '1000'
+    outputFile = 'output/lsh/measurements' + '-' + JACCARD_THRESHOLD + '-' + descriptorsPerObjectLimit + '.json'
 
     run_command_line_command('bin/build32x32/signatureSearcher '
          '--signature-directory=output/lsh/minhash_signatures '
          '--query-directory=' + queryPath + ' '
-         '--output-file=output/lsh/measurements.json '
+         '--output-file=' + outputFile + ' '
          '--support-radius=' + shrec2016_support_radius + ' '
-         '--subset-start-index=' + str(startIndex) + ' '
-         '--subset-end-index=' + str(endIndex) + ' '
-         '--JACCARD_THRESHOLD=0.7 '
-         '--descriptorsPerObjectLimit=200'
+         '--JACCARD_THRESHOLD=' + JACCARD_THRESHOLD + ' '
+         '--descriptorsPerObjectLimit=' + descriptorsPerObjectLimit + ' '
          '--resultsPerQueryImage=1 '
          '--randomSeed=' + mainEvaluationRandomSeed + ' '
         )
+        #  '--subset-start-index=' + str(startIndex) + ' '
+        #  '--subset-end-index=' + str(endIndex) + ' '
         #  '--haystack-directory=input/SHREC2016_partial_retrieval/complete_objects '
         #  '--resultsPerQueryImage=1 '
         #  '--randomSeed=' + mainEvaluationRandomSeed + ' '

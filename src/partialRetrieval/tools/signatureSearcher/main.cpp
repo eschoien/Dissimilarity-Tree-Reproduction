@@ -108,7 +108,7 @@ QueryResult runSignatureQuery(
             signatureOrder.at(s) = s;
         }
         // Comment out line below to disable randomness?
-        std::shuffle(signatureOrder.begin(), signatureOrder.end(), generator);
+        // std::shuffle(signatureOrder.begin(), signatureOrder.end(), generator);
 
         for (unsigned int j = 0; j < descriptorsPerObjectLimit; j++) {
 
@@ -227,6 +227,7 @@ int main(int argc, const char **argv) {
             outJson["queryEndIndex"] = endIndex;
             outJson["descriptorsPerObjectLimit"] = descriptorsPerObjectLimit.value();
             outJson["JACCARD_THRESHOLD"] = JACCARD_THRESHOLD.value();
+            outJson["permutations"] = signatureIndex->numPermutations;
 
             outJson["results"] = {};
 
