@@ -1109,7 +1109,7 @@ def computeSignatures():
     run_command_line_command('bin/build32x32/signatureBuilder '
                              '--index-directory=output/lsh '
                              '--quicci-dump-directory=output/descriptors/complete_objects_32x32 '
-                             '--permutation-count=5')
+                             '--permutation-count=10')
     print()
 
 
@@ -1134,8 +1134,8 @@ def runSignatureSearcher():
     # global pipelineEvaluation_consensusThreshold
     # global pipelineEvaluation_queryMode
 
-    startIndex = random.randint(0, len(os.listdir('input/SHREC2016_partial_retrieval/complete_objects')) - 50)
-    endIndex = startIndex + 50
+    startIndex = random.randint(0, len(os.listdir('input/SHREC2016_partial_retrieval/complete_objects')) - 10)
+    endIndex = startIndex + 10
 
     queryPath = 'output/augmented_dataset_original'# if pipelineEvaluation_queryMode == 'Best Case' else 'output/augmented_dataset_remeshed'
     # resolution = pipelineEvaluation_resolution
@@ -1148,14 +1148,10 @@ def runSignatureSearcher():
          '--query-directory=' + queryPath + ' '
          '--support-radius=' + shrec2016_support_radius + ' '
          '--subset-start-index=' + str(startIndex) + ' '
-         '--subset-end-index=' + str(endIndex)
-        )
-        #  '--haystack-directory=input/SHREC2016_partial_retrieval/complete_objects '
-        #  '--resultsPerQueryImage=1 '
-        #  '--randomSeed=' + mainEvaluationRandomSeed + ' '
-        #  '--consensus-threshold=' + consensusThreshold + ' '
-        #  '--force-gpu=' + str(gpuID) + ' '
-        #  '--output-file=' + outputFile + ' '
+         '--subset-end-index=' + str(endIndex) + ' '
+         '--resultsPerQueryImage=1 '
+         '--randomSeed=' + mainEvaluationRandomSeed + ' '
+    )
 
 
 def runMainMenu():
