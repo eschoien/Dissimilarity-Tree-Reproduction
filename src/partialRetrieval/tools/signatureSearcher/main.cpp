@@ -95,24 +95,22 @@ QueryResult runSignatureQuery(
             queryObjectSignature->descriptorSignatures.push_back(descriptorSignature);
     }
 
-
     // loop through signature index object signatures
     for(unsigned int i = 0; i < haystackFiles.size(); i++) {
-        ObjectSignature* objectSignature = new ObjectSignature;
-        objectSignature = readSignature(haystackFiles.at(i), signatureIndex->numPermutations);
+        
+        ObjectSignature* objectSignature = readSignature(haystackFiles.at(i), signatureIndex->numPermutations);
         // std::cout << objectSignature->file_id << " " << objectSignature->descriptorSignatures.size() << std::endl; 
         // loop through descripor signatures of signature index complete objects
 
-        std::vector<unsigned int> signatureOrder(objectSignature->descriptorSignatures.size()); // (queryDescriptors.length);
-        for(unsigned int s = 0; s < objectSignature->descriptorSignatures.size(); s++) {
-            signatureOrder.at(s) = s;
-        }
+        // std::vector<unsigned int> signatureOrder(objectSignature->descriptorSignatures.size()); // (queryDescriptors.length);
+        // for(unsigned int s = 0; s < objectSignature->descriptorSignatures.size(); s++) {
+        //     signatureOrder.at(s) = s;
+        // }
         // Comment out line below to disable randomness?
         // std::shuffle(signatureOrder.begin(), signatureOrder.end(), generator);
-
         for (unsigned int j = 0; j < descriptorsPerObjectLimit; j++) {
-
-            std::vector<int> candidateSignature = objectSignature->descriptorSignatures[signatureOrder[j]].signatures;
+            // std::vector<int> candidateSignature = objectSignature->descriptorSignatures[signatureOrder[j]].signatures;
+            std::vector<int> candidateSignature = objectSignature->descriptorSignatures[j].signatures;
             
             for(unsigned int k = 0; k < queryObjectSignature->descriptorSignatures.size(); k++) {
 
@@ -140,6 +138,12 @@ QueryResult runSignatureQuery(
     std::cout << "\tTotal execution time: " << float(duration.count()) / 1000.0f << " seconds" << std::endl;
     std::cout << std::endl;
 
+    ShapeDescriptor::free::array(descriptorOrigins);
+    ShapeDescriptor::free::array(descriptors);
+    ShapeDescriptor::free::array(queryDescriptors);
+    ShapeDescriptor::free::array(riciDescriptors);
+    ShapeDescriptor::free::mesh(mesh);
+    ShapeDescriptor::free::mesh(gpuMesh);
     
     QueryResult result;
     result.queryFileID = fileID;
@@ -251,20 +255,8 @@ int main(int argc, const char **argv) {
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
     std::cout << std::endl << "MinHash signature construction complete. " << std::endl;
     std::cout << "Total execution time: " << float(duration.count()) / 1000.0f << " seconds" << std::endl;
-    // --- TODO: Loop and query partial objects -----
-    /*
-    ObjectQueryResult runSignatureQuery(
-        std::experimental::filesystem::path queryFile,
-        std::vector<std::vector<int>> permutations,
-        float supportRadius,
-        size_t seed,
-        unsigned int resultsPerQuery,
-        unsigned int consensusThreshold,
-        std::vector<std::experimental::filesystem::path> &haystackFiles,
-        std::string outputProgressionFile,
-        int progressionFileIterationLimit)
-    */
-   // -----------------------------------------------
+    
+    delete signatureIndex;
 
     std::cout << "Done." << std::endl;
 }

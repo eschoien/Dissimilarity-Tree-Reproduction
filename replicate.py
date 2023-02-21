@@ -21,6 +21,7 @@ indexGenerationMode = 'CPU'
 pipelineEvaluation_queryMode = 'Best Case'
 pipelineEvaluation_consensusThreshold = '10'
 pipelineEvaluation_resolution = '32x32'
+permutation_count = '10'
 
 # Execution times:
 # Generating all descriptors: 50m
@@ -1109,7 +1110,7 @@ def computeSignatures():
     run_command_line_command('bin/build32x32/signatureBuilder '
                              '--index-directory=output/lsh '
                              '--quicci-dump-directory=output/descriptors/complete_objects_32x32 '
-                             '--permutation-count=10')
+                             '--permutation-count=' + permutation_count + ' ')
     print()
 
 
@@ -1117,7 +1118,7 @@ def runDescriptorSignatureTest():
     run_command_line_command('bin/build32x32/descriptorSignatureTest '
                              '--file-id=0 '
                              '--descriptor-id=0 '
-                             '--permutation-count=10 '
+                             '--permutation-count=' + permutation_count + ' '
                              '--quicci-dump-directory=output/descriptors/complete_objects_32x32')
     print()
 
@@ -1143,8 +1144,9 @@ def runSignatureSearcher():
 
     # outputFile = computePipelineEvaluationOutputFileName(pipelineEvaluation_queryMode, consensusThreshold, resolution)
     JACCARD_THRESHOLD = '0.6'
-    descriptorsPerObjectLimit = '1000'
-    outputFile = 'output/lsh/measurements' + '-' + JACCARD_THRESHOLD + '-' + descriptorsPerObjectLimit + '.json'
+    descriptorsPerObjectLimit = '100'
+    os.makedirs('output/lsh/measurements', exist_ok=True)
+    outputFile = 'output/lsh/measurements/measurement' + '-' + JACCARD_THRESHOLD + '-' + descriptorsPerObjectLimit + '-' + permutation_count + '.json'
 
     run_command_line_command('bin/build32x32/signatureSearcher '
          '--signature-directory=output/lsh/minhash_signatures '
@@ -1165,7 +1167,33 @@ def runSignatureSearcher():
         #  '--force-gpu=' + str(gpuID) + ' '
         #  '--output-file=' + outputFile + ' '
     
+def runSignatureExperiment():
 
+    startIndex = random.randint(0, len(os.listdir('input/SHREC2016_partial_retrieval/complete_objects')) - 2)
+    endIndex = startIndex + 2
+
+    queryPath = 'output/augmented_dataset_original'
+    os.makedirs('output/lsh/measurements', exist_ok=True)
+    thresholds = ['0.5', '0.6', '0.7', '0.8', '0.9']
+    descriptorlimits = ['100', '500', '1000', '2000']
+
+    for threshold in thresholds:
+        JACCARD_THRESHOLD = threshold
+        for descriptorlimit in descriptorlimits:
+
+            descriptorsPerObjectLimit = descriptorlimit
+            outputFile = 'output/lsh/measurements/measurement' + '-' + JACCARD_THRESHOLD + '-' + descriptorsPerObjectLimit + '-' + permutation_count + '.json'
+
+            run_command_line_command('bin/build32x32/signatureSearcher '
+                '--signature-directory=output/lsh/minhash_signatures '
+                '--query-directory=' + queryPath + ' '
+                '--output-file=' + outputFile + ' '
+                '--support-radius=' + shrec2016_support_radius + ' '
+                '--JACCARD_THRESHOLD=' + JACCARD_THRESHOLD + ' '
+                '--descriptorsPerObjectLimit=' + descriptorsPerObjectLimit + ' '
+                '--resultsPerQueryImage=1 '
+                '--randomSeed=' + mainEvaluationRandomSeed + ' '
+                )
 
 def runMainMenu():
     while True:
@@ -1189,7 +1217,8 @@ def runMainMenu():
             "17. Run descriptor signature test",
             "18. Run descriptor signature matching test",
             "19. Run signature searcher",
-            "20. exit"], title='---------------------- Main Menu ----------------------')
+            "20. Run signature experiment",
+            "21. exit"], title='---------------------- Main Menu ----------------------')
 
         choice = main_menu.show() + 1
 
@@ -1232,6 +1261,8 @@ def runMainMenu():
         if choice == 19:
             runSignatureSearcher()
         if choice == 20:
+            runSignatureExperiment()
+        if choice == 21:
             return
 
 def runIntroSequence():
