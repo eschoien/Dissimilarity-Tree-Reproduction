@@ -1,4 +1,5 @@
 import json
+import os
 
 def calculate_accuracy(data):
 
@@ -10,11 +11,18 @@ def calculate_accuracy(data):
         if i['queryFileID'] == i['bestMatchID']:
             correct_guesses += 1
 
+    amount = f'{correct_guesses}/{total_guesses}'
     accuracy = (correct_guesses / total_guesses) * 100
-    return accuracy
+    return amount, accuracy
 
-signature_data = json.load(open('output/lsh/measurements/measurement-0.6-100-10.json'))
 
-signature_accuracy = calculate_accuracy(signature_data)
+filedir = 'output/lsh/measurements'
 
-print(f'Accuracy from signature-0.6-100-10: {signature_accuracy}%')
+for filename in sorted(os.listdir(filedir)):
+    file = os.path.join(filedir, filename)
+
+    signature_data = json.load(open(file))
+
+    signature_accuracy = calculate_accuracy(signature_data)
+
+    print(f'Accuracy from {filename[12:-5]}: {signature_accuracy[0]}, {round(signature_accuracy[1] ,2)}%')
