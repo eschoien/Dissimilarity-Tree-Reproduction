@@ -58,8 +58,8 @@ QueryResult runSignatureQuery(
     ShapeDescriptor::cpu::Mesh mesh = ShapeDescriptor::utilities::loadMesh(queryFile, true);
     ShapeDescriptor::gpu::Mesh gpuMesh = ShapeDescriptor::copy::hostMeshToDevice(mesh);
 
-    ShapeDescriptor::gpu::array<ShapeDescriptor::OrientedPoint> descriptorOrigins = ShapeDescriptor::utilities::generateSpinOriginBuffer(
-            gpuMesh);
+    ShapeDescriptor::gpu::array<ShapeDescriptor::OrientedPoint> descriptorOrigins = 
+            ShapeDescriptor::utilities::generateSpinOriginBuffer(gpuMesh);
 
     // Compute the descriptor(s)
     ShapeDescriptor::gpu::array<ShapeDescriptor::RICIDescriptor> riciDescriptors =
@@ -87,30 +87,37 @@ QueryResult runSignatureQuery(
     unsigned int fileID = queryObjectSignature->file_id;
 
     std::cout << "Partial object: " << queryObjectSignature->file_id << std::endl;
-    // TODO: add randomness
+    
+    std::vector<unsigned int> queryDescriptorsOrder(queryDescriptors.length); // (queryDescriptors.length);
+    for(unsigned int s = 0; s < queryDescriptors.length; s++) {
+        queryDescriptorsOrder.at(s) = s;
+    }
+    // Comment out line below to disable randomness?
+    std::shuffle(queryDescriptorsOrder.begin(), queryDescriptorsOrder.end(), generator);
+
     for(unsigned int i = 0; i < descriptorsPerObjectLimit; i++) {
-            DescriptorSignature descriptorSignature;
-            descriptorSignature.descriptor_id = i + 1;
-            computeDescriptorSignature(queryDescriptors.content[i], &(descriptorSignature.signatures), signatureIndex->permutations);
-            queryObjectSignature->descriptorSignatures.push_back(descriptorSignature);
+        DescriptorSignature descriptorSignature;
+        descriptorSignature.descriptor_id = queryDescriptorsOrder[i] + 1; //i + 1;
+        computeDescriptorSignature(queryDescriptors.content[queryDescriptorsOrder[i]], &(descriptorSignature.signatures), signatureIndex->permutations);
+        queryObjectSignature->descriptorSignatures.push_back(descriptorSignature);
     }
 
     // loop through signature index object signatures
     for(unsigned int i = 0; i < haystackFiles.size(); i++) {
         
         ObjectSignature* objectSignature = readSignature(haystackFiles.at(i), signatureIndex->numPermutations);
-        // std::cout << objectSignature->file_id << " " << objectSignature->descriptorSignatures.size() << std::endl; 
+        //std::cout << objectSignature->file_id << " " << objectSignature->descriptorSignatures.size() << std::endl; 
         // loop through descripor signatures of signature index complete objects
 
-        // std::vector<unsigned int> signatureOrder(objectSignature->descriptorSignatures.size()); // (queryDescriptors.length);
-        // for(unsigned int s = 0; s < objectSignature->descriptorSignatures.size(); s++) {
-        //     signatureOrder.at(s) = s;
-        // }
+        std::vector<unsigned int> completeDescriptorsOrder(objectSignature->descriptorSignatures.size()); // (queryDescriptors.length);
+        for(unsigned int s = 0; s < objectSignature->descriptorSignatures.size(); s++) {
+            completeDescriptorsOrder.at(s) = s;
+        }
         // Comment out line below to disable randomness?
-        // std::shuffle(signatureOrder.begin(), signatureOrder.end(), generator);
+        std::shuffle(completeDescriptorsOrder.begin(), completeDescriptorsOrder.end(), generator);
         for (unsigned int j = 0; j < descriptorsPerObjectLimit; j++) {
-            // std::vector<int> candidateSignature = objectSignature->descriptorSignatures[signatureOrder[j]].signatures;
-            std::vector<int> candidateSignature = objectSignature->descriptorSignatures[j].signatures;
+            std::vector<int> candidateSignature = objectSignature->descriptorSignatures[completeDescriptorsOrder[j]].signatures;
+            //std::vector<int> candidateSignature = objectSignature->descriptorSignatures[j].signatures;
             
             for(unsigned int k = 0; k < queryObjectSignature->descriptorSignatures.size(); k++) {
 
