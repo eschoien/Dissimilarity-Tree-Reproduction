@@ -36,4 +36,4 @@ namespace lsh {
     }
 }
 
-std::vector<std::vector<int>> create_permutations(int numberOfPermutations);
+std::vector<std::vector<int>> create_permutations(int numberOfPermutations, size_t seed);

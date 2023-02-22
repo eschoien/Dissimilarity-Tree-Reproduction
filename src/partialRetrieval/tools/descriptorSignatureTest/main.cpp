@@ -22,7 +22,8 @@ int main(int argc, const char **argv) {
         "descriptor-id", "Descriptor id", '\0', arrrgh::Optional, 0);
     const auto& numberOfPermutations = parser.add<int>(
         "permutation-count", "Number of Minhash functions (signature length)", '\0', arrrgh::Optional, 10);
-
+    const auto &seed = parser.add<int>(
+        "randomSeed", "Random seed to use for determining the order of query images to visit.", '\0', arrrgh::Optional, 725948161);
     const auto& showHelp = parser.add<bool>(
         "help", "Show this help message.", 'h', arrrgh::Optional, false);
 
@@ -47,7 +48,7 @@ int main(int argc, const char **argv) {
     ShapeDescriptor::cpu::array<ShapeDescriptor::QUICCIDescriptor> descriptors = ShapeDescriptor::read::QUICCIDescriptors(haystackFiles.at(fileID.value()));
     ShapeDescriptor::QUICCIDescriptor testDescriptor = descriptors.content[descriptorID.value()];
 
-    std::vector<std::vector<int>> permutations = create_permutations(numberOfPermutations.value());
+    std::vector<std::vector<int>> permutations = create_permutations(numberOfPermutations.value(), seed.value());
 
     std::vector<int> signature;
     computeDescriptorSignature(testDescriptor, &signature, permutations);

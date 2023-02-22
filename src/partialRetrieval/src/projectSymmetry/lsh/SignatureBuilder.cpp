@@ -15,7 +15,7 @@
 #include "SignatureBuilder.h"
 #include "Permutation.h"
 
-SignatureIndex buildSignaturesFromDumpDirectory(const std::experimental::filesystem::path &imageDumpDirectory, const std::experimental::filesystem::path &outputDirectory, const unsigned int numberOfPermutations) {
+SignatureIndex buildSignaturesFromDumpDirectory(const std::experimental::filesystem::path &imageDumpDirectory, const std::experimental::filesystem::path &outputDirectory, const unsigned int numberOfPermutations, size_t seed) {
     
     SignatureIndex signatureIndex;
     signatureIndex.objectCount = 0;
@@ -32,7 +32,7 @@ SignatureIndex buildSignaturesFromDumpDirectory(const std::experimental::filesys
     */
 
     // generate minhash permutations
-    signatureIndex.permutations = create_permutations(numberOfPermutations);
+    signatureIndex.permutations = create_permutations(numberOfPermutations, seed);
 
     std::cout << "Processing descriptors.." << std::endl;
 
