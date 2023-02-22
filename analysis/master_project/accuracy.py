@@ -18,7 +18,7 @@ def calculate_accuracy(data):
 
 filedir = 'output/lsh/measurements'
 
-for filename in sorted(os.listdir(filedir)):
+for filename in sorted(os.listdir(filedir), key=lambda x: (float(x.split('-')[1]), int(x.split('-')[2]))):
     file = os.path.join(filedir, filename)
 
     signature_data = json.load(open(file))
