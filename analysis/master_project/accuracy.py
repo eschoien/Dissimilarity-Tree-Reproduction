@@ -18,11 +18,14 @@ def calculate_accuracy(data):
 
 filedir = 'output/lsh/measurements'
 
-for filename in sorted(os.listdir(filedir), key=lambda x: (float(x.split('-')[1]), int(x.split('-')[2]))):
-    file = os.path.join(filedir, filename)
+for (root, dirs, files) in os.walk(filedir):
+    for filename in sorted(files, key=lambda x: (float(x.split('-')[1]), int(x.split('-')[2]))):
+        file = os.path.join(root, filename)
 
-    signature_data = json.load(open(file))
+        signature_data = json.load(open(file))
 
-    signature_accuracy = calculate_accuracy(signature_data)
+        signature_accuracy = calculate_accuracy(signature_data)
 
-    print(f'Accuracy from {filename[12:-5]}: {signature_accuracy[0]}, {round(signature_accuracy[1] ,2)}%')
+        print(f'Accuracy from {filename[12:-5]}: {signature_accuracy[0]}, {round(signature_accuracy[1] ,2)}%')
+    
+    print()

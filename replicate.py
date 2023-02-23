@@ -1145,8 +1145,9 @@ def runSignatureSearcher():
     # outputFile = computePipelineEvaluationOutputFileName(pipelineEvaluation_queryMode, consensusThreshold, resolution)
     JACCARD_THRESHOLD = '0.6'
     descriptorsPerObjectLimit = '100'
-    os.makedirs('output/lsh/measurements', exist_ok=True)
-    outputFile = 'output/lsh/measurements/measurement' + '-' + JACCARD_THRESHOLD + '-' + descriptorsPerObjectLimit + '-' + permutation_count + '.json'
+    outputPath = 'output/lsh/measurements/permcount' + permutation_count
+    os.makedirs(outputPath, exist_ok=True)
+    outputFile = outputPath + '/measurement' + '-' + JACCARD_THRESHOLD + '-' + descriptorsPerObjectLimit + '-' + permutation_count + '.json'
 
     run_command_line_command('bin/build32x32/signatureSearcher '
          '--signature-directory=output/lsh/minhash_signatures '
@@ -1165,7 +1166,6 @@ def runSignatureSearcher():
         #  '--randomSeed=' + mainEvaluationRandomSeed + ' '
         #  '--consensus-threshold=' + consensusThreshold + ' '
         #  '--force-gpu=' + str(gpuID) + ' '
-        #  '--output-file=' + outputFile + ' '
     
 def runSignatureExperiment():
 
@@ -1173,16 +1173,17 @@ def runSignatureExperiment():
     endIndex = startIndex + 2
 
     queryPath = 'output/augmented_dataset_original'
-    os.makedirs('output/lsh/measurements', exist_ok=True)
+    outputPath = 'output/lsh/measurements/permcount' + permutation_count
+    os.makedirs(outputPath, exist_ok=True)
     thresholds = ['0.5', '0.6', '0.7', '0.8', '0.9']
-    descriptorlimits = ['100', '500', '1000', '2000']
+    descriptorlimits = ['100', '500', '1000']
 
     for threshold in thresholds:
         JACCARD_THRESHOLD = threshold
         for descriptorlimit in descriptorlimits:
 
             descriptorsPerObjectLimit = descriptorlimit
-            outputFile = 'output/lsh/measurements/measurement' + '-' + JACCARD_THRESHOLD + '-' + descriptorsPerObjectLimit + '-' + permutation_count + '.json'
+            outputFile = outputPath + '/measurement' + '-' + JACCARD_THRESHOLD + '-' + descriptorsPerObjectLimit + '-' + permutation_count + '.json'
 
             run_command_line_command('bin/build32x32/signatureSearcher '
                 '--signature-directory=output/lsh/minhash_signatures '
