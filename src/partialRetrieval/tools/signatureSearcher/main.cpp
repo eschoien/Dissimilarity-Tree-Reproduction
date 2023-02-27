@@ -88,35 +88,32 @@ QueryResult runSignatureQuery(
 
     std::cout << "Partial object: " << queryObjectSignature->file_id << std::endl;
     
-    std::vector<unsigned int> queryDescriptorsOrder(queryDescriptors.length); // (queryDescriptors.length);
-    for(unsigned int s = 0; s < queryDescriptors.length; s++) {
-        queryDescriptorsOrder.at(s) = s;
+    std::vector<unsigned int> order(350000); // (queryDescriptors.length);
+    for(unsigned int s = 0; s < 350000; s++) {
+        order.at(s) = s;
     }
     // Comment out line below to disable randomness?
-    std::shuffle(queryDescriptorsOrder.begin(), queryDescriptorsOrder.end(), generator);
+    std::shuffle(order.begin(), order.end(), generator);
 
     for(unsigned int i = 0; i < descriptorsPerObjectLimit; i++) {
         DescriptorSignature descriptorSignature;
-        descriptorSignature.descriptor_id = queryDescriptorsOrder[i] + 1; //i + 1;
-        computeDescriptorSignature(queryDescriptors.content[queryDescriptorsOrder[i]], &(descriptorSignature.signatures), signatureIndex->permutations);
+        descriptorSignature.descriptor_id = order[i] % queryDescriptors.length + 1; //i + 1;
+        computeDescriptorSignature(queryDescriptors.content[order[i] % queryDescriptors.length], &(descriptorSignature.signatures), signatureIndex->permutations);
         queryObjectSignature->descriptorSignatures.push_back(descriptorSignature);
     }
 
-    // loop through signature index object signatures
+
+    // parallize this
+    // Loop through commplete object signature files
+    #pragma omp parallel for schedule(dynamic)
     for(unsigned int i = 0; i < haystackFiles.size(); i++) {
         
         ObjectSignature* objectSignature = readSignature(haystackFiles.at(i), signatureIndex->numPermutations);
-        //std::cout << objectSignature->file_id << " " << objectSignature->descriptorSignatures.size() << std::endl; 
-        // loop through descripor signatures of signature index complete objects
 
-        std::vector<unsigned int> completeDescriptorsOrder(objectSignature->descriptorSignatures.size()); // (queryDescriptors.length);
-        for(unsigned int s = 0; s < objectSignature->descriptorSignatures.size(); s++) {
-            completeDescriptorsOrder.at(s) = s;
-        }
+        // Loop through complete object descripor signatures 
         // Comment out line below to disable randomness?
-        std::shuffle(completeDescriptorsOrder.begin(), completeDescriptorsOrder.end(), generator);
         for (unsigned int j = 0; j < descriptorsPerObjectLimit; j++) {
-            std::vector<int> candidateSignature = objectSignature->descriptorSignatures[completeDescriptorsOrder[j]].signatures;
+            std::vector<int> candidateSignature = objectSignature->descriptorSignatures[order[j] % objectSignature->descriptorSignatures.size()].signatures;
             //std::vector<int> candidateSignature = objectSignature->descriptorSignatures[j].signatures;
             
             for(unsigned int k = 0; k < queryObjectSignature->descriptorSignatures.size(); k++) {
