@@ -1,6 +1,7 @@
 #include <arrrgh.hpp>
 #include <iostream>
 #include <algorithm>
+#include <map>
 #include <vector>
 #include <atomic>
 #include <string>
@@ -40,7 +41,12 @@ using ordered_map = tsl::ordered_map<Key, T, Hash, KeyEqual, AllocatorPair, Valu
 using json = nlohmann::basic_json<ordered_map>;
 struct QueryResult {
     unsigned int queryFileID;
+    unsigned int queryFileScore;
+    float queryFilejaccard;
+    int match;
     unsigned int bestMatchID;
+    unsigned int bestMatchScore;
+    float bestMatchjaccard;
     float executionTimeSeconds;
 };
 
@@ -104,7 +110,6 @@ QueryResult runSignatureQuery(
 
     // loop through signature index object signatures
     for(unsigned int i = 0; i < haystackFiles.size(); i++) {
-        
         ObjectSignature* objectSignature = readSignature(haystackFiles.at(i), signatureIndex->numPermutations);
         //std::cout << objectSignature->file_id << " " << objectSignature->descriptorSignatures.size() << std::endl; 
         // loop through descripor signatures of signature index complete objects
@@ -115,18 +120,18 @@ QueryResult runSignatureQuery(
         }
         // Comment out line below to disable randomness?
         std::shuffle(completeDescriptorsOrder.begin(), completeDescriptorsOrder.end(), generator);
-        for (unsigned int j = 0; j < descriptorsPerObjectLimit; j++) {
-            std::vector<int> candidateSignature = objectSignature->descriptorSignatures[completeDescriptorsOrder[j]].signatures;
-            //std::vector<int> candidateSignature = objectSignature->descriptorSignatures[j].signatures;
-            
-            for(unsigned int k = 0; k < queryObjectSignature->descriptorSignatures.size(); k++) {
+        for(unsigned int k = 0; k < queryObjectSignature->descriptorSignatures.size(); k++) {
 
-                std::vector<int> querySignature = queryObjectSignature->descriptorSignatures[k].signatures;
+            std::vector<int> querySignature = queryObjectSignature->descriptorSignatures[k].signatures;
+            
+            for (unsigned int j = 0; j < descriptorsPerObjectLimit; j++) {
+                std::vector<int> candidateSignature = objectSignature->descriptorSignatures[completeDescriptorsOrder[j]].signatures;
+                //std::vector<int> candidateSignature = objectSignature->descriptorSignatures[j].signatures;
 
                 double jaccardSimilarity = computeJaccardSimilarity(querySignature, candidateSignature);
-            
                 if (jaccardSimilarity >= JACCARD_THRESHOLD) {
-                    objectScores[objectSignature->file_id-1]++;        
+                    objectScores[objectSignature->file_id-1]++;
+                    break;   
                 }
 
             }
@@ -154,7 +159,9 @@ QueryResult runSignatureQuery(
     
     QueryResult result;
     result.queryFileID = fileID;
+    result.queryFileScore = objectScores[fileID-1];
     result.bestMatchID = bestMatch;
+    result.bestMatchScore = objectScores[bestMatch-1];
     result.executionTimeSeconds = float(duration.count()) / 1000.0f;
 
     return result;
@@ -246,7 +253,11 @@ int main(int argc, const char **argv) {
                 outJson["results"].emplace_back();
                 outJson["results"][resultIndex] = {};
                 outJson["results"][resultIndex]["queryFileID"] = searchResults.at(resultIndex).queryFileID;
+                outJson["results"][resultIndex]["queryFileScore"] = searchResults.at(resultIndex).queryFileScore;
+                outJson["results"][resultIndex]["queryFilejaccard"] = searchResults.at(resultIndex).queryFilejaccard;
                 outJson["results"][resultIndex]["bestMatchID"] = searchResults.at(resultIndex).bestMatchID;
+                outJson["results"][resultIndex]["bestMatchScore"] = searchResults.at(resultIndex).bestMatchScore;
+                outJson["results"][resultIndex]["bestMatchjaccard"] = searchResults.at(resultIndex).bestMatchjaccard;
                 outJson["results"][resultIndex]["executionTimeSeconds"] = searchResults.at(resultIndex).executionTimeSeconds;
             }
 
