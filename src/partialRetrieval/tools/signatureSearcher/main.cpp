@@ -42,11 +42,9 @@ using json = nlohmann::basic_json<ordered_map>;
 struct QueryResult {
     unsigned int queryFileID;
     unsigned int queryFileScore;
-    float queryFilejaccard;
     int match;
     unsigned int bestMatchID;
     unsigned int bestMatchScore;
-    float bestMatchjaccard;
     float executionTimeSeconds;
 };
 
@@ -122,14 +120,13 @@ QueryResult runSignatureQuery(
             std::vector<int> querySignature = queryObjectSignature->descriptorSignatures[k].signatures;
             
             for (unsigned int j = 0; j < descriptorsPerObjectLimit; j++) {
-                std::vector<int> candidateSignature = objectSignature->descriptorSignatures[order[j] % objectSignature->descriptorSignatures.size()].signatures;
+                std::vector<int> candidateSignature = objectSignature->descriptorSignatures[j].signatures;
                 //std::vector<int> candidateSignature = objectSignature->descriptorSignatures[j].signatures;
 
                 double jaccardSimilarity = computeJaccardSimilarity(querySignature, candidateSignature);
                 
                 if (jaccardSimilarity >= JACCARD_THRESHOLD) {
                     objectScores[objectSignature->file_id-1]++;
-                    break;   
                 }
 
             }
@@ -252,10 +249,8 @@ int main(int argc, const char **argv) {
                 outJson["results"][resultIndex] = {};
                 outJson["results"][resultIndex]["queryFileID"] = searchResults.at(resultIndex).queryFileID;
                 outJson["results"][resultIndex]["queryFileScore"] = searchResults.at(resultIndex).queryFileScore;
-                outJson["results"][resultIndex]["queryFilejaccard"] = searchResults.at(resultIndex).queryFilejaccard;
                 outJson["results"][resultIndex]["bestMatchID"] = searchResults.at(resultIndex).bestMatchID;
                 outJson["results"][resultIndex]["bestMatchScore"] = searchResults.at(resultIndex).bestMatchScore;
-                outJson["results"][resultIndex]["bestMatchjaccard"] = searchResults.at(resultIndex).bestMatchjaccard;
                 outJson["results"][resultIndex]["executionTimeSeconds"] = searchResults.at(resultIndex).executionTimeSeconds;
             }
 

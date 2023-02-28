@@ -1105,11 +1105,14 @@ def runShrec16Queries():
         if choice == 7:
             return
 
+descriptorsPerObjectLimit = '1000'
+
 def computeSignatures():
     os.makedirs('output/lsh/minhash_signatures', exist_ok=True)
     run_command_line_command('bin/build32x32/signatureBuilder '
                              '--index-directory=output/lsh '
                              '--quicci-dump-directory=output/descriptors/complete_objects_32x32 '
+                             '--descriptorsPerObjectLimit=' + descriptorsPerObjectLimit + ' '
                              '--permutation-count=' + permutation_count + ' ')
     print()
 
@@ -1144,7 +1147,7 @@ def runSignatureSearcher():
 
     # outputFile = computePipelineEvaluationOutputFileName(pipelineEvaluation_queryMode, consensusThreshold, resolution)
     JACCARD_THRESHOLD = '0.6'
-    descriptorsPerObjectLimit = '100'
+    
     outputPath = 'output/lsh/measurements/permcount' + permutation_count
     os.makedirs(outputPath, exist_ok=True)
     outputFile = outputPath + '/measurement' + '-' + JACCARD_THRESHOLD + '-' + descriptorsPerObjectLimit + '-' + permutation_count + '.json'
@@ -1179,19 +1182,17 @@ def runSignatureExperiment():
     descriptorlimits = ['100', '500', '1000']
 
     for threshold in thresholds:
-        JACCARD_THRESHOLD = threshold
         for descriptorlimit in descriptorlimits:
 
-            descriptorsPerObjectLimit = descriptorlimit
-            outputFile = outputPath + '/measurement' + '-' + JACCARD_THRESHOLD + '-' + descriptorsPerObjectLimit + '-' + permutation_count + '.json'
+            outputFile = outputPath + '/measurement' + '-' + threshold + '-' + descriptorlimit + '-' + permutation_count + '.json'
 
             run_command_line_command('bin/build32x32/signatureSearcher '
                 '--signature-directory=output/lsh/minhash_signatures '
                 '--query-directory=' + queryPath + ' '
                 '--output-file=' + outputFile + ' '
                 '--support-radius=' + shrec2016_support_radius + ' '
-                '--JACCARD_THRESHOLD=' + JACCARD_THRESHOLD + ' '
-                '--descriptorsPerObjectLimit=' + descriptorsPerObjectLimit + ' '
+                '--JACCARD_THRESHOLD=' + threshold + ' '
+                '--descriptorsPerObjectLimit=' + descriptorlimit + ' '
                 '--resultsPerQueryImage=1 '
                 '--randomSeed=' + mainEvaluationRandomSeed + ' '
                 )

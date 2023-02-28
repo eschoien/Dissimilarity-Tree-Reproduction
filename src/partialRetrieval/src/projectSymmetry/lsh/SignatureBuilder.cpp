@@ -3,6 +3,7 @@
 #include <vector>
 #include <atomic>
 #include <string> 
+#include <random>
 #include <shapeDescriptor/common/types/methods/RICIDescriptor.h>
 #include <shapeDescriptor/utilities/read/QUICCIDescriptors.h>
 #include <shapeDescriptor/utilities/fileutils.h>
@@ -15,7 +16,13 @@
 #include "SignatureBuilder.h"
 #include "Permutation.h"
 
-SignatureIndex buildSignaturesFromDumpDirectory(const std::experimental::filesystem::path &imageDumpDirectory, const std::experimental::filesystem::path &outputDirectory, const unsigned int numberOfPermutations, size_t seed) {
+SignatureIndex buildSignaturesFromDumpDirectory(
+    const std::experimental::filesystem::path &imageDumpDirectory, 
+    const std::experimental::filesystem::path &outputDirectory, 
+    const unsigned int numberOfPermutations,
+    unsigned int descriptorsPerObjectLimit,
+    size_t seed
+    ) {
     
     SignatureIndex signatureIndex;
     signatureIndex.objectCount = 0;
@@ -31,9 +38,20 @@ SignatureIndex buildSignaturesFromDumpDirectory(const std::experimental::filesys
     nextStartIndex = 0;
     */
 
+    std::random_device rd("/dev/urandom");
+    size_t randomSeed = seed != 0 ? seed : rd();
+    std::minstd_rand0 generator{randomSeed};
+    std::uniform_real_distribution<float> distribution(0, 1);
+
     // generate minhash permutations
     signatureIndex.permutations = create_permutations(numberOfPermutations, seed);
 
+    std::vector<unsigned int> order(350000); // (queryDescriptors.length);
+    for(unsigned int s = 0; s < 350000; s++) {
+        order.at(s) = s;
+    }
+    // Comment out line below to disable randomness?
+    std::shuffle(order.begin(), order.end(), generator);
     std::cout << "Processing descriptors.." << std::endl;
 
     // loop through all objects
@@ -54,12 +72,12 @@ SignatureIndex buildSignaturesFromDumpDirectory(const std::experimental::filesys
         signatureIndex.objectCount++;
         
         // loop through descriptors for current object
-        for(unsigned int j = 0; j < descriptors.length; j++) {
+        for(unsigned int i = 0; i < descriptorsPerObjectLimit; i++) {
             DescriptorSignature descriptorSignature;
-            descriptorSignature.descriptor_id = j + 1;
-            computeDescriptorSignature(descriptors.content[j], &(descriptorSignature.signatures), signatureIndex.permutations);
+            descriptorSignature.descriptor_id = order[i] % descriptors.length + 1; //i + 1;
+            computeDescriptorSignature(descriptors.content[order[i] % descriptors.length], &(descriptorSignature.signatures), signatureIndex.permutations);
             objectSignature->descriptorSignatures.push_back(descriptorSignature);
-        }
+        }    
 
         //Write object signature to file
         writeSignatures(*objectSignature, outputDirectory, numberOfPermutations);

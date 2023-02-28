@@ -15,6 +15,8 @@ int main(int argc, const char** argv) {
         "quicci-dump-directory", "The directory where binary dump files of QUICCI images are stored that should be indexed.", '\0', arrrgh::Optional, "");
     const auto& numberOfPermutations = parser.add<int>(
         "permutation-count", "The number of MInhash permutations / signature length", '\0', arrrgh::Optional, 10);
+    const auto &descriptorsPerObjectLimit = parser.add<int>(
+        "descriptorsPerObjectLimit", "descriptorsPerObjectLimit", '\0', arrrgh::Optional, 2000);
     const auto &seed = parser.add<int>(
         "randomSeed", "Random seed to use for determining the order of query images to visit.", '\0', arrrgh::Optional, 725948161);
     const auto& showHelp = parser.add<bool>(
@@ -41,7 +43,7 @@ int main(int argc, const char** argv) {
 
     std::cout << "Number of Minhash functions / permutations: " << numberOfPermutations.value() << std::endl;
 
-    SignatureIndex signatureIndex = buildSignaturesFromDumpDirectory(sourceDirectory.value(), std::experimental::filesystem::path(indexDirectory.value()) / "minhash_signatures/", numberOfPermutations.value(), seed.value());
+    SignatureIndex signatureIndex = buildSignaturesFromDumpDirectory(sourceDirectory.value(), std::experimental::filesystem::path(indexDirectory.value()) / "minhash_signatures/", numberOfPermutations.value(), descriptorsPerObjectLimit.value(), seed.value());
 
     std::cout << "Writing Signature index file.." << std::endl;
 
