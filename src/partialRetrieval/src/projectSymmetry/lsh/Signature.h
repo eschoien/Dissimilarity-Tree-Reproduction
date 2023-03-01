@@ -31,8 +31,10 @@ struct ObjectSignature {
 /* Signature metadata, minhash permutations etc. (add more here) */
 struct SignatureIndex {
     int objectCount;
-    std::vector<std::vector<int>> permutations;
+    int descriptorsLimit;
     int numPermutations;
+    std::vector<std::vector<int>> permutations;
+    std::vector<ObjectSignature> objectSignatures;
 };
 
 void computeDescriptorSignature(ShapeDescriptor::QUICCIDescriptor descriptor, std::vector<int>* descriptorSignaturesPtr, std::vector<std::vector<int>> permutations);

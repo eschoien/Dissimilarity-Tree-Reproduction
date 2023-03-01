@@ -43,11 +43,12 @@ int main(int argc, const char** argv) {
 
     std::cout << "Number of Minhash functions / permutations: " << numberOfPermutations.value() << std::endl;
 
-    SignatureIndex signatureIndex = buildSignaturesFromDumpDirectory(sourceDirectory.value(), std::experimental::filesystem::path(indexDirectory.value()) / "minhash_signatures/", numberOfPermutations.value(), descriptorsPerObjectLimit.value(), seed.value());
+    SignatureIndex *signatureIndex = buildSignaturesFromDumpDirectory(sourceDirectory.value(), std::experimental::filesystem::path(indexDirectory.value()) / "minhash_signatures/", numberOfPermutations.value(), descriptorsPerObjectLimit.value(), seed.value());
 
     std::cout << "Writing Signature index file.." << std::endl;
 
     writeSignatureIndex(signatureIndex, std::experimental::filesystem::path(indexDirectory.value()) / "index.dat");
+    delete signatureIndex;
 
     std::cout << std::endl << "Done." << std::endl;
 }

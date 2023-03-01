@@ -16,7 +16,7 @@
 #include "SignatureBuilder.h"
 #include "Permutation.h"
 
-SignatureIndex buildSignaturesFromDumpDirectory(
+SignatureIndex* buildSignaturesFromDumpDirectory(
     const std::experimental::filesystem::path &imageDumpDirectory, 
     const std::experimental::filesystem::path &outputDirectory, 
     const unsigned int numberOfPermutations,
@@ -24,9 +24,9 @@ SignatureIndex buildSignaturesFromDumpDirectory(
     size_t seed
     ) {
     
-    SignatureIndex signatureIndex;
-    signatureIndex.objectCount = 0;
-    signatureIndex.numPermutations = numberOfPermutations;
+    SignatureIndex *signatureIndex = new SignatureIndex; 
+    signatureIndex->objectCount = 0;
+    signatureIndex->numPermutations = numberOfPermutations;
 
 
     std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now();
@@ -44,7 +44,9 @@ SignatureIndex buildSignaturesFromDumpDirectory(
     std::uniform_real_distribution<float> distribution(0, 1);
 
     // generate minhash permutations
-    signatureIndex.permutations = create_permutations(numberOfPermutations, seed);
+    signatureIndex->permutations = create_permutations(numberOfPermutations, seed);
+    signatureIndex->descriptorsLimit = descriptorsPerObjectLimit;
+    signatureIndex->objectSignatures.resize(haystackFiles.size());
 
     std::vector<unsigned int> order(350000); // (queryDescriptors.length);
     for(unsigned int s = 0; s < 350000; s++) {
@@ -69,18 +71,19 @@ SignatureIndex buildSignaturesFromDumpDirectory(
         std::string path_string = haystackFiles.at(i);
         std::size_t pos = path_string.find("/T");
         objectSignature->file_id = std::stoi(path_string.substr(pos+2));
-        signatureIndex.objectCount++;
+        signatureIndex->objectCount++;
         
         // loop through descriptors for current object
-        for(unsigned int i = 0; i < descriptorsPerObjectLimit; i++) {
+        for(unsigned int j = 0; j < descriptorsPerObjectLimit; j++) {
             DescriptorSignature descriptorSignature;
-            descriptorSignature.descriptor_id = order[i] % descriptors.length + 1; //i + 1;
-            computeDescriptorSignature(descriptors.content[order[i] % descriptors.length], &(descriptorSignature.signatures), signatureIndex.permutations);
+            descriptorSignature.descriptor_id = order[j] % descriptors.length + 1; //i + 1;
+            computeDescriptorSignature(descriptors.content[order[j] % descriptors.length], &(descriptorSignature.signatures), signatureIndex->permutations);
             objectSignature->descriptorSignatures.push_back(descriptorSignature);
         }    
 
         //Write object signature to file
-        writeSignatures(*objectSignature, outputDirectory, numberOfPermutations);
+        // writeSignatures(*objectSignature, outputDirectory, numberOfPermutations);
+        signatureIndex->objectSignatures.at(i) = *objectSignature;
 
         // End time for current object
         std::chrono::steady_clock::time_point objectEndTime = std::chrono::steady_clock::now();
@@ -95,7 +98,7 @@ SignatureIndex buildSignaturesFromDumpDirectory(
         std::cout << std::endl;
         // ------------------
 
-        delete objectSignature;
+        // delete objectSignature;
         ShapeDescriptor::free::array(descriptors);
     }
 

@@ -21,7 +21,6 @@ indexGenerationMode = 'CPU'
 pipelineEvaluation_queryMode = 'Best Case'
 pipelineEvaluation_consensusThreshold = '10'
 pipelineEvaluation_resolution = '32x32'
-permutation_count = '10'
 
 # Execution times:
 # Generating all descriptors: 50m
@@ -1105,14 +1104,17 @@ def runShrec16Queries():
         if choice == 7:
             return
 
+# LSH MASTER PROJECT
+permutation_count = '100'
 descriptorsPerObjectLimit = '1000'
 
-def computeSignatures():
+def computeSignatures(descriptorsLimit):
     os.makedirs('output/lsh/minhash_signatures', exist_ok=True)
     run_command_line_command('bin/build32x32/signatureBuilder '
                              '--index-directory=output/lsh '
                              '--quicci-dump-directory=output/descriptors/complete_objects_32x32 '
-                             '--descriptorsPerObjectLimit=' + descriptorsPerObjectLimit + ' '
+                             '--descriptorsPerObjectLimit=' + descriptorsLimit + ' '
+                             '--randomSeed=' + mainEvaluationRandomSeed + ' '
                              '--permutation-count=' + permutation_count + ' ')
     print()
 
@@ -1138,8 +1140,8 @@ def runSignatureSearcher():
     # global pipelineEvaluation_consensusThreshold
     # global pipelineEvaluation_queryMode
 
-    startIndex = random.randint(0, len(os.listdir('input/SHREC2016_partial_retrieval/complete_objects')) - 2)
-    endIndex = startIndex + 2
+    # startIndex = random.randint(0, len(os.listdir('input/SHREC2016_partial_retrieval/complete_objects')) - 2)
+    # endIndex = startIndex + 2
 
     queryPath = 'output/augmented_dataset_original'# if pipelineEvaluation_queryMode == 'Best Case' else 'output/augmented_dataset_remeshed'
     # resolution = pipelineEvaluation_resolution
@@ -1153,7 +1155,7 @@ def runSignatureSearcher():
     outputFile = outputPath + '/measurement' + '-' + JACCARD_THRESHOLD + '-' + descriptorsPerObjectLimit + '-' + permutation_count + '.json'
 
     run_command_line_command('bin/build32x32/signatureSearcher '
-         '--signature-directory=output/lsh/minhash_signatures '
+         '--signature-file=output/lsh/index.dat '
          '--query-directory=' + queryPath + ' '
          '--output-file=' + outputFile + ' '
          '--support-radius=' + shrec2016_support_radius + ' '
@@ -1181,13 +1183,14 @@ def runSignatureExperiment():
     thresholds = ['0.5', '0.6', '0.7', '0.8', '0.9']
     descriptorlimits = ['100', '500', '1000']
 
-    for threshold in thresholds:
-        for descriptorlimit in descriptorlimits:
+    for descriptorlimit in descriptorlimits:
+        computeSignatures(descriptorlimit)
+        for threshold in thresholds:
 
             outputFile = outputPath + '/measurement' + '-' + threshold + '-' + descriptorlimit + '-' + permutation_count + '.json'
 
             run_command_line_command('bin/build32x32/signatureSearcher '
-                '--signature-directory=output/lsh/minhash_signatures '
+                '--signature-file=output/lsh/index.dat '
                 '--query-directory=' + queryPath + ' '
                 '--output-file=' + outputFile + ' '
                 '--support-radius=' + shrec2016_support_radius + ' '
@@ -1255,7 +1258,7 @@ def runMainMenu():
         if choice == 15:  # Done
             runShrec16Queries()
         if choice == 16:
-            computeSignatures()
+            computeSignatures(descriptorsPerObjectLimit)
         if choice == 17:
             runDescriptorSignatureTest()
         if choice == 18:

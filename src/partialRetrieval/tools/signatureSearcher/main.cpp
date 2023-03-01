@@ -52,7 +52,6 @@ QueryResult runSignatureQuery(
         std::experimental::filesystem::path queryFile,
         SignatureIndex *signatureIndex,
         float supportRadius,
-        std::vector<std::experimental::filesystem::path> &haystackFiles,
         unsigned int descriptorsPerObjectLimit,
         double JACCARD_THRESHOLD,
         size_t seed
@@ -80,7 +79,7 @@ QueryResult runSignatureQuery(
     
     
     std::chrono::steady_clock::time_point queryStartTime = std::chrono::steady_clock::now();
-    std::vector<int> objectScores(haystackFiles.size(), 0);
+    std::vector<int> objectScores(signatureIndex->objectCount, 0);
    
     // Create partial object signatures
     ObjectSignature* queryObjectSignature = new ObjectSignature;
@@ -110,8 +109,9 @@ QueryResult runSignatureQuery(
     // parallize this
     // Loop through commplete object signature files
     #pragma omp parallel for schedule(dynamic)
-    for(unsigned int i = 0; i < haystackFiles.size(); i++) {
-        ObjectSignature* objectSignature = readSignature(haystackFiles.at(i), signatureIndex->numPermutations);
+    for(unsigned int i = 0; i < signatureIndex->objectCount; i++) {
+        // ObjectSignature* objectSignature = readSignature(haystackFiles.at(i), signatureIndex->numPermutations);
+        ObjectSignature* objectSignature = &(signatureIndex->objectSignatures[i]);
 
         // Loop through complete object descripor signatures 
         // Comment out line below to disable randomness?
@@ -121,17 +121,18 @@ QueryResult runSignatureQuery(
             
             for (unsigned int j = 0; j < descriptorsPerObjectLimit; j++) {
                 std::vector<int> candidateSignature = objectSignature->descriptorSignatures[j].signatures;
-                //std::vector<int> candidateSignature = objectSignature->descriptorSignatures[j].signatures;
+                //std::vector<int> candidateSignature = objectSignature.descriptorSignatures[j].signatures;
 
                 double jaccardSimilarity = computeJaccardSimilarity(querySignature, candidateSignature);
                 
                 if (jaccardSimilarity >= JACCARD_THRESHOLD) {
                     objectScores[objectSignature->file_id-1]++;
+                    break;
                 }
 
             }
         }
-        delete objectSignature;
+        // delete objectSignature;
     }   
     delete queryObjectSignature;
 
@@ -165,8 +166,8 @@ QueryResult runSignatureQuery(
 // modified from another object search, needs further changes
 int main(int argc, const char **argv) {
     arrrgh::parser parser("signatureSearcher", "Search for similar objects using LSH.");
-    const auto &signatureDirectory = parser.add<std::string>(
-        "signature-directory", "The directory containing the signatures to be queried.", '\0', arrrgh::Required, "");
+    const auto &signatureFile = parser.add<std::string>(
+        "signature-file", "The signature file to be queried.", '\0', arrrgh::Required, "output/lsh/index.dat");
     const auto &queryDirectory = parser.add<std::string>(
         "query-directory", "The directory containing meshes which should be used for querying the index.", '\0', arrrgh::Required, "");
     const auto &resultsPerQuery = parser.add<int>(
@@ -211,9 +212,9 @@ int main(int argc, const char **argv) {
     }
     
     std::vector<std::experimental::filesystem::path> queryFiles = ShapeDescriptor::utilities::listDirectory(queryDirectory.value());
-    std::vector<std::experimental::filesystem::path> haystackFiles = ShapeDescriptor::utilities::listDirectory(signatureDirectory.value());
+    // std::vector<std::experimental::filesystem::path> haystackFiles = ShapeDescriptor::utilities::listDirectory(signatureDirectory.value());
 
-    SignatureIndex *signatureIndex = readSignatureIndex("output/lsh/index.dat");
+    SignatureIndex *signatureIndex = readSignatureIndex(signatureFile.value());
 
     std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now();
 
@@ -223,7 +224,7 @@ int main(int argc, const char **argv) {
     unsigned int endIndex = subsetEndIndex.value() != -1 ? subsetEndIndex.value() : queryFiles.size();
     for(unsigned int queryFile = startIndex; queryFile < endIndex; queryFile++) {
         std::cout << "Processing query " << (queryFile + 1) << "/" << endIndex << ": " << queryFiles.at(queryFile).string() << std::endl;
-        QueryResult queryResult = runSignatureQuery(queryFiles.at(queryFile), signatureIndex, supportRadius.value(), haystackFiles, descriptorsPerObjectLimit.value(), JACCARD_THRESHOLD.value(), seed.value());
+        QueryResult queryResult = runSignatureQuery(queryFiles.at(queryFile), signatureIndex, supportRadius.value(), descriptorsPerObjectLimit.value(), JACCARD_THRESHOLD.value(), seed.value());
         searchResults.push_back(queryResult);
 
         if(outputFile.value() != "NONE_SELECTED") {
@@ -233,7 +234,7 @@ int main(int argc, const char **argv) {
             outJson["queryObjectSupportRadius"] = supportRadius.value();
 
             outJson["queryDirectory"] = cluster::path(queryDirectory.value()).string();
-            outJson["signatureDirectory"] = cluster::path(signatureDirectory.value()).string();
+            outJson["signatureFile"] = cluster::path(signatureFile.value()).string();
             outJson["dumpFilePath"] = cluster::path(outputFile.value()).string();
             outJson["randomSeed"] = seed.value();
             outJson["queryStartIndex"] = startIndex;
