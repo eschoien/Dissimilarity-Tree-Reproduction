@@ -15,5 +15,5 @@
 void writeSignatures(ObjectSignature objectSig, const std::experimental::filesystem::path outputDirectory, const unsigned int numberOfPermutations);
 ObjectSignature *readSignature(const std::experimental::filesystem::path indexFile, const unsigned int numberOfPermutations);
 
-void writeSignatureIndex(SignatureIndex sigIndex, const std::experimental::filesystem::path outputFile);
+void writeSignatureIndex(SignatureIndex *sigIndex, const std::experimental::filesystem::path outputFile);
 SignatureIndex *readSignatureIndex(const std::experimental::filesystem::path indexFile);

@@ -74,28 +74,54 @@ ObjectSignature *readSignature(const std::experimental::filesystem::path indexFi
     return objectSig;
 }
 
-void writeSignatureIndex(SignatureIndex sigIndex, const std::experimental::filesystem::path outputFile) {
+void writeSignatureIndex(SignatureIndex *sigIndex, const std::experimental::filesystem::path outputFile) {
 
     std::ofstream outStream(outputFile.string(), std::ios::out | std::ios::binary);
 
     const char headerString[4] = "SIF";
     outStream.write(headerString, 4);
 
-    unsigned long long fileCount = sigIndex.objectCount;
+    unsigned long long fileCount = sigIndex->objectCount;
     outStream.write((const char*) &fileCount, sizeof(unsigned long long));
 
-    unsigned long long numPermutations = sigIndex.numPermutations;
+    unsigned long long descriptorLimit = sigIndex->descriptorsLimit;
+    outStream.write((const char*) &descriptorLimit, sizeof(unsigned long long));
+
+    unsigned long long numPermutations = sigIndex->numPermutations;
     outStream.write((const char*) &numPermutations, sizeof(unsigned long long));
 
     for (int i = 0; i < numPermutations; i++) {
         unsigned int permutation_id = i + 1;
         outStream.write((const char*) &permutation_id, sizeof(unsigned int));
 
-        unsigned long long permutationCount = sigIndex.permutations[i].size();
+        unsigned long long permutationCount = sigIndex->permutations[i].size();
         outStream.write((const char*) &permutationCount, sizeof(unsigned long long));
 
-        outStream.write((const char*) sigIndex.permutations[i].data(), permutationCount * sizeof(int));
+        outStream.write((const char*) sigIndex->permutations[i].data(), permutationCount * sizeof(int));
     }
+    
+    std::cout << sigIndex->objectSignatures.size() << std::endl;
+    for (int i = 0; i < fileCount; i++) {
+
+        ObjectSignature objectSig = sigIndex->objectSignatures.at(i);
+
+        unsigned long long fileID = objectSig.file_id;
+        outStream.write((const char*) &fileID, sizeof(unsigned long long));
+
+        unsigned long long descriptorCount = objectSig.descriptorSignatures.size();
+        outStream.write((const char*) &descriptorCount, sizeof(unsigned long long));
+
+        for(int j = 0; j < objectSig.descriptorSignatures.size(); j++) {
+            DescriptorSignature descriptorSig;
+            descriptorSig = objectSig.descriptorSignatures.at(j);
+
+            unsigned int descriptorID = descriptorSig.descriptor_id;
+            outStream.write((const char*) &descriptorID, sizeof(unsigned int));
+
+            outStream.write((const char*) descriptorSig.signatures.data(), numPermutations * sizeof(int));
+        }
+    }
+
 }
 
 SignatureIndex *readSignatureIndex(const std::experimental::filesystem::path indexFile) {
@@ -112,6 +138,10 @@ SignatureIndex *readSignatureIndex(const std::experimental::filesystem::path ind
     inStream.read((char*) &fileCount, sizeof(unsigned long long));
     sigIndex->objectCount = fileCount;
 
+    unsigned long long descriptorLimit;
+    inStream.read((char*) &descriptorLimit, sizeof(unsigned long long));
+    sigIndex->descriptorsLimit = descriptorLimit;
+
     unsigned long long numPermutations;
     inStream.read((char*) &numPermutations, sizeof(unsigned long long));
 
@@ -127,6 +157,34 @@ SignatureIndex *readSignatureIndex(const std::experimental::filesystem::path ind
         sigIndex->permutations[i].resize(permutationCount);
 
         inStream.read((char*) sigIndex->permutations[i].data(), permutationCount * sizeof(int));
+    }
+
+    sigIndex->objectSignatures.resize(fileCount);
+
+    for (int i = 0; i < fileCount; i++) {
+
+        ObjectSignature objectSig;
+
+        unsigned long long fileID;
+        inStream.read((char*) &fileID, sizeof(unsigned long long));
+
+        unsigned long long descriptorCount;
+        inStream.read((char*) &descriptorCount, sizeof(unsigned long long));
+
+        objectSig.file_id = fileID;
+        objectSig.descriptorSignatures.resize(descriptorCount);
+
+        for(unsigned int j = 0; j < descriptorCount; j++) {
+            unsigned int descriptorID;
+            inStream.read((char*) &descriptorID, sizeof(unsigned int));
+            objectSig.descriptorSignatures[j].descriptor_id = descriptorID;
+
+            objectSig.descriptorSignatures[j].signatures.resize(numPermutations);
+
+            inStream.read((char*) objectSig.descriptorSignatures[j].signatures.data(), numPermutations * sizeof(int));
+        }
+
+        sigIndex->objectSignatures[i] = objectSig;
     }
 
     return sigIndex;
