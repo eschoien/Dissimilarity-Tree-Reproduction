@@ -65,12 +65,12 @@ SignatureIndex* buildSignaturesFromDumpDirectory(
         // loads all the descriptors for current object
         ShapeDescriptor::cpu::array<ShapeDescriptor::QUICCIDescriptor> descriptors = ShapeDescriptor::read::QUICCIDescriptors(haystackFiles.at(i));
 
-        ObjectSignature objectSignature;
+        ObjectSignature* objectSignature = new ObjectSignature;
 
         // objectSignature->file_id = i + 1;
         std::string path_string = haystackFiles.at(i);
         std::size_t pos = path_string.find("/T");
-        objectSignature.file_id = std::stoi(path_string.substr(pos+2));
+        objectSignature->file_id = std::stoi(path_string.substr(pos+2));
         signatureIndex->objectCount++;
         
         // loop through descriptors for current object
@@ -78,21 +78,21 @@ SignatureIndex* buildSignaturesFromDumpDirectory(
             DescriptorSignature descriptorSignature;
             descriptorSignature.descriptor_id = order[j] % descriptors.length + 1; //i + 1;
             computeDescriptorSignature(descriptors.content[order[j] % descriptors.length], &(descriptorSignature.signatures), signatureIndex->permutations);
-            objectSignature.descriptorSignatures.push_back(descriptorSignature);
+            objectSignature->descriptorSignatures.push_back(descriptorSignature);
         }    
 
         //Write object signature to file
         // writeSignatures(*objectSignature, outputDirectory, numberOfPermutations);
-        signatureIndex->objectSignatures.at(i) = objectSignature;
+        signatureIndex->objectSignatures.at(i) = *objectSignature;
 
         // End time for current object
         std::chrono::steady_clock::time_point objectEndTime = std::chrono::steady_clock::now();
         auto objectDuration = std::chrono::duration_cast<std::chrono::milliseconds>(objectEndTime - objectStartTime);
 
         // ----- OUTPUT -----
-        std::cout << "ObjectFileId: " << objectSignature.file_id << std::endl;
+        std::cout << "ObjectFileId: " << objectSignature->file_id << std::endl;
         std::cout << descriptors.length << " descriptors" << std::endl;
-        std::cout << objectSignature.descriptorSignatures.size() << " signatures" << std::endl;        
+        std::cout << objectSignature->descriptorSignatures.size() << " signatures" << std::endl;        
         std::cout << float(objectDuration.count()) / 1000.0f << " seconds" << std::endl;
         std::cout << "Descriptors per second: " << descriptors.length / (float(objectDuration.count()) / 1000.0f) << std::endl;
         std::cout << std::endl;

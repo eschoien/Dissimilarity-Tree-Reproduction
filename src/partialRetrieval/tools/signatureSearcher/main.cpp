@@ -111,7 +111,7 @@ QueryResult runSignatureQuery(
     #pragma omp parallel for schedule(dynamic)
     for(unsigned int i = 0; i < signatureIndex->objectCount; i++) {
         // ObjectSignature* objectSignature = readSignature(haystackFiles.at(i), signatureIndex->numPermutations);
-        ObjectSignature objectSignature = signatureIndex->objectSignatures[i];
+        ObjectSignature* objectSignature = &(signatureIndex->objectSignatures[i]);
 
         // Loop through complete object descripor signatures 
         // Comment out line below to disable randomness?
@@ -120,13 +120,13 @@ QueryResult runSignatureQuery(
             std::vector<int> querySignature = queryObjectSignature->descriptorSignatures[k].signatures;
             
             for (unsigned int j = 0; j < descriptorsPerObjectLimit; j++) {
-                std::vector<int> candidateSignature = objectSignature.descriptorSignatures[j].signatures;
+                std::vector<int> candidateSignature = objectSignature->descriptorSignatures[j].signatures;
                 //std::vector<int> candidateSignature = objectSignature.descriptorSignatures[j].signatures;
 
                 double jaccardSimilarity = computeJaccardSimilarity(querySignature, candidateSignature);
                 
                 if (jaccardSimilarity >= JACCARD_THRESHOLD) {
-                    objectScores[objectSignature.file_id-1]++;
+                    objectScores[objectSignature->file_id-1]++;
                     break;
                 }
 
@@ -166,8 +166,8 @@ QueryResult runSignatureQuery(
 // modified from another object search, needs further changes
 int main(int argc, const char **argv) {
     arrrgh::parser parser("signatureSearcher", "Search for similar objects using LSH.");
-    const auto &signatureDirectory = parser.add<std::string>(
-        "signature-directory", "The directory containing the signatures to be queried.", '\0', arrrgh::Required, "output/lsh/index.dat");
+    const auto &signatureFile = parser.add<std::string>(
+        "signature-file", "The signature file to be queried.", '\0', arrrgh::Required, "output/lsh/index.dat");
     const auto &queryDirectory = parser.add<std::string>(
         "query-directory", "The directory containing meshes which should be used for querying the index.", '\0', arrrgh::Required, "");
     const auto &resultsPerQuery = parser.add<int>(
@@ -214,7 +214,7 @@ int main(int argc, const char **argv) {
     std::vector<std::experimental::filesystem::path> queryFiles = ShapeDescriptor::utilities::listDirectory(queryDirectory.value());
     // std::vector<std::experimental::filesystem::path> haystackFiles = ShapeDescriptor::utilities::listDirectory(signatureDirectory.value());
 
-    SignatureIndex *signatureIndex = readSignatureIndex(signatureDirectory.value());
+    SignatureIndex *signatureIndex = readSignatureIndex(signatureFile.value());
 
     std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now();
 
@@ -234,7 +234,7 @@ int main(int argc, const char **argv) {
             outJson["queryObjectSupportRadius"] = supportRadius.value();
 
             outJson["queryDirectory"] = cluster::path(queryDirectory.value()).string();
-            outJson["signatureDirectory"] = cluster::path(signatureDirectory.value()).string();
+            outJson["signatureFile"] = cluster::path(signatureFile.value()).string();
             outJson["dumpFilePath"] = cluster::path(outputFile.value()).string();
             outJson["randomSeed"] = seed.value();
             outJson["queryStartIndex"] = startIndex;

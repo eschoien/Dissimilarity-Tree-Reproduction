@@ -21,7 +21,6 @@ indexGenerationMode = 'CPU'
 pipelineEvaluation_queryMode = 'Best Case'
 pipelineEvaluation_consensusThreshold = '10'
 pipelineEvaluation_resolution = '32x32'
-permutation_count = '100'
 
 # Execution times:
 # Generating all descriptors: 50m
@@ -1105,6 +1104,8 @@ def runShrec16Queries():
         if choice == 7:
             return
 
+# LSH MASTER PROJECT
+permutation_count = '100'
 descriptorsPerObjectLimit = '1000'
 
 def computeSignatures(descriptorsLimit):
@@ -1139,8 +1140,8 @@ def runSignatureSearcher():
     # global pipelineEvaluation_consensusThreshold
     # global pipelineEvaluation_queryMode
 
-    startIndex = random.randint(0, len(os.listdir('input/SHREC2016_partial_retrieval/complete_objects')) - 2)
-    endIndex = startIndex + 2
+    # startIndex = random.randint(0, len(os.listdir('input/SHREC2016_partial_retrieval/complete_objects')) - 2)
+    # endIndex = startIndex + 2
 
     queryPath = 'output/augmented_dataset_original'# if pipelineEvaluation_queryMode == 'Best Case' else 'output/augmented_dataset_remeshed'
     # resolution = pipelineEvaluation_resolution
@@ -1154,7 +1155,7 @@ def runSignatureSearcher():
     outputFile = outputPath + '/measurement' + '-' + JACCARD_THRESHOLD + '-' + descriptorsPerObjectLimit + '-' + permutation_count + '.json'
 
     run_command_line_command('bin/build32x32/signatureSearcher '
-         '--signature-directory=output/lsh/index.dat '
+         '--signature-file=output/lsh/index.dat '
          '--query-directory=' + queryPath + ' '
          '--output-file=' + outputFile + ' '
          '--support-radius=' + shrec2016_support_radius + ' '
@@ -1189,7 +1190,7 @@ def runSignatureExperiment():
             outputFile = outputPath + '/measurement' + '-' + threshold + '-' + descriptorlimit + '-' + permutation_count + '.json'
 
             run_command_line_command('bin/build32x32/signatureSearcher '
-                '--signature-directory=output/lsh/index.dat '
+                '--signature-file=output/lsh/index.dat '
                 '--query-directory=' + queryPath + ' '
                 '--output-file=' + outputFile + ' '
                 '--support-radius=' + shrec2016_support_radius + ' '
