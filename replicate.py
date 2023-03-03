@@ -1203,6 +1203,30 @@ def runSignatureExperiment():
                 '--k=' + k + ' '
                 )
 
+    queryPath = 'output/augmented_dataset_original'
+    outputPath = 'output/lsh/measurements/partial_objects/permcount' + permutation_count
+    os.makedirs(outputPath, exist_ok=True)
+    thresholds = ['0.1','0.2','0.3','0.4','0.5', '0.6', '0.7', '0.8', '0.9', '1.0']
+    descriptorlimits = ['100','500','1000']
+
+    for descriptorlimit in descriptorlimits:
+        computeSignatures(descriptorlimit)
+        for threshold in thresholds:
+
+            outputFile = outputPath + '/measurement' + '-' + threshold + '-' + descriptorlimit + '-' + permutation_count + '.json'
+
+            run_command_line_command('bin/build32x32/signatureSearcher '
+                '--signature-file=output/lsh/index.dat '
+                '--query-directory=' + queryPath + ' '
+                '--output-file=' + outputFile + ' '
+                '--support-radius=' + shrec2016_support_radius + ' '
+                '--JACCARD_THRESHOLD=' + threshold + ' '
+                '--descriptorsPerObjectLimit=' + descriptorlimit + ' '
+                '--resultsPerQueryImage=1 '
+                '--randomSeed=' + mainEvaluationRandomSeed + ' '
+                '--k=' + k + ' '
+                )
+
 def runMainMenu():
     while True:
         main_menu = TerminalMenu([
