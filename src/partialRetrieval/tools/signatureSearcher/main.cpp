@@ -39,14 +39,23 @@ template<class Key, class T, class Ignore, class Allocator,
 using ordered_map = tsl::ordered_map<Key, T, Hash, KeyEqual, AllocatorPair, ValueTypeContainer>;
 
 using json = nlohmann::basic_json<ordered_map>;
+struct ObjectScore {
+    unsigned int fileID;
+    unsigned int score;
+};
 struct QueryResult {
     unsigned int queryFileID;
     unsigned int queryFileScore;
-    int match;
-    unsigned int bestMatchID;
-    unsigned int bestMatchScore;
+    std::vector<unsigned int> bestMatches;
+    std::vector<unsigned int> bestMatchScores;
     float executionTimeSeconds;
 };
+
+
+bool compareScores(ObjectScore o1, ObjectScore o2)
+{
+    return (o1.score > o2.score);
+}
 
 QueryResult runSignatureQuery(
         std::experimental::filesystem::path queryFile,
@@ -54,7 +63,8 @@ QueryResult runSignatureQuery(
         float supportRadius,
         unsigned int descriptorsPerObjectLimit,
         double JACCARD_THRESHOLD,
-        size_t seed
+        size_t seed,
+        int k
         ) {
 
   // --- load partial object and compute descriptors
@@ -79,7 +89,7 @@ QueryResult runSignatureQuery(
     
     
     std::chrono::steady_clock::time_point queryStartTime = std::chrono::steady_clock::now();
-    std::vector<int> objectScores(signatureIndex->objectCount, 0);
+    std::vector<ObjectScore> objectScores(signatureIndex->objectCount, *(new ObjectScore));
    
     // Create partial object signatures
     ObjectSignature* queryObjectSignature = new ObjectSignature;
@@ -112,6 +122,8 @@ QueryResult runSignatureQuery(
     for(unsigned int i = 0; i < signatureIndex->objectCount; i++) {
         // ObjectSignature* objectSignature = readSignature(haystackFiles.at(i), signatureIndex->numPermutations);
         ObjectSignature* objectSignature = &(signatureIndex->objectSignatures[i]);
+        objectScores[objectSignature->file_id-1].fileID = objectSignature->file_id;
+        objectScores[objectSignature->file_id-1].score = 0;
 
         // Loop through complete object descripor signatures 
         // Comment out line below to disable randomness?
@@ -126,7 +138,7 @@ QueryResult runSignatureQuery(
                 double jaccardSimilarity = computeJaccardSimilarity(querySignature, candidateSignature);
                 
                 if (jaccardSimilarity >= JACCARD_THRESHOLD) {
-                    objectScores[objectSignature->file_id-1]++;
+                    objectScores[objectSignature->file_id-1].score++;
                     break;
                 }
 
@@ -138,8 +150,11 @@ QueryResult runSignatureQuery(
 
     // best matching object
     // returns the object with the highest number of descriptor signatures with jaccard similarity greater than threshold
-    unsigned int bestMatch = std::distance(objectScores.begin(), std::max_element(objectScores.begin(), objectScores.end())) + 1;
-    std::cout << "Best matching object " << bestMatch << std::endl;
+    std::vector<ObjectScore> bestMatches(objectScores.size());
+    std::copy(objectScores.begin(), objectScores.end(), std::back_inserter(bestMatches));
+    std::sort(bestMatches.begin(), bestMatches.end(), compareScores);
+    // unsigned int bestMatch = std::distance(objectScores.begin(), std::max_element(objectScores.begin(), objectScores.end())) + 1;
+    // std::cout << "Best matching object " << bestMatch << std::endl;
 
     std::chrono::steady_clock::time_point endTime = std::chrono::steady_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - queryStartTime);
@@ -155,9 +170,11 @@ QueryResult runSignatureQuery(
     
     QueryResult result;
     result.queryFileID = fileID;
-    result.queryFileScore = objectScores[fileID-1];
-    result.bestMatchID = bestMatch;
-    result.bestMatchScore = objectScores[bestMatch-1];
+    result.queryFileScore = objectScores[fileID-1].score;
+    for (int i = 0; i < k; i++) {
+        result.bestMatches.push_back(bestMatches[i].fileID);
+        result.bestMatchScores.push_back(objectScores[bestMatches[i].fileID-1].score);
+    }
     result.executionTimeSeconds = float(duration.count()) / 1000.0f;
 
     return result;
@@ -188,6 +205,8 @@ int main(int argc, const char **argv) {
         "subset-start-index", "Query index to start from.", '\0', arrrgh::Optional, 0);
     const auto &subsetEndIndex = parser.add<int>(
         "subset-end-index", "Query index to end at. Must be equal or less than the --sample-count parameter.", '\0', arrrgh::Optional, -1);
+    const auto &k = parser.add<int>(
+        "k", "k-nearest neighbour", '\0', arrrgh::Optional, 5);
     const auto &showHelp = parser.add<bool>(
         "help", "Show this help message.", 'h', arrrgh::Optional, false);
     const auto &descriptorsPerObjectLimit = parser.add<int>(
@@ -224,7 +243,7 @@ int main(int argc, const char **argv) {
     unsigned int endIndex = subsetEndIndex.value() != -1 ? subsetEndIndex.value() : queryFiles.size();
     for(unsigned int queryFile = startIndex; queryFile < endIndex; queryFile++) {
         std::cout << "Processing query " << (queryFile + 1) << "/" << endIndex << ": " << queryFiles.at(queryFile).string() << std::endl;
-        QueryResult queryResult = runSignatureQuery(queryFiles.at(queryFile), signatureIndex, supportRadius.value(), descriptorsPerObjectLimit.value(), JACCARD_THRESHOLD.value(), seed.value());
+        QueryResult queryResult = runSignatureQuery(queryFiles.at(queryFile), signatureIndex, supportRadius.value(), descriptorsPerObjectLimit.value(), JACCARD_THRESHOLD.value(), seed.value(), k.value());
         searchResults.push_back(queryResult);
 
         if(outputFile.value() != "NONE_SELECTED") {
@@ -250,8 +269,15 @@ int main(int argc, const char **argv) {
                 outJson["results"][resultIndex] = {};
                 outJson["results"][resultIndex]["queryFileID"] = searchResults.at(resultIndex).queryFileID;
                 outJson["results"][resultIndex]["queryFileScore"] = searchResults.at(resultIndex).queryFileScore;
-                outJson["results"][resultIndex]["bestMatchID"] = searchResults.at(resultIndex).bestMatchID;
-                outJson["results"][resultIndex]["bestMatchScore"] = searchResults.at(resultIndex).bestMatchScore;
+                outJson["bestMatches"] = {};
+                for (size_t bestMatchID = 0; bestMatchID < k.value(); bestMatchID++) {
+                    outJson["results"][resultIndex]["bestMatches"][bestMatchID] = searchResults.at(resultIndex).bestMatches.at(bestMatchID);
+                }
+                outJson["bestMatchScores"] = {};
+                for (size_t bestMatchscoreID = 0; bestMatchscoreID < k.value(); bestMatchscoreID++) {
+                    outJson["results"][resultIndex]["bestMatchScores"][bestMatchscoreID] = searchResults.at(resultIndex).bestMatchScores.at(bestMatchscoreID);
+                }
+                // outJson["results"][resultIndex]["bestMatchScore"] = searchResults.at(resultIndex).bestMatchScore;
                 outJson["results"][resultIndex]["executionTimeSeconds"] = searchResults.at(resultIndex).executionTimeSeconds;
             }
 

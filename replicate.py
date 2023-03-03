@@ -1106,7 +1106,8 @@ def runShrec16Queries():
 
 # LSH MASTER PROJECT
 permutation_count = '100'
-descriptorsPerObjectLimit = '1000'
+descriptorsPerObjectLimit = '100'
+k = '10'
 
 def computeSignatures(descriptorsLimit):
     os.makedirs('output/lsh/minhash_signatures', exist_ok=True)
@@ -1114,7 +1115,7 @@ def computeSignatures(descriptorsLimit):
                              '--index-directory=output/lsh '
                              '--quicci-dump-directory=output/descriptors/complete_objects_32x32 '
                              '--descriptorsPerObjectLimit=' + descriptorsLimit + ' '
-                             '--randomSeed=' + mainEvaluationRandomSeed + ' '
+                             '--randomSeed=32895532 '
                              '--permutation-count=' + permutation_count + ' ')
     print()
 
@@ -1143,14 +1144,14 @@ def runSignatureSearcher():
     # startIndex = random.randint(0, len(os.listdir('input/SHREC2016_partial_retrieval/complete_objects')) - 2)
     # endIndex = startIndex + 2
 
-    queryPath = 'output/augmented_dataset_original'# if pipelineEvaluation_queryMode == 'Best Case' else 'output/augmented_dataset_remeshed'
+    queryPath = 'input/SHREC2016_partial_retrieval/complete_objects' # if pipelineEvaluation_queryMode == 'Best Case' else 'output/augmented_dataset_remeshed'
     # resolution = pipelineEvaluation_resolution
     # consensusThreshold = pipelineEvaluation_consensusThreshold
 
     # outputFile = computePipelineEvaluationOutputFileName(pipelineEvaluation_queryMode, consensusThreshold, resolution)
-    JACCARD_THRESHOLD = '0.6'
+    JACCARD_THRESHOLD = '0.3'
     
-    outputPath = 'output/lsh/measurements/permcount' + permutation_count
+    outputPath = 'output/lsh/measurements/complete_objects/permcount' + permutation_count
     os.makedirs(outputPath, exist_ok=True)
     outputFile = outputPath + '/measurement' + '-' + JACCARD_THRESHOLD + '-' + descriptorsPerObjectLimit + '-' + permutation_count + '.json'
 
@@ -1163,6 +1164,7 @@ def runSignatureSearcher():
          '--descriptorsPerObjectLimit=' + descriptorsPerObjectLimit + ' '
          '--resultsPerQueryImage=1 '
          '--randomSeed=' + mainEvaluationRandomSeed + ' '
+         '--k=' + k + ' '
         )
         #  '--subset-start-index=' + str(startIndex) + ' '
         #  '--subset-end-index=' + str(endIndex) + ' '
@@ -1177,11 +1179,11 @@ def runSignatureExperiment():
     startIndex = random.randint(0, len(os.listdir('input/SHREC2016_partial_retrieval/complete_objects')) - 2)
     endIndex = startIndex + 2
 
-    queryPath = 'output/augmented_dataset_original'
-    outputPath = 'output/lsh/measurements/permcount' + permutation_count
+    queryPath = 'input/SHREC2016_partial_retrieval/complete_objects'
+    outputPath = 'output/lsh/measurements/complete_objects/permcount' + permutation_count
     os.makedirs(outputPath, exist_ok=True)
-    thresholds = ['0.5', '0.6', '0.7', '0.8', '0.9']
-    descriptorlimits = ['100', '500', '1000']
+    thresholds = ['0.1','0.2','0.3','0.4','0.5', '0.6', '0.7', '0.8', '0.9', '1.0']
+    descriptorlimits = ['100','500','1000']
 
     for descriptorlimit in descriptorlimits:
         computeSignatures(descriptorlimit)
@@ -1198,6 +1200,7 @@ def runSignatureExperiment():
                 '--descriptorsPerObjectLimit=' + descriptorlimit + ' '
                 '--resultsPerQueryImage=1 '
                 '--randomSeed=' + mainEvaluationRandomSeed + ' '
+                '--k=' + k + ' '
                 )
 
 def runMainMenu():
