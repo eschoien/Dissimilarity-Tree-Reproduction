@@ -15,28 +15,36 @@ def calculate_accuracy(data):
         for j in i['bestMatches']:
             if i['queryFileID'] == j:
                 correct_guesses += 1
+                break
 
     amount = f'{correct_guesses}/{total_guesses}'
     accuracy = (correct_guesses / total_guesses) * 100
     return amount, accuracy
 
-permutations = [10,100,1000]
+permutations = [10,100]
 thresholds =  ["0.1","0.2","0.3","0.4","0.5","0.6","0.7","0.8","0.9","1.0"]
-limits = [100, 500, 1000, 10000]
+limits = [100, 500, 1000, 0, 101, 501, 1001]
 
 for p in permutations:
     print("Permutations: ", p)
-    outputTable = PrettyTable(['Jaccard T', "D100", "D500", "D1000", "D10000"])
+    outputTable = PrettyTable(['Partial', "P100", "P500", "P1000", "Complete", "C100", "C500", "C1000"])
     outputTable.align = "r"
 
     accuracies = {}
 
     for j in thresholds:
         accuracies[j] = {}
+        partial = True
         for d in limits:
 
             try:
-                signature_data = json.load(open('output/lsh/measurements/complete_objects/permcount'+str(p)+'/measurement-'+j+'-'+str(d)+'-'+str(p)+'.json'))
+                if d == 0:
+                    partial = False
+                if partial == True:
+                    signature_data = json.load(open('output/lsh/measurements/partial_objects/permcount'+str(p)+'/measurement-'+j+'-'+str(d)+'-'+str(p)+'.json'))
+                else:
+                    signature_data = json.load(open('output/lsh/measurements/complete_objects/permcount'+str(p)+'/measurement-'+j+'-'+str(d-1)+'-'+str(p)+'.json'))
+
                 signature_accuracy = calculate_accuracy(signature_data)
                 # accuracies[filename.split('-')[1]][filename.split('-')[2]] = acc_percent
 
