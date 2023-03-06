@@ -115,7 +115,6 @@ QueryResult runSignatureQuery(
         queryObjectSignature->descriptorSignatures.push_back(descriptorSignature);
     }
 
-
     // parallize this
     // Loop through commplete object signature files
     #pragma omp parallel for schedule(dynamic)
@@ -137,7 +136,7 @@ QueryResult runSignatureQuery(
 
                 double jaccardSimilarity = computeJaccardSimilarity(querySignature, candidateSignature);
                 
-                if (jaccardSimilarity >= JACCARD_THRESHOLD) {
+                if (jaccardSimilarity >= JACCARD_THRESHOLD - 0.000001) {
                     objectScores[objectSignature->file_id-1].score++;
                     break;
                 }
@@ -259,7 +258,7 @@ int main(int argc, const char **argv) {
             outJson["queryStartIndex"] = startIndex;
             outJson["queryEndIndex"] = endIndex;
             outJson["descriptorsPerObjectLimit"] = descriptorsPerObjectLimit.value();
-            outJson["JACCARD_THRESHOLD"] = JACCARD_THRESHOLD.value();
+            outJson["JACCARD_THRESHOLD"] = JACCARD_THRESHOLD.value() - 0.000001;
             outJson["permutations"] = signatureIndex->numPermutations;
 
             outJson["results"] = {};
