@@ -175,7 +175,7 @@ def fileMD5(filePath):
 def generateAugmentedDataset():
     os.makedirs('output/augmented_dataset_original', exist_ok=True)
     os.makedirs('output/augmented_dataset_remeshed', exist_ok=True)
-    os.makedirs('output/augmented_MIT_CSAIL', exist_ok=True)
+    # os.makedirs('output/augmented_MIT_CSAIL', exist_ok=True)
     
     # run_command_line_command('bin/build32x32/querysetgenerator '
     #                          '--object-directory=input/MIT_CSAIL/tull '
@@ -210,11 +210,12 @@ def computeDescriptorsFromDirectory(inputDirectory, outputDirectory, descriptorW
 
         computeDescriptorsFromFile(inputFilePath, dumpFilePath, descriptorWidth)
 
-
-descriptorInputDirectories = ['input/MIT_CSAIL/complete_objects']
+descriptorInputDirectories = ['input/SHREC2016_partial_retrieval/complete_objects']
+#descriptorInputDirectories = ['input/MIT_CSAIL/complete_objects']
 
 def getDescriptorDirectoriesByResolution(resolution):
-    outputDirectories = ['output/descriptors/MIT_CSAIL/complete_objects_' + resolution + 'x' + resolution]
+    outputDirectories = ['output/descriptors/complete_objects_' + resolution + 'x' + resolution]
+    #outputDirectories = ['output/descriptors/MIT_CSAIL/complete_objects_' + resolution + 'x' + resolution]
     return outputDirectories
 
 def computeDescriptorBatch(batchIndex, resolution):
@@ -223,7 +224,8 @@ def computeDescriptorBatch(batchIndex, resolution):
 
 def computeDescriptors():
     for descriptorwidth in ['32', '64', '96']:
-        os.makedirs('output/descriptors/MIT_CSAIL/complete_objects_' + descriptorwidth + 'x' + descriptorwidth, exist_ok=True)
+        os.makedirs('output/descriptors/complete_objects_' + descriptorwidth + 'x' + descriptorwidth, exist_ok=True)
+        #os.makedirs('output/descriptors/MIT_CSAIL/complete_objects_' + descriptorwidth + 'x' + descriptorwidth, exist_ok=True)
 
     while True:
         run_menu = TerminalMenu([
@@ -1109,12 +1111,13 @@ def runShrec16Queries():
         if choice == 7:
             return
 
-# LSH MASTER PROJECT
-permutation_count = '10'
-descriptorsPerObjectLimit = '100'
-k = '380'
+#
+#
+# LSH MASTER'S PROJECT
+#
+#
 
-def computeSignatures(descriptorsLimit):
+def computeSignatures(permutation_count=10, descriptorsLimit=100):
     os.makedirs('output/lsh/minhash_signatures', exist_ok=True)
     run_command_line_command('bin/build32x32/signatureBuilder '
                              '--index-directory=output/lsh '
@@ -1126,6 +1129,7 @@ def computeSignatures(descriptorsLimit):
 
 
 def runDescriptorSignatureTest():
+    permutation_count = 10
     run_command_line_command('bin/build32x32/descriptorSignatureTest '
                              '--file-id=0 '
                              '--descriptor-id=0 '
@@ -1142,30 +1146,30 @@ def runSignatureMatchingTest():
     print()
 
 def runSignatureSearcher():
+    # Comments copied from referenced method:
+    # if pipelineEvaluation_queryMode == 'Best Case' else 'output/augmented_dataset_remeshed' (regarding queryPath)
     # global pipelineEvaluation_resolution
     # global pipelineEvaluation_consensusThreshold
     # global pipelineEvaluation_queryMode
-
-    startIndex = 312
-    endIndex = 383
-
-    queryPath = 'input/SHREC2016_partial_retrieval/complete_objects' # if pipelineEvaluation_queryMode == 'Best Case' else 'output/augmented_dataset_remeshed'
     # resolution = pipelineEvaluation_resolution
     # consensusThreshold = pipelineEvaluation_consensusThreshold
-
     # outputFile = computePipelineEvaluationOutputFileName(pipelineEvaluation_queryMode, consensusThreshold, resolution)
-    JACCARD_THRESHOLD = '0.1'
-    
+
+    permutation_count = 10
+    descriptorsPerObjectLimit = "100"
+    jaccardThreshold = '0.1'
+    queryPath = 'input/SHREC2016_partial_retrieval/complete_objects'
+
     outputPath = 'output/lsh/measurements/test/complete_objects/permcount' + permutation_count
     os.makedirs(outputPath, exist_ok=True)
-    outputFile = outputPath + '/measurement' + '-' + JACCARD_THRESHOLD + '-' + descriptorsPerObjectLimit + '-' + permutation_count + '.json'
+    outputFile = outputPath + '/measurement' + '-' + jaccardThreshold + '-' + descriptorsPerObjectLimit + '-' + permutation_count + '.json'
 
     run_command_line_command('bin/build32x32/signatureSearcher '
          '--signature-file=output/lsh/index.dat '
          '--query-directory=' + queryPath + ' '
          '--output-file=' + outputFile + ' '
          '--support-radius=' + shrec2016_support_radius + ' '
-         '--JACCARD_THRESHOLD=' + JACCARD_THRESHOLD + ' '
+         '--JACCARD_THRESHOLD=' + jaccardThreshold + ' '
          '--descriptorsPerObjectLimit=' + descriptorsPerObjectLimit + ' '
          '--resultsPerQueryImage=1 '
          '--randomSeed=' + mainEvaluationRandomSeed + ' '
@@ -1181,22 +1185,28 @@ def runSignatureSearcher():
     
 def runSignatureExperiment():
 
-    startIndex = random.randint(0, len(os.listdir('input/SHREC2016_partial_retrieval/complete_objects')) - 2)
-    endIndex = startIndex + 2
+    version = "v3"
     perm_counts = ['10', '50', '100']
+    thresholds = ['0.1','0.2','0.3','0.4','0.5', '0.6', '0.7', '0.8', '0.9', '1.0']
+    descriptorlimits = ['100', '500', '1000']
+    k = "10"
+
+    completeQueryPath = 'input/SHREC2016_partial_retrieval/complete_objects'
+    partialQueryPath = 'output/augmented_dataset_original'
+    outPutBasePath = 'output/lsh/measurements/' + version + "/"
+    
+
     for perm_count in perm_counts:
       
-        completeQueryPath = 'input/SHREC2016_partial_retrieval/complete_objects'
-        completeOutputPath = 'output/lsh/measurements/complete_objects/permcount' + perm_count
-        partialQueryPath = 'output/augmented_dataset_original'
-        partialOutputPath = 'output/lsh/measurements/partial_objects/permcount' + perm_count
+        completeOutputPath = outPutBasePath + 'complete_objects/permcount' + perm_count
+        partialOutputPath = outPutBasePath + 'partial_objects/permcount' + perm_count
+
         os.makedirs(completeOutputPath, exist_ok=True)
         os.makedirs(partialOutputPath, exist_ok=True)
-        thresholds = ['0.1','0.2','0.3','0.4','0.5', '0.6', '0.7', '0.8', '0.9', '1.0']
-        descriptorlimits = ['100', '500', '1000']
 
         for descriptorlimit in descriptorlimits:
-            computeSignatures(descriptorlimit)
+            computeSignatures(perm_count, descriptorlimit)
+
             for threshold in thresholds:
 
                 completeOutputFile = completeOutputPath + '/measurement' + '-' + threshold + '-' + descriptorlimit + '-' + perm_count + '.json'
@@ -1211,7 +1221,7 @@ def runSignatureExperiment():
                     '--descriptorsPerObjectLimit=' + descriptorlimit + ' '
                     '--resultsPerQueryImage=1 '
                     '--randomSeed=' + mainEvaluationRandomSeed + ' '
-                    # '--k=' + k + ' '
+                    '--k=' + k + ' '
                     )
 
                 run_command_line_command('bin/build32x32/signatureSearcher '
@@ -1223,10 +1233,8 @@ def runSignatureExperiment():
                     '--descriptorsPerObjectLimit=' + descriptorlimit + ' '
                     '--resultsPerQueryImage=1 '
                     '--randomSeed=' + mainEvaluationRandomSeed + ' '
-                    # '--k=' + k + ' '
+                    '--k=' + k + ' '
                     )
-
-
 
 def runMainMenu():
     while True:
@@ -1286,7 +1294,7 @@ def runMainMenu():
         if choice == 15:  # Done
             runShrec16Queries()
         if choice == 16:
-            computeSignatures(descriptorsPerObjectLimit)
+            computeSignatures()
         if choice == 17:
             runDescriptorSignatureTest()
         if choice == 18:

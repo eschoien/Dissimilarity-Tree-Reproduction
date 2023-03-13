@@ -14,3 +14,5 @@ output/**/*.json
 input/
 build/
 .vscode/
+
+callgrind.out.*
