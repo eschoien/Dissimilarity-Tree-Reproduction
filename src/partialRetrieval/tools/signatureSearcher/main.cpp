@@ -269,12 +269,10 @@ int main(int argc, const char **argv) {
                 outJson["results"][resultIndex]["queryFileID"] = searchResults.at(resultIndex).queryFileID;
                 outJson["results"][resultIndex]["queryFileScore"] = searchResults.at(resultIndex).queryFileScore;
                 outJson["bestMatches"] = {};
+                outJson["bestMatchScores"] = {};
                 for (size_t bestMatchID = 0; bestMatchID < k.value(); bestMatchID++) {
                     outJson["results"][resultIndex]["bestMatches"][bestMatchID] = searchResults.at(resultIndex).bestMatches.at(bestMatchID);
-                }
-                outJson["bestMatchScores"] = {};
-                for (size_t bestMatchscoreID = 0; bestMatchscoreID < k.value(); bestMatchscoreID++) {
-                    outJson["results"][resultIndex]["bestMatchScores"][bestMatchscoreID] = searchResults.at(resultIndex).bestMatchScores.at(bestMatchscoreID);
+                    outJson["results"][resultIndex]["bestMatchScores"][bestMatchID] = searchResults.at(resultIndex).bestMatchScores.at(bestMatchID);
                 }
                 // outJson["results"][resultIndex]["bestMatchScore"] = searchResults.at(resultIndex).bestMatchScore;
                 outJson["results"][resultIndex]["executionTimeSeconds"] = searchResults.at(resultIndex).executionTimeSeconds;
