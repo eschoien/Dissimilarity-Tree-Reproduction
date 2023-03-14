@@ -206,6 +206,8 @@ int main(int argc, const char **argv) {
         "subset-end-index", "Query index to end at. Must be equal or less than the --sample-count parameter.", '\0', arrrgh::Optional, -1);
     const auto &k = parser.add<int>(
         "k", "k-nearest neighbour", '\0', arrrgh::Optional, 5);
+    const auto &version = parser.add<std::string>(
+        "version", "version of the signature searcher", '\0', arrrgh::Optional, "v1");
     const auto &showHelp = parser.add<bool>(
         "help", "Show this help message.", 'h', arrrgh::Optional, false);
     const auto &descriptorsPerObjectLimit = parser.add<int>(
@@ -248,7 +250,7 @@ int main(int argc, const char **argv) {
         if(outputFile.value() != "NONE_SELECTED") {
             json outJson;
 
-            outJson["version"] = "v1";
+            outJson["version"] = version.value();
             outJson["queryObjectSupportRadius"] = supportRadius.value();
 
             outJson["queryDirectory"] = cluster::path(queryDirectory.value()).string();
