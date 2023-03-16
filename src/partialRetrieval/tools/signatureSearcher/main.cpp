@@ -49,6 +49,7 @@ struct QueryResult {
     std::vector<unsigned int> bestMatches;
     std::vector<unsigned int> bestMatchScores;
     float executionTimeSeconds;
+    unsigned int kLimit;
 };
 
 
@@ -149,7 +150,7 @@ QueryResult runSignatureQuery(
 
     // best matching object
     // returns the object with the highest number of descriptor signatures with jaccard similarity greater than threshold
-    std::vector<ObjectScore> bestMatches(objectScores.size());
+    std::vector<ObjectScore> bestMatches;
     std::copy(objectScores.begin(), objectScores.end(), std::back_inserter(bestMatches));
     std::sort(bestMatches.begin(), bestMatches.end(), compareScores);
     // unsigned int bestMatch = std::distance(objectScores.begin(), std::max_element(objectScores.begin(), objectScores.end())) + 1;
@@ -170,6 +171,7 @@ QueryResult runSignatureQuery(
     QueryResult result;
     result.queryFileID = fileID;
     result.queryFileScore = objectScores[fileID-1].score;
+    result.kLimit = k;
     for (int i = 0; i < k; i++) {
         result.bestMatches.push_back(bestMatches[i].fileID);
         result.bestMatchScores.push_back(objectScores[bestMatches[i].fileID-1].score);
@@ -268,11 +270,12 @@ int main(int argc, const char **argv) {
             for(size_t resultIndex = 0; resultIndex < searchResults.size(); resultIndex++) {
                 outJson["results"].emplace_back();
                 outJson["results"][resultIndex] = {};
+                outJson["results"][resultIndex]["kLimit"] = searchResults.at(resultIndex).kLimit;
                 outJson["results"][resultIndex]["queryFileID"] = searchResults.at(resultIndex).queryFileID;
                 outJson["results"][resultIndex]["queryFileScore"] = searchResults.at(resultIndex).queryFileScore;
                 outJson["bestMatches"] = {};
                 outJson["bestMatchScores"] = {};
-                for (size_t bestMatchID = 0; bestMatchID < k.value(); bestMatchID++) {
+                for (size_t bestMatchID = 0; bestMatchID < searchResults.at(resultIndex).kLimit; bestMatchID++) {
                     outJson["results"][resultIndex]["bestMatches"][bestMatchID] = searchResults.at(resultIndex).bestMatches.at(bestMatchID);
                     outJson["results"][resultIndex]["bestMatchScores"][bestMatchID] = searchResults.at(resultIndex).bestMatchScores.at(bestMatchID);
                 }
