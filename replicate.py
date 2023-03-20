@@ -1185,11 +1185,11 @@ def runSignatureSearcher():
     
 def runSignatureExperiment():
 
-    version = "v3"
+    version = "v4"
     perm_counts = ['10', '50', '100']
     thresholds = ['0.1','0.2','0.3','0.4','0.5','0.6','0.7','0.8','0.9','1.0']
     descriptorlimits = ['100', '500', '1000']
-    k = "100"
+    k = "383"
 
     completeQueryPath = 'input/SHREC2016_partial_retrieval/complete_objects'
     partialQueryPath = 'output/augmented_dataset_original'
