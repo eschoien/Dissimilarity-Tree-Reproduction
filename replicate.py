@@ -1129,7 +1129,7 @@ def computeSignatures(permutation_count=10, descriptorsLimit=100):
 
 
 def runDescriptorSignatureTest():
-    permutation_count = 10
+    permutation_count = '10'
     run_command_line_command('bin/build32x32/descriptorSignatureTest '
                              '--file-id=0 '
                              '--descriptor-id=0 '
@@ -1155,14 +1155,21 @@ def runSignatureSearcher():
     # consensusThreshold = pipelineEvaluation_consensusThreshold
     # outputFile = computePipelineEvaluationOutputFileName(pipelineEvaluation_queryMode, consensusThreshold, resolution)
 
-    permutation_count = 10
-    descriptorsPerObjectLimit = "100"
-    jaccardThreshold = '0.1'
-    queryPath = 'input/SHREC2016_partial_retrieval/complete_objects'
+
+    version = "v5"
+    permutation_count = '50'
+    descriptorsPerObjectLimit = "500"
+    jaccardThreshold = '0.4'
+    #queryPath = 'input/SHREC2016_partial_retrieval/complete_objects'
+    queryPath = 'output/augmented_dataset_original'
+    k = "383"
+
 
     outputPath = 'output/lsh/measurements/test/complete_objects/permcount' + permutation_count
     os.makedirs(outputPath, exist_ok=True)
     outputFile = outputPath + '/measurement' + '-' + jaccardThreshold + '-' + descriptorsPerObjectLimit + '-' + permutation_count + '.json'
+
+    computeSignatures(permutation_count, descriptorsPerObjectLimit)
 
     run_command_line_command('bin/build32x32/signatureSearcher '
          '--signature-file=output/lsh/index.dat '
@@ -1173,6 +1180,8 @@ def runSignatureSearcher():
          '--descriptorsPerObjectLimit=' + descriptorsPerObjectLimit + ' '
          '--resultsPerQueryImage=1 '
          '--randomSeed=' + mainEvaluationRandomSeed + ' '
+         '--k=' + k + ' '
+         '--version=' + version + ' '
         #  '--k=' + k + ' '
         #  '--subset-start-index=' + str(startIndex) + ' '
         #  '--subset-end-index=' + str(endIndex) + ' '
@@ -1185,7 +1194,7 @@ def runSignatureSearcher():
     
 def runSignatureExperiment():
 
-    version = "v4"
+    version = "v5"
     perm_counts = ['10', '50', '100']
     thresholds = ['0.1','0.2','0.3','0.4','0.5','0.6','0.7','0.8','0.9','1.0']
     descriptorlimits = ['100', '500', '1000']

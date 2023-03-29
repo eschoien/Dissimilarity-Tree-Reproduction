@@ -8,7 +8,7 @@ def calculate_accuracy(data):
 
     for i in data['results']:
         total_guesses += 1
-        if i['queryFileID'] == i['bestMatchID']:
+        if i['queryFileID'] in i['bestMatches'][:1]:
             correct_guesses += 1
 
     amount = f'{correct_guesses}/{total_guesses}'
