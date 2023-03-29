@@ -48,10 +48,12 @@ int main(int argc, const char **argv) {
     ShapeDescriptor::cpu::array<ShapeDescriptor::QUICCIDescriptor> descriptors = ShapeDescriptor::read::QUICCIDescriptors(haystackFiles.at(fileID.value()));
     ShapeDescriptor::QUICCIDescriptor testDescriptor = descriptors.content[descriptorID.value()];
 
-    std::vector<std::vector<int>> permutations = create_permutations(numberOfPermutations.value(), seed.value());
+    //std::vector<std::vector<int>> permutations = create_permutations(numberOfPermutations.value(), seed.value());
+
+
 
     std::vector<int> signature;
-    computeDescriptorSignature(testDescriptor, &signature, permutations);
+    computeDescriptorSignature(testDescriptor, &signature, numberOfPermutations);
 
     // ----- OUTPUT -----
     std::cout << "Object# " << fileID.value() << " Descriptor# " << descriptorID.value() << std::endl;
@@ -60,8 +62,8 @@ int main(int argc, const char **argv) {
     std::cout << "Signature: " << std::endl;
     lsh::print::signature(signature);
 
-    std::cout << "Permutations: " << std::endl;
-    lsh::print::permutations(permutations, 50);
+    // std::cout << "Permutations: " << std::endl;
+    // lsh::print::permutations(permutation, 50);
     // ------------------
 
     return 0;

@@ -56,11 +56,11 @@ int main(int argc, const char **argv) {
 
     // load permutations
     SignatureIndex *signatureIndex = readSignatureIndex("output/lsh/index.dat");
-    std::vector<std::vector<int>> permutations = signatureIndex->permutations;
+    //std::vector<std::vector<int>> permutations = signatureIndex->permutations;
 
     // compute signatures
     std::vector<int> querySignature;
-    computeDescriptorSignature(queryDescriptor, &querySignature, permutations);
+    computeDescriptorSignature(queryDescriptor, &querySignature, signatureIndex->numPermutations);
 
     std::vector<std::experimental::filesystem::path> haystackFiles = ShapeDescriptor::utilities::listDirectory(signatureDirectory.value());
     

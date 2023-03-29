@@ -77,7 +77,7 @@ SignatureIndex* buildSignaturesFromDumpDirectory(
         for(unsigned int j = 0; j < descriptorsPerObjectLimit; j++) {
             DescriptorSignature descriptorSignature;
             descriptorSignature.descriptor_id = order[j] % descriptors.length + 1; //i + 1;
-            computeDescriptorSignature(descriptors.content[order[j] % descriptors.length], &(descriptorSignature.signatures), signatureIndex->permutations);
+            computeDescriptorSignature(descriptors.content[order[j] % descriptors.length], &(descriptorSignature.signatures), signatureIndex->numPermutations);
             objectSignature->descriptorSignatures.push_back(descriptorSignature);
         }    
 

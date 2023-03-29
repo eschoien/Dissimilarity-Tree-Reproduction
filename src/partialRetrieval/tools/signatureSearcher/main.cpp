@@ -112,7 +112,7 @@ QueryResult runSignatureQuery(
     for(unsigned int i = 0; i < descriptorsPerObjectLimit; i++) {
         DescriptorSignature descriptorSignature;
         descriptorSignature.descriptor_id = order[i] % queryDescriptors.length + 1; //i + 1;
-        computeDescriptorSignature(queryDescriptors.content[order[i] % queryDescriptors.length], &(descriptorSignature.signatures), signatureIndex->permutations);
+        computeDescriptorSignature(queryDescriptors.content[order[i] % queryDescriptors.length], &(descriptorSignature.signatures), signatureIndex->numPermutations);
         queryObjectSignature->descriptorSignatures.push_back(descriptorSignature);
     }
 
