@@ -1117,7 +1117,15 @@ def runShrec16Queries():
 #
 #
 
-def computeSignatures(permutation_count=10, descriptorsLimit=100):
+
+#   v1 ->
+#   v2 ->
+#   v3 ->
+#   v4 ->
+#   v5 -> 
+#   v6 -> ObjectScores sorted by both score and fileID, in order for matching objects order to be equal between signature and hashtable search
+
+def computeSignatures(permutation_count="10", descriptorsLimit="1000"):
     os.makedirs('output/lsh/minhash_signatures', exist_ok=True)
     run_command_line_command('bin/build32x32/signatureBuilder '
                              '--index-directory=output/lsh '
@@ -1246,6 +1254,48 @@ def runSignatureExperiment():
                     '--k=' + k + ' '
                     '--version=' + version + ' '
                     )
+                
+def computeTopKDissimilarityTree():    
+    pass
+
+###### HASHTABLES ######
+
+def runHashtableBuilder():
+    
+    os.makedirs('output/lsh/hashtables', exist_ok=True)
+    
+    run_command_line_command('bin/build32x32/hashtableBuilder ' \
+        '--index-directory=output/lsh/hashtables ' \
+        '--quicci-dump-directory=output/descriptors/complete_objects_32x32 ' \
+        '--descriptorsPerObjectLimit=100 ' \
+        '--randomSeed=32895532 ' \
+        '--permutation-count=10 ')
+
+def runHashtableSearcher():
+
+    version = "v5"
+    threshold = "0.3"
+    descriptorlimit = "100"
+    perm_count = "10"
+    k = "383"
+    completeObjectsPath = 'input/SHREC2016_partial_retrieval/complete_objects'
+    queryset = "completeObjects"
+
+    os.makedirs('output/hashtableMeasurements/' + version + '/' + queryset + '/permcount' + perm_count + '', exist_ok=True)
+
+    run_command_line_command('bin/build32x32/hashtableSearcher ' \
+        '--hashtable-directory=output/lsh/hashtables ' \
+        '--query-directory=' + completeObjectsPath + ' ' \
+        '--descriptorsPerObjectLimit=' + descriptorlimit + ' ' \
+        '--randomSeed=' + mainEvaluationRandomSeed + ' ' \
+        '--numPermutations=' + perm_count + ' ' \
+        '--support-radius=' + shrec2016_support_radius + ' ' \
+        '--output-file=output/hashtableMeasurements/' + version + '/' + queryset + '/permcount' + perm_count + '/measurement-' + threshold + '-' + descriptorlimit + '-' + perm_count + '.json ' \
+        '--JACCARD_THRESHOLD=' + threshold + ' ' \
+        '--k=' + k + ' ' \
+        '--version=' + version + ' ')
+
+########################
 
 def runMainMenu():
     while True:
@@ -1270,7 +1320,10 @@ def runMainMenu():
             "18. Run descriptor signature matching test",
             "19. Run signature searcher",
             "20. Run signature experiment",
-            "21. exit"], title='---------------------- Main Menu ----------------------')
+            "21. Compute top-k results for dissimilarity tree",
+            "22. Run hashtable builder",
+            "23. Run hashtable searcher",
+            "24. exit"], title='---------------------- Main Menu ----------------------')
 
         choice = main_menu.show() + 1
 
@@ -1315,6 +1368,12 @@ def runMainMenu():
         if choice == 20:
             runSignatureExperiment()
         if choice == 21:
+            computeTopKDissimilarityTree()
+        if choice == 22:
+            runHashtableBuilder()
+        if choice == 23:
+            runHashtableSearcher()
+        if choice == 24:
             return
 
 def runIntroSequence():
