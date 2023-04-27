@@ -53,8 +53,10 @@ struct QueryResult {
 };
 
 
-bool compareScores(ObjectScore o1, ObjectScore o2)
-{
+bool compareScores(ObjectScore o1, ObjectScore o2) {
+    if (o1.score == o2.score) {
+        return (o1.fileID < o2.fileID);
+    }
     return (o1.score > o2.score);
 }
 
@@ -293,7 +295,7 @@ int main(int argc, const char **argv) {
     // Measure total execution time
     std::chrono::steady_clock::time_point endTime = std::chrono::steady_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
-    std::cout << std::endl << "MinHash signature construction complete. " << std::endl;
+    std::cout << std::endl << "MinHash signature search complete. " << std::endl;
     std::cout << "Total execution time: " << float(duration.count()) / 1000.0f << " seconds" << std::endl;
     
     delete signatureIndex;

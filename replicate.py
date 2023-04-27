@@ -1164,7 +1164,7 @@ def runSignatureSearcher():
     # outputFile = computePipelineEvaluationOutputFileName(pipelineEvaluation_queryMode, consensusThreshold, resolution)
 
 
-    version = "v5"
+    version = "v6"
     permutation_count = '50'
     descriptorsPerObjectLimit = "500"
     jaccardThreshold = '0.4'
@@ -1202,7 +1202,7 @@ def runSignatureSearcher():
     
 def runSignatureExperiment():
 
-    version = "v5"
+    version = "v6"
     perm_counts = ['10', '50', '100']
     thresholds = ['0.1','0.2','0.3','0.4','0.5','0.6','0.7','0.8','0.9','1.0']
     descriptorlimits = ['100', '500', '1000']
