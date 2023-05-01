@@ -137,3 +137,9 @@ target_link_libraries(signatureMatchingTest glfw projectsymmetry ShapeDescriptor
 
 add_executable(signatureSearcher tools/signatureSearcher/main.cpp)
 target_link_libraries(signatureSearcher glfw projectsymmetry ShapeDescriptor stdc++fs fast-lzma2 pmp gitinfo)
+
+add_executable(hashtableBuilder tools/hashtableBuilder/main.cpp)
+target_link_libraries(hashtableBuilder glfw projectsymmetry ShapeDescriptor stdc++fs fast-lzma2 pmp gitinfo)
+
+add_executable(hashtableSearcher tools/hashtableSearcher/main.cpp)
+target_link_libraries(hashtableSearcher glfw projectsymmetry ShapeDescriptor stdc++fs fast-lzma2 pmp gitinfo)

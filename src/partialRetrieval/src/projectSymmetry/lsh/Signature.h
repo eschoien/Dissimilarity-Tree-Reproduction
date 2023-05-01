@@ -37,6 +37,6 @@ struct SignatureIndex {
     std::vector<ObjectSignature> objectSignatures;
 };
 
-void computeDescriptorSignature(ShapeDescriptor::QUICCIDescriptor descriptor, std::vector<int>* descriptorSignaturesPtr, std::vector<std::vector<int>> permutations);
+void computeDescriptorSignature(ShapeDescriptor::QUICCIDescriptor descriptor, std::vector<int>* descriptorSignaturesPtr, const std::vector<std::vector<int>>& permutations);
 
 double computeJaccardSimilarity(std::vector<int> signature1, std::vector<int> signature2);

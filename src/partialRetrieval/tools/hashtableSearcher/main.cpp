@@ -1,11 +1,17 @@
-#include <arrrgh.hpp>
+#include <vector>
+#include <unordered_map>
+#include <projectSymmetry/lsh/Hashtable.h>
+#include <projectSymmetry/lsh/HashtableIO.h>
+#include <string>
 #include <iostream>
 #include <algorithm>
-#include <map>
-#include <vector>
-#include <atomic>
-#include <string>
+#include <shapeDescriptor/utilities/fileutils.h>
+#include <projectSymmetry/lsh/Signature.h>
+#include <projectSymmetry/lsh/Permutation.h>
 #include <random>
+#include <arrrgh.hpp>
+#include <map>
+#include <atomic>
 #include <shapeDescriptor/cpu/types/array.h>
 #include <shapeDescriptor/gpu/types/array.h>
 #include <shapeDescriptor/gpu/types/Mesh.h>
@@ -39,10 +45,12 @@ template<class Key, class T, class Ignore, class Allocator,
 using ordered_map = tsl::ordered_map<Key, T, Hash, KeyEqual, AllocatorPair, ValueTypeContainer>;
 
 using json = nlohmann::basic_json<ordered_map>;
+
 struct ObjectScore {
     unsigned int fileID;
     unsigned int score;
 };
+
 struct QueryResult {
     unsigned int queryFileID;
     unsigned int queryFileScore;
@@ -52,7 +60,6 @@ struct QueryResult {
     unsigned int kLimit;
 };
 
-
 bool compareScores(ObjectScore o1, ObjectScore o2) {
     if (o1.score == o2.score) {
         return (o1.fileID < o2.fileID);
@@ -60,9 +67,36 @@ bool compareScores(ObjectScore o1, ObjectScore o2) {
     return (o1.score > o2.score);
 }
 
-QueryResult runSignatureQuery(
+// flattens multiple vectors of descriptor entries to one unordered map of descriptor entries and count across the vectors
+std::unordered_map<std::string, int> reduce(std::vector<HashtableValue> htValues) {
+
+    std::unordered_map<std::string, int> result;
+
+    for (HashtableValue htv : htValues) {
+        for (DescriptorEntry de : htv) {
+            result.emplace(descriptorEntryToString(de), 0);
+            result[descriptorEntryToString(de)] += 1;
+        }
+    }
+    
+    return result;
+}
+
+// prints each item in an unordered map of descriptor entry string and int
+void printResultEntries(std::unordered_map<std::string, int> result) {
+    for (auto const &pair : result) {
+        std::cout << "{" << pair.first << ": " << pair.second << "}\n";
+    }
+}
+
+unsigned int objectIDfromPath(std::string path) {
+    return std::stoi(path.substr(path.find("/T")+2));
+}
+
+QueryResult runHashtableQuery(
         std::experimental::filesystem::path queryFile,
-        SignatureIndex *signatureIndex,
+        std::vector<Hashtable*>& hashtables,
+        std::vector<std::vector<int>>& permutations,
         float supportRadius,
         unsigned int descriptorsPerObjectLimit,
         double JACCARD_THRESHOLD,
@@ -70,18 +104,22 @@ QueryResult runSignatureQuery(
         int k
         ) {
 
-  // --- load partial object and compute descriptors
-    ShapeDescriptor::cpu::Mesh mesh = ShapeDescriptor::utilities::loadMesh(queryFile, true);
-    ShapeDescriptor::gpu::Mesh gpuMesh = ShapeDescriptor::copy::hostMeshToDevice(mesh);
+    int numPermutations = 10;
+    int numberOfObjects = 383;
 
+      // --- load query object and compute descriptors
+    ShapeDescriptor::cpu::Mesh mesh = ShapeDescriptor::utilities::loadMesh(queryFile, true);
+    
+    ShapeDescriptor::gpu::Mesh gpuMesh = ShapeDescriptor::copy::hostMeshToDevice(mesh);
+    
     ShapeDescriptor::gpu::array<ShapeDescriptor::OrientedPoint> descriptorOrigins = 
             ShapeDescriptor::utilities::generateSpinOriginBuffer(gpuMesh);
-
-    // Compute the descriptor(s)
+    
     ShapeDescriptor::gpu::array<ShapeDescriptor::RICIDescriptor> riciDescriptors =
             ShapeDescriptor::gpu::generateRadialIntersectionCountImages(gpuMesh, descriptorOrigins, supportRadius);
 
     ShapeDescriptor::gpu::array<ShapeDescriptor::QUICCIDescriptor> descriptors = convertRICIToModifiedQUICCI(riciDescriptors);
+    
     ShapeDescriptor::cpu::array<ShapeDescriptor::QUICCIDescriptor> queryDescriptors = ShapeDescriptor::copy::deviceArrayToHost(descriptors);
     // ----
 
@@ -89,79 +127,93 @@ QueryResult runSignatureQuery(
     size_t randomSeed = seed != 0 ? seed : rd();
     std::minstd_rand0 generator{randomSeed};
     std::uniform_real_distribution<float> distribution(0, 1);
-    
-    
-    std::chrono::steady_clock::time_point queryStartTime = std::chrono::steady_clock::now();
-    std::vector<ObjectScore> objectScores(signatureIndex->objectCount, *(new ObjectScore));
-   
-    // Create partial object signatures
-    ObjectSignature* queryObjectSignature = new ObjectSignature;
-    
-    std::string path_string = queryFile.string();
-    std::size_t pos = path_string.find("/T");
-    queryObjectSignature->file_id = std::stoi(path_string.substr(pos+2));
-    unsigned int fileID = queryObjectSignature->file_id;
 
-    std::cout << "Partial object: " << queryObjectSignature->file_id << std::endl;
+
+    std::chrono::steady_clock::time_point queryStartTime = std::chrono::steady_clock::now();
+    std::vector<ObjectScore> objectScores(numberOfObjects, *(new ObjectScore));
+
+    for (uint i = 1; i <= numberOfObjects; i++) {
+            objectScores[i-1].fileID = i;
+            objectScores[i-1].score = 0;
+        }
+
+    uint queryFileID = objectIDfromPath(queryFile.string());
+
+    std::cout << "Partial object: " << queryFileID << std::endl;
     
-    std::vector<unsigned int> order(350000); // (queryDescriptors.length);
-    for(unsigned int s = 0; s < 350000; s++) {
+    std::vector<uint> order(350000); // highest (queryDescriptors.length);
+    for(uint s = 0; s < 350000; s++) {
         order.at(s) = s;
     }
+
     // Comment out line below to disable randomness?
     std::shuffle(order.begin(), order.end(), generator);
 
-    for(unsigned int i = 0; i < descriptorsPerObjectLimit; i++) {
-        DescriptorSignature descriptorSignature;
-        descriptorSignature.descriptor_id = order[i] % queryDescriptors.length + 1; //i + 1;
-        computeDescriptorSignature(queryDescriptors.content[order[i] % queryDescriptors.length], &(descriptorSignature.signatures), signatureIndex->permutations);
-        queryObjectSignature->descriptorSignatures.push_back(descriptorSignature);
-    }
+    for(uint q = 0; q < descriptorsPerObjectLimit; q++) {
 
-    // parallize this
-    // Loop through commplete object signature files
-    #pragma omp parallel for schedule(dynamic)
-    for(unsigned int i = 0; i < signatureIndex->objectCount; i++) {
-        // ObjectSignature* objectSignature = readSignature(haystackFiles.at(i), signatureIndex->numPermutations);
-        ObjectSignature* objectSignature = &(signatureIndex->objectSignatures[i]);
-        objectScores[objectSignature->file_id-1].fileID = objectSignature->file_id;
-        objectScores[objectSignature->file_id-1].score = 0;
+        std::vector<int> queryDescriptorSignature;
+        uint queryDescriptorIndex = order[q] % queryDescriptors.length;
 
-        // Loop through complete object descripor signatures 
-        // Comment out line below to disable randomness?
-        for(unsigned int k = 0; k < queryObjectSignature->descriptorSignatures.size(); k++) {
+        computeDescriptorSignature(queryDescriptors.content[queryDescriptorIndex], &queryDescriptorSignature, permutations);
 
-            std::vector<int> querySignature = queryObjectSignature->descriptorSignatures[k].signatures;
+        // vector of candidate descriptor entry vectors
+        std::vector<HashtableValue> htValues(numPermutations);
+
+        for (uint i = 0; i < numPermutations; i++) {
+            // get the correct HashtableValue for each hashtable
+            htValues[i] = hashtables.at(i)->at(queryDescriptorSignature[i]);
+        }
+
+        std::unordered_map<std::string, int> result = reduce(htValues);
+
+        /*
+        std::cout << "\nResult entries:\n" << std::endl;
+
+        for (auto const &pair : result) {
+            if (pair.second >= JACCARD_THRESHOLD)
+                std::cout << "{" << pair.first << ": " << pair.second << "}\n";
+        }
+        */
+
+        std::vector<int> matches(numberOfObjects, 0);
+
+        for (auto const &pair : result) {
             
-            for (unsigned int j = 0; j < descriptorsPerObjectLimit; j++) {
-                std::vector<int> candidateSignature = objectSignature->descriptorSignatures[j].signatures;
-                //std::vector<int> candidateSignature = objectSignature.descriptorSignatures[j].signatures;
-
-                double jaccardSimilarity = computeJaccardSimilarity(querySignature, candidateSignature);
-                
-                if (jaccardSimilarity >= JACCARD_THRESHOLD - 0.000001) {
-                    objectScores[objectSignature->file_id-1].score++;
-                    break;
-                }
-
+            // sufficient match
+            if (((double) pair.second / (double) numPermutations) > JACCARD_THRESHOLD - 0.000001) {
+                // std::cout << "de count " << pair.second << " : JT: " << JACCARD_THRESHOLD - 0.000001 << std::endl;
+                // remove the need for stoi here at some point
+                unsigned int oID = std::stoi((pair.first).substr(0, (pair.first).find("-")));
+                // std::cout << "object id " << oID << std::endl;
+                matches[oID-1] = 1;
             }
         }
-        // delete objectSignature;
-    }   
-    delete queryObjectSignature;
 
-    // best matching object
-    // returns the object with the highest number of descriptor signatures with jaccard similarity greater than threshold
+        for (uint i = 0; i < matches.size(); i++) {
+
+            if (matches[i] == 1) {
+                objectScores[i].score++;
+            }
+        }
+
+        // std::cout << "Matches descriptor " << q << " : " << std::accumulate(matches.begin(), matches.end(), 0) << std::endl;
+    }
+
     std::vector<ObjectScore> bestMatches;
     std::copy(objectScores.begin(), objectScores.end(), std::back_inserter(bestMatches));
     std::sort(bestMatches.begin(), bestMatches.end(), compareScores);
-    // unsigned int bestMatch = std::distance(objectScores.begin(), std::max_element(objectScores.begin(), objectScores.end())) + 1;
-    // std::cout << "Best matching object " << bestMatch << std::endl;
+
+
+    /*
+    for (int k = 0; k < 10; k++) {
+        ObjectScore os = bestMatches[k];
+        std::cout << os.fileID << " : " << os.score << std::endl;
+    }
+    */
 
     std::chrono::steady_clock::time_point endTime = std::chrono::steady_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - queryStartTime);
-    std::cout << "\tTotal execution time: " << float(duration.count()) / 1000.0f << " seconds" << std::endl;
-    std::cout << std::endl;
+    std::cout << "\tExecution time: " << float(duration.count()) / 1000.0f << " seconds" << std::endl;
 
     ShapeDescriptor::free::array(descriptorOrigins);
     ShapeDescriptor::free::array(descriptors);
@@ -170,9 +222,10 @@ QueryResult runSignatureQuery(
     ShapeDescriptor::free::mesh(mesh);
     ShapeDescriptor::free::mesh(gpuMesh);
     
+    
     QueryResult result;
-    result.queryFileID = fileID;
-    result.queryFileScore = objectScores[fileID-1].score;
+    result.queryFileID = queryFileID;
+    result.queryFileScore = objectScores[queryFileID-1].score;
     result.kLimit = k;
     for (int i = 0; i < k; i++) {
         result.bestMatches.push_back(bestMatches[i].fileID);
@@ -181,13 +234,13 @@ QueryResult runSignatureQuery(
     result.executionTimeSeconds = float(duration.count()) / 1000.0f;
 
     return result;
+
 }
 
-// modified from another object search, needs further changes
 int main(int argc, const char **argv) {
-    arrrgh::parser parser("signatureSearcher", "Search for similar objects using LSH.");
-    const auto &signatureFile = parser.add<std::string>(
-        "signature-file", "The signature file to be queried.", '\0', arrrgh::Required, "output/lsh/index.dat");
+    arrrgh::parser parser("hashtableSearcher", "Search for similar objects using LSH including hashtables.");
+    const auto &hashtableDirectory = parser.add<std::string>(
+        "hashtable-directory", "The directory containing hashtables to query.", '\0', arrrgh::Required, "output/lsh/hashtables/");
     const auto &queryDirectory = parser.add<std::string>(
         "query-directory", "The directory containing meshes which should be used for querying the index.", '\0', arrrgh::Required, "");
     const auto &resultsPerQuery = parser.add<int>(
@@ -218,9 +271,10 @@ int main(int argc, const char **argv) {
         "descriptorsPerObjectLimit", "descriptorsPerObjectLimit", '\0', arrrgh::Optional, 200);
     const auto &JACCARD_THRESHOLD = parser.add<float>(
         "JACCARD_THRESHOLD", "JACCARD_THRESHOLD", '\0', arrrgh::Optional, 0.5);
+    const auto &numberOfPermutations = parser.add<int>(
+        "numPermutations", "Number of permutations", '\0', arrrgh::Optional, 10);
 
-    try
-    {
+    try {
         parser.parse(argc, argv);
     }
     catch (const std::exception &e)
@@ -236,9 +290,16 @@ int main(int argc, const char **argv) {
     }
     
     std::vector<std::experimental::filesystem::path> queryFiles = ShapeDescriptor::utilities::listDirectory(queryDirectory.value());
-    // std::vector<std::experimental::filesystem::path> haystackFiles = ShapeDescriptor::utilities::listDirectory(signatureDirectory.value());
+    std::vector<std::experimental::filesystem::path> hashtableFiles = ShapeDescriptor::utilities::listDirectory(hashtableDirectory.value());
 
-    SignatureIndex *signatureIndex = readSignatureIndex(signatureFile.value());
+    std::vector<Hashtable*> hashtables(numberOfPermutations.value());
+
+    for (int i = 0; i < numberOfPermutations.value(); i++) {
+        std::cout << hashtableFiles[i].string() << std::endl;
+        hashtables[i] = readHashtable("output/lsh/hashtables/H"+std::to_string(i)+".dat");
+    }
+
+    std::vector<std::vector<int>> permutations = create_permutations(numberOfPermutations.value(), (size_t) 32895532);
 
     std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now();
 
@@ -248,7 +309,7 @@ int main(int argc, const char **argv) {
     unsigned int endIndex = subsetEndIndex.value() != -1 ? subsetEndIndex.value() : queryFiles.size();
     for(unsigned int queryFile = startIndex; queryFile < endIndex; queryFile++) {
         std::cout << "Processing query " << (queryFile + 1) << "/" << endIndex << ": " << queryFiles.at(queryFile).string() << std::endl;
-        QueryResult queryResult = runSignatureQuery(queryFiles.at(queryFile), signatureIndex, supportRadius.value(), descriptorsPerObjectLimit.value(), JACCARD_THRESHOLD.value(), seed.value(), k.value());
+        QueryResult queryResult = runHashtableQuery(queryFiles.at(queryFile), hashtables, permutations, supportRadius.value(), descriptorsPerObjectLimit.value(), JACCARD_THRESHOLD.value(), seed.value(), k.value());
         searchResults.push_back(queryResult);
 
         if(outputFile.value() != "NONE_SELECTED") {
@@ -258,14 +319,14 @@ int main(int argc, const char **argv) {
             outJson["queryObjectSupportRadius"] = supportRadius.value();
 
             outJson["queryDirectory"] = cluster::path(queryDirectory.value()).string();
-            outJson["signatureFile"] = cluster::path(signatureFile.value()).string();
+            outJson["hashtables"] = hashtables.size();
             outJson["dumpFilePath"] = cluster::path(outputFile.value()).string();
             outJson["randomSeed"] = seed.value();
             outJson["queryStartIndex"] = startIndex;
             outJson["queryEndIndex"] = endIndex;
             outJson["descriptorsPerObjectLimit"] = descriptorsPerObjectLimit.value();
             outJson["JACCARD_THRESHOLD"] = JACCARD_THRESHOLD.value() - 0.000001;
-            outJson["permutations"] = signatureIndex->numPermutations;
+            outJson["permutations"] = permutations.size();
 
             outJson["results"] = {};
 
@@ -290,15 +351,16 @@ int main(int argc, const char **argv) {
             outFile.close();
         }
     }
-    // runSignatureQuery(queryFiles.at(0), signatureIndex, supportRadius, haystackFiles);
-    
+
     // Measure total execution time
     std::chrono::steady_clock::time_point endTime = std::chrono::steady_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
-    std::cout << std::endl << "MinHash signature search complete. " << std::endl;
+    std::cout << std::endl << "Hashtable search complete. " << std::endl;
     std::cout << "Total execution time: " << float(duration.count()) / 1000.0f << " seconds" << std::endl;
     
-    delete signatureIndex;
+    // delete signatureIndex;
 
     std::cout << "Done." << std::endl;
+
+   return 0;
 }

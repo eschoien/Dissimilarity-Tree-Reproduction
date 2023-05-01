@@ -5,7 +5,7 @@
 #include "Signature.h"
 #include "Permutation.h"
 
-void computeDescriptorSignature(ShapeDescriptor::QUICCIDescriptor descriptor, std::vector<int>* signaturePtr, std::vector<std::vector<int>> permutations) {
+void computeDescriptorSignature(ShapeDescriptor::QUICCIDescriptor descriptor, std::vector<int>* signaturePtr, const std::vector<std::vector<int>>& permutations) {
     
     for (int p = 0; p < permutations.size(); p++) {
 
@@ -24,6 +24,14 @@ void computeDescriptorSignature(ShapeDescriptor::QUICCIDescriptor descriptor, st
             }
             m++;
         }
+
+        /*
+        TMP: Empty descriptors will result in signature values of 1024, which means there are 1025 possible signature values.
+        if (m > 1023) {
+            m = 1023;
+        }
+        */
+
         // m is now the signature of this descriptor for the current permutation
         signaturePtr->push_back(m);
     }
