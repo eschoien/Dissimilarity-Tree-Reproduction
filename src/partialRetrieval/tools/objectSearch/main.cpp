@@ -54,6 +54,23 @@ bool searchResultComparator(ObjectSearchResult const &lhs, ObjectSearchResult co
     return lhs.fileID < rhs.fileID;
 }
 
+template <typename T>
+std::vector<size_t> sort_indexes(const std::vector<T> &v) {
+
+    // initialize original index locations
+    std::vector<size_t> idx(v.size());
+    std::iota(idx.begin(), idx.end(), 0);
+
+    // sort indexes based on comparing values in v
+    // using std::stable_sort instead of std::sort
+    // to avoid unnecessary index re-orderings
+    // when v contains elements of equal values 
+    std::stable_sort(idx.begin(), idx.end(),
+        [&v](size_t i1, size_t i2) {return v[i1] > v[i2];});
+
+    return idx;
+}
+
 ObjectQueryResult runObjectQuery(
         cluster::path queryFile,
         Cluster* cluster,
@@ -166,14 +183,16 @@ ObjectQueryResult runObjectQuery(
                         // assumes single object returned as best match though
                         // TODO: greater than one search result will cause a result to be included more than once
                         if (searchResultOccurrenceCounts.at(result.entry.fileID) == consensusThreshold) {
-                            std::cout << "\tFound match: "
-                                      << haystackFiles.at(result.entry.fileID).filename().string() << ", "
-                                      << searchResultOccurrenceCounts.at(result.entry.fileID) << ", "
-                                      << searchResultTotalDistance.at(result.entry.fileID) << std::endl;
-                            searchResults.emplace_back(result.entry.fileID,
-                                                       searchResultOccurrenceCounts.at(result.entry.fileID),
-                                                       searchResultTotalDistance.at(result.entry.fileID));
-
+                            std::vector<size_t> sortedDistanceIndices = sort_indexes(searchResultTotalDistance);
+                            for (auto & distanceIdx : sortedDistanceIndices) {
+                                std::cout << "\tFound match: "
+                                        << haystackFiles.at(distanceIdx).filename().string() << ", "
+                                        << searchResultOccurrenceCounts.at(distanceIdx) << ", "
+                                        << searchResultTotalDistance.at(distanceIdx) << std::endl;
+                                searchResults.emplace_back(distanceIdx,
+                                                            searchResultOccurrenceCounts.at(distanceIdx),
+                                                            searchResultTotalDistance.at(distanceIdx));
+                            }
                             hasSurpassedThreshold = true;
                             break;
                         }

@@ -31,7 +31,7 @@ def calculate_time(data):
 
 
 # --- ARGUMENTS ---
-basePath = 'output/dissTree/measurements/'
+basePath = 'output/dissTree/measurements/v3/'
 ks = ["1", "3", "5", "10"]
 # -----------------
 
@@ -63,12 +63,14 @@ for k in ks:
     except:
         columnAccuracy.append('-')
         columnTimes.append(0)
+        columnAvgTimes.append(0)
                         
 outputTable.add_column("accuracy", columnAccuracy)
 outputTable.add_column("total time", columnTimes)
 outputTable.add_column("average time", columnAvgTimes)
 
+
 print(outputTable)
-print(f'Results for top-k={k}, Total time: {timedelta(seconds=round(totalTime))}')
+print(f'Total time: {timedelta(seconds=round(totalTime))}')
 print()
 print()

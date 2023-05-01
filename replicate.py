@@ -1195,9 +1195,9 @@ def runSignatureSearcher():
 def runSignatureExperiment():
 
     version = "v5"
-    perm_counts = ['10', '50', '100']
-    thresholds = ['0.1','0.2','0.3','0.4','0.5','0.6','0.7','0.8','0.9','1.0']
-    descriptorlimits = ['100', '500', '1000']
+    perm_counts = ['50']
+    thresholds = ['0.3','0.4']
+    descriptorlimits = ['1000']
     k = "383"
 
     completeQueryPath = 'input/SHREC2016_partial_retrieval/complete_objects'
@@ -1247,6 +1247,34 @@ def runSignatureExperiment():
                     '--version=' + version + ' '
                     )
 
+
+def objectSearchTopKExperiment():
+    consensusThreshold = '10'
+    queryPath = 'output/augmented_dataset_original'
+    startIndex = 0
+    endIndex = len(os.listdir('input/SHREC2016_partial_retrieval/complete_objects'))
+    outputPath = 'output/dissTree/measurements/v4/'
+    os.makedirs(outputPath, exist_ok=True)
+
+    ks = ['383']
+    for k in ks:
+    
+        outputFile = outputPath + 'measurement-' + k + '.json'
+
+
+        run_command_line_command('bin/build32x32/objectSearch '
+            '--index-directory=output/dissimilarity_tree/index32x32 '
+            '--haystack-directory=input/SHREC2016_partial_retrieval/complete_objects '
+            '--query-directory=' + queryPath + ' '
+            '--resultsPerQueryImage=' + k + ''
+            '--randomSeed=' + mainEvaluationRandomSeed + ' '
+            '--support-radius=' + shrec2016_support_radius + ' '
+            '--consensus-threshold=' + consensusThreshold + ' '
+            '--force-gpu=' + str(gpuID) + ' '
+            '--output-file=' + outputFile + ' '
+            '--subset-start-index=' + str(startIndex) + ' '
+            '--subset-end-index=' + str(endIndex))
+
 def runMainMenu():
     while True:
         main_menu = TerminalMenu([
@@ -1270,7 +1298,8 @@ def runMainMenu():
             "18. Run descriptor signature matching test",
             "19. Run signature searcher",
             "20. Run signature experiment",
-            "21. exit"], title='---------------------- Main Menu ----------------------')
+            "21. Run dissimilarity tree experiment",
+            "22. exit"], title='---------------------- Main Menu ----------------------')
 
         choice = main_menu.show() + 1
 
@@ -1315,6 +1344,8 @@ def runMainMenu():
         if choice == 20:
             runSignatureExperiment()
         if choice == 21:
+            objectSearchTopKExperiment()
+        if choice == 22:
             return
 
 def runIntroSequence():
