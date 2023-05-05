@@ -10,7 +10,7 @@ def calculate_accuracy(data, k):
 
     for queries in data['results']:
         queryFile = queries['queryFile'].split("/")[2]
-        for query in queries['searchResults']:
+        for query in queries['searchResults'][:k]:
             guessedFile = query['objectFilePath'].split("/")[3]
             if queryFile == guessedFile:
                 correct_guesses += 1
@@ -31,8 +31,8 @@ def calculate_time(data):
 
 
 # --- ARGUMENTS ---
-basePath = 'output/dissTree/measurements/v3/'
-ks = ["1", "3", "5", "10"]
+basePath = 'output/dissTree/measurements/v4/partial_objects/'
+ks = range(1,384)
 # -----------------
 
 outputTable = PrettyTable()
@@ -41,14 +41,10 @@ outputTable.add_column("Top-K", ks)
 columnAccuracy = []
 columnTimes = []
 columnAvgTimes = []
-# outputTable.add_column("-", ["-"]*4,)
 totalTime = 0
 for k in ks:
-
-
-
     try:
-        dissTree_data = json.load(open(basePath + 'measurement-' + k + '.json'))
+        dissTree_data = json.load(open(basePath + 'measurement-383.json'))
 
         dissTree_accuracy = calculate_accuracy(dissTree_data, k)
         columnAccuracy.append('{:.2f}%'.format(round(dissTree_accuracy[1],2)).rjust(7, " "))
