@@ -76,16 +76,20 @@ querysets = ["partial"]
 limits = [100, 500, 1000]
 # -----------------
 accuracies = {}
+times= {}
 for p in permutations:
     accuracies[p] = {}
+    times[p] = {}
     for queryset in querysets:
         for d in limits:
             accuracies[p][d] = {}
+            times[p][d] = {}
             for j in thresholds:
                 # accuracies[p][d][j] = []
                 signature_data = json.load(open(basePath + queryset + '_objects/permcount'+str(p)+'/measurement-'+str(j)+'-'+str(d)+'-'+str(p)+'.json'))
                 
-                accuracies[p][d][j] = calculate_accuracy(signature_data, k)[1] 
+                accuracies[p][d][j] = calculate_accuracy(signature_data, k)[1]
+                times[p][d][j] = calculate_time(signature_data)[0]
 
 data = {
     'Threshold': thresholds,
@@ -94,35 +98,74 @@ df = pd.DataFrame(data)
 
 for p in permutations:
     dl100 = accuracies[p][limits[0]].values()
-    print(dl100)
     dl500 = accuracies[p][limits[1]].values()
     dl1000 = accuracies[p][limits[2]].values()
     df.insert(len(df.columns), f'{p}-Desc_limit-100', dl100)
     df.insert(len(df.columns), f'{p}-Desc_limit-500', dl500)
     df.insert(len(df.columns), f'{p}-Desc_limit-1000', dl1000)
+
+    t100 = times[p][limits[0]].values()
+    t500 = times[p][limits[1]].values()
+    t1000 = times[p][limits[2]].values()
+    df.insert(len(df.columns), f'{p}-Desc_limit-100-Time', t100)
+    df.insert(len(df.columns), f'{p}-Desc_limit-500-Time', t500)
+    df.insert(len(df.columns), f'{p}-Desc_limit-1000-Time', t1000)
+
+
 print(df)
 
 N = len(thresholds)
 ind = np.arange(N) 
 width = 0.25
-print(df['10-Desc_limit-100'])
 
-bar1 = [plt.bar(ind, df['10-Desc_limit-100'], width=width),
-        plt.bar(ind, df['50-Desc_limit-100'], bottom=df['10-Desc_limit-100'], width=width),
-        plt.bar(ind, df['100-Desc_limit-100'], bottom=df['10-Desc_limit-100']+df['50-Desc_limit-100'], width=width)]
-bar2 = [plt.bar(ind+width, df['10-Desc_limit-500'], width=width),
-        plt.bar(ind+width, df['50-Desc_limit-500'], bottom=df['10-Desc_limit-500'], width=width),
-        plt.bar(ind+width, df['100-Desc_limit-500'], bottom=df['10-Desc_limit-500']+df['50-Desc_limit-500'], width=width)]
-bar3 = [plt.bar(ind+width*2, df['10-Desc_limit-1000'], width=width),
-        plt.bar(ind+width*2, df['50-Desc_limit-1000'], bottom=df['10-Desc_limit-1000'], width=width),
-        plt.bar(ind+width*2, df['100-Desc_limit-1000'], bottom=df['10-Desc_limit-1000']+df['50-Desc_limit-1000'], width=width)]
+bar1 = [plt.bar(ind, df['10-Desc_limit-100'], width=width, label='P=10 D=100'),
+        # plt.bar(ind, df['50-Desc_limit-100'], bottom=df['10-Desc_limit-100'], width=width),
+        # plt.bar(ind, df['100-Desc_limit-100'], bottom=df['10-Desc_limit-100']+df['50-Desc_limit-100'], width=width)
+        ]
+bar2 = [plt.bar(ind+width, df['10-Desc_limit-500'], width=width, label='P=10 D=500'),
+        # plt.bar(ind+width, df['50-Desc_limit-500'], bottom=df['10-Desc_limit-500'], width=width),
+        # plt.bar(ind+width, df['100-Desc_limit-500'], bottom=df['10-Desc_limit-500']+df['50-Desc_limit-500'], width=width)
+        ]
+bar3 = [plt.bar(ind+width*2, df['10-Desc_limit-1000'], width=width, label='P=10 D=1000'),
+        # plt.bar(ind+width*2, df['50-Desc_limit-1000'], bottom=df['10-Desc_limit-1000'], width=width),
+        # plt.bar(ind+width*2, df['100-Desc_limit-1000'], bottom=df['10-Desc_limit-1000']+df['50-Desc_limit-1000'], width=width)
+        ]
+
+
+# bar1 = []
+# bar2 = []
+# bar3 = []
+# for p in permutations:
+#     bar1.append(plt.bar(ind, df[f'{p}-Desc_limit-100'], align='edge', width=width))
+#     bar2.append(plt.bar(ind+width, df[f'{p}-Desc_limit-500'], align='edge', width=width))
+#     bar3.append(plt.bar(ind+width*2, df[f'{p}-Desc_limit-1000'], align='edge', width=width))
 
 plt.xlabel("Jaccard Thresholds")
 plt.ylabel("Accuracy%")
+plt.ylim([0,100])
+# plt.xlim([0,1])
+# plt.title("test")
+
+plt.xticks(ind+width, thresholds)
+plt.legend()
+# plt.legend((bar1[0], bar1[1], bar1[2], bar2[0], bar2[1], bar2[2], bar3[0], bar3[1], bar3[2]), ('P=10 D=100', 'P=50 D=100', 'P=100 D=100', 'P=10 D=500', 'P=50 D=500', 'P=100 D=500', 'P=10 D=1000', 'P=50 D=1000', 'P=100 D=1000'))
+plt.savefig('output/project-results/minhash/accuracy_comparison.png')
+plt.show()
+
+
+bar1 = [plt.bar(ind, df['10-Desc_limit-100-Time'], width=width, label='P=10 D=100 Time'),
+        ]
+bar2 = [plt.bar(ind+width, df['10-Desc_limit-500-Time'], width=width, label='P=10 D=500 Time'),
+        ]
+bar3 = [plt.bar(ind+width*2, df['10-Desc_limit-1000-Time'], width=width, label='P=10 D=1000 Time'),
+        ]
+
+plt.xlabel("Jaccard Thresholds")
+plt.ylabel("Time (s)")
 # plt.ylim([0,100])
 # plt.xlim([0,1])
 # plt.title("test")
 
 plt.xticks(ind+width, thresholds)
-plt.legend((bar1[0], bar1[1], bar1[2], bar2[0], bar2[1], bar2[2], bar3[0], bar3[1], bar3[2]), ('P=10 D=100', 'P=50 D=100', 'P=100 D=100', 'P=10 D=500', 'P=50 D=500', 'P=100 D=500', 'P=10 D=1000', 'P=50 D=1000', 'P=100 D=1000'))
-plt.show()
+plt.legend()
+plt.savefig('output/project-results/minhash/time_comparison.png')
