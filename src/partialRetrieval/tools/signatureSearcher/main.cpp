@@ -54,9 +54,9 @@ struct QueryResult {
 
 
 bool compareScores(ObjectScore o1, ObjectScore o2) {
-    if (o1.score == o2.score) {
+    /*if (o1.score == o2.score) {
         return (o1.fileID < o2.fileID);
-    }
+    }*/
     return (o1.score > o2.score);
 }
 
