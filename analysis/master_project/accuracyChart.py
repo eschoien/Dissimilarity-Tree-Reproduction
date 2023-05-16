@@ -4,45 +4,6 @@ import pandas as pd
 import numpy as np
 import random
 
-
-# objects = []
-# h_time = []
-# v_time = []
-# c_time = []
-
-
-# for i in range(10):
-#     if i == 4:
-#         obj = f'T{380}'
-#         objects.append(obj)
-#         h_time.append(sorted_horizontal[obj])
-#         v_time.append(sorted_vertical[obj])
-#         c_time.append(sorted_combinded[obj])
-#         continue
-    
-#     if i == 7:
-#         obj = f'T{275}'
-#         objects.append(obj)
-#         h_time.append(sorted_horizontal[obj])
-#         v_time.append(sorted_vertical[obj])
-#         c_time.append(sorted_combinded[obj])
-#         continue
-
-#     if i == 5:
-#         obj = f'T{373}'
-#         objects.append(obj)
-#         h_time.append(sorted_horizontal[obj])
-#         v_time.append(sorted_vertical[obj])
-#         c_time.append(sorted_combinded[obj])
-#         continue
-        
-#     x = random.randint(1, 383)
-#     obj = f'T{x}'
-#     objects.append(obj)
-#     h_time.append(sorted_horizontal[obj])
-#     v_time.append(sorted_vertical[obj])
-#     c_time.append(sorted_combinded[obj])
-
 def calculate_accuracy(data, k):
 
     correct_guesses = 0
@@ -118,54 +79,65 @@ N = len(thresholds)
 ind = np.arange(N) 
 width = 0.25
 
-bar1 = [plt.bar(ind, df['10-Desc_limit-100'], width=width, label='P=10 D=100'),
-        # plt.bar(ind, df['50-Desc_limit-100'], bottom=df['10-Desc_limit-100'], width=width),
-        # plt.bar(ind, df['100-Desc_limit-100'], bottom=df['10-Desc_limit-100']+df['50-Desc_limit-100'], width=width)
+plt.figure(1)
+bar1 = [plt.bar(ind, df['10-Desc_limit-100'], width=width, label='P=10 D=100', color='c')
         ]
-bar2 = [plt.bar(ind+width, df['10-Desc_limit-500'], width=width, label='P=10 D=500'),
-        # plt.bar(ind+width, df['50-Desc_limit-500'], bottom=df['10-Desc_limit-500'], width=width),
-        # plt.bar(ind+width, df['100-Desc_limit-500'], bottom=df['10-Desc_limit-500']+df['50-Desc_limit-500'], width=width)
+bar2 = [plt.bar(ind+width, df['10-Desc_limit-500'], width=width, label='P=10 D=500', color='b')
         ]
-bar3 = [plt.bar(ind+width*2, df['10-Desc_limit-1000'], width=width, label='P=10 D=1000'),
-        # plt.bar(ind+width*2, df['50-Desc_limit-1000'], bottom=df['10-Desc_limit-1000'], width=width),
-        # plt.bar(ind+width*2, df['100-Desc_limit-1000'], bottom=df['10-Desc_limit-1000']+df['50-Desc_limit-1000'], width=width)
+bar3 = [plt.bar(ind+width*2, df['10-Desc_limit-1000'], width=width, label='P=10 D=1000', color='darkorange')
         ]
 
-
-# bar1 = []
-# bar2 = []
-# bar3 = []
-# for p in permutations:
-#     bar1.append(plt.bar(ind, df[f'{p}-Desc_limit-100'], align='edge', width=width))
-#     bar2.append(plt.bar(ind+width, df[f'{p}-Desc_limit-500'], align='edge', width=width))
-#     bar3.append(plt.bar(ind+width*2, df[f'{p}-Desc_limit-1000'], align='edge', width=width))
 
 plt.xlabel("Jaccard Thresholds")
 plt.ylabel("Accuracy%")
 plt.ylim([0,100])
-# plt.xlim([0,1])
-# plt.title("test")
 
 plt.xticks(ind+width, thresholds)
 plt.legend()
-# plt.legend((bar1[0], bar1[1], bar1[2], bar2[0], bar2[1], bar2[2], bar3[0], bar3[1], bar3[2]), ('P=10 D=100', 'P=50 D=100', 'P=100 D=100', 'P=10 D=500', 'P=50 D=500', 'P=100 D=500', 'P=10 D=1000', 'P=50 D=1000', 'P=100 D=1000'))
 plt.savefig('output/project-results/minhash/accuracy_comparison.png')
-plt.show()
 
-
-bar1 = [plt.bar(ind, df['10-Desc_limit-100-Time'], width=width, label='P=10 D=100 Time'),
+plt.figure(2)
+bar1 = [plt.bar(ind, df['10-Desc_limit-100-Time'], width=width, label='P=10 D=100 Time', color='c'),
         ]
-bar2 = [plt.bar(ind+width, df['10-Desc_limit-500-Time'], width=width, label='P=10 D=500 Time'),
+bar2 = [plt.bar(ind+width, df['10-Desc_limit-500-Time'], width=width, label='P=10 D=500 Time', color='b'),
         ]
-bar3 = [plt.bar(ind+width*2, df['10-Desc_limit-1000-Time'], width=width, label='P=10 D=1000 Time'),
+bar3 = [plt.bar(ind+width*2, df['10-Desc_limit-1000-Time'], width=width, label='P=10 D=1000 Time', color='darkorange'),
         ]
 
 plt.xlabel("Jaccard Thresholds")
 plt.ylabel("Time (s)")
-# plt.ylim([0,100])
-# plt.xlim([0,1])
-# plt.title("test")
 
 plt.xticks(ind+width, thresholds)
 plt.legend()
 plt.savefig('output/project-results/minhash/time_comparison.png')
+
+plt.figure(3)
+bar1 = [plt.bar(ind, df['10-Desc_limit-500'], width=width, label='P=10 D=500', color='r')
+        ]
+bar2 = [plt.bar(ind+width, df['50-Desc_limit-500'], width=width, label='P=50 D=500', color='b')
+        ]
+bar3 = [plt.bar(ind+width*2, df['100-Desc_limit-500'], width=width, label='P=100 D=500', color='g')
+        ]
+
+plt.xlabel("Jaccard Thresholds")
+plt.ylabel("Accuracy%")
+plt.ylim([0,100])
+
+plt.xticks(ind+width, thresholds)
+plt.legend()
+plt.savefig('output/project-results/minhash/accuracy_comparisonP.png')
+
+plt.figure(4)
+bar1 = [plt.bar(ind, df['10-Desc_limit-500-Time'], width=width, label='P=10 D=500 Time', color='r'),
+        ]
+bar2 = [plt.bar(ind+width, df['50-Desc_limit-500-Time'], width=width, label='P=50 D=500 Time', color='b'),
+        ]
+bar3 = [plt.bar(ind+width*2, df['100-Desc_limit-500-Time'], width=width, label='P=100 D=500 Time', color='g'),
+        ]
+
+plt.xlabel("Jaccard Thresholds")
+plt.ylabel("Time (s)")
+
+plt.xticks(ind+width, thresholds)
+plt.legend()
+plt.savefig('output/project-results/minhash/time_comparisonP.png')
