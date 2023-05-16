@@ -148,7 +148,7 @@ QueryResult runHashtableQuery(
 
     // Comment out line below to disable randomness?
     std::shuffle(order.begin(), order.end(), generator);
-
+    #pragma omp parallel for schedule(dynamic)
     for(uint q = 0; q < descriptorsPerObjectLimit; q++) {
 
         std::vector<int> queryDescriptorSignature;

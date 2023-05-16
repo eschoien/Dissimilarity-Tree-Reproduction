@@ -1260,50 +1260,67 @@ def computeTopKDissimilarityTree():
 
 ###### HASHTABLES ######
 
-def runHashtableBuilder():
+def runHashtableBuilder(descLimit, perm_count):
     
     os.makedirs('output/lsh/hashtables', exist_ok=True)
     
     run_command_line_command('bin/build32x32/hashtableBuilder ' \
         '--index-directory=output/lsh/hashtables ' \
         '--quicci-dump-directory=output/descriptors/complete_objects_32x32 ' \
-        '--descriptorsPerObjectLimit=100 ' \
+        '--descriptorsPerObjectLimit=' + descLimit + ' ' \
         '--randomSeed=32895532 ' \
-        '--permutation-count=10 ')
+        '--permutation-count=' + perm_count + ' ')
 
 def runHashtableSearcher():
 
-    version = "v5"
-    threshold = "0.3"
-    descriptorlimit = "100"
-    perm_count = "10"
+    version = "v7"
+    perm_counts = ['10', '50', '100']
+    thresholds = ['0.3','0.4','0.5','0.6']
+    descriptorlimits = ['100', '500', '1000']
     k = "383"
-    completeObjectsPath = 'input/SHREC2016_partial_retrieval/complete_objects'
-    queryset = "completeObjects"
 
-    os.makedirs('output/hashtableMeasurements/' + version + '/' + queryset + '/permcount' + perm_count + '', exist_ok=True)
+    completeQueryPath = 'input/SHREC2016_partial_retrieval/complete_objects'
+    partialQueryPath = 'output/augmented_dataset_original'
+    outPutBasePath = 'output/hashtableMeasurements/' + version + "/"
+    
 
-    run_command_line_command('bin/build32x32/hashtableSearcher ' \
-        '--hashtable-directory=output/lsh/hashtables ' \
-        '--query-directory=' + completeObjectsPath + ' ' \
-        '--descriptorsPerObjectLimit=' + descriptorlimit + ' ' \
-        '--randomSeed=' + mainEvaluationRandomSeed + ' ' \
-        '--numPermutations=' + perm_count + ' ' \
-        '--support-radius=' + shrec2016_support_radius + ' ' \
-        '--output-file=output/hashtableMeasurements/' + version + '/' + queryset + '/permcount' + perm_count + '/measurement-' + threshold + '-' + descriptorlimit + '-' + perm_count + '.json ' \
-        '--JACCARD_THRESHOLD=' + threshold + ' ' \
-        '--k=' + k + ' ' \
-        '--version=' + version + ' ')
+    for perm_count in perm_counts:
+    
+        completeOutputPath = outPutBasePath + 'complete_objects/permcount' + perm_count
+        partialOutputPath = outPutBasePath + 'partial_objects/permcount' + perm_count
+
+        os.makedirs(completeOutputPath, exist_ok=True)
+        os.makedirs(partialOutputPath, exist_ok=True)
+
+        queryPaths = [(completeQueryPath, completeOutputPath), (partialQueryPath, partialOutputPath)]
+
+        for descriptorlimit in descriptorlimits:
+            runHashtableBuilder(descriptorlimit, perm_count)
+            for queryPath in queryPaths:
+                for threshold in thresholds:
+                    outputFile = queryPath[1] + '/measurement' + '-' + threshold + '-' + descriptorlimit + '-' + perm_count + '.json'
+                    
+                    run_command_line_command('bin/build32x32/hashtableSearcher ' \
+                        '--hashtable-directory=output/lsh/hashtables ' \
+                        '--query-directory=' + queryPath[0] + ' ' \
+                        '--descriptorsPerObjectLimit=' + descriptorlimit + ' ' \
+                        '--randomSeed=' + mainEvaluationRandomSeed + ' ' \
+                        '--numPermutations=' + perm_count + ' ' \
+                        '--support-radius=' + shrec2016_support_radius + ' ' \
+                        '--output-file=' + outputFile + ' ' \
+                        '--JACCARD_THRESHOLD=' + threshold + ' ' \
+                        '--k=' + k + ' ' \
+                        '--version=' + version + ' ')
 
 ########################
 
 
 def objectSearchTopKExperiment():
     consensusThreshold = '10'
-    queryPath = 'output/augmented_dataset_original'
+    queryPath = 'input/SHREC2016_partial_retrieval/complete_objects'
     startIndex = 0
     endIndex = len(os.listdir('input/SHREC2016_partial_retrieval/complete_objects'))
-    outputPath = 'output/dissTree/measurements/v4/'
+    outputPath = 'output/dissTree/measurements/v4/complete_objects/'
     os.makedirs(outputPath, exist_ok=True)
 
     ks = ['383']
@@ -1398,7 +1415,7 @@ def runMainMenu():
         if choice == 21:
             objectSearchTopKExperiment()
         if choice == 22:
-            runHashtableBuilder()
+            runHashtableBuilder(100, 10)
         if choice == 23:
             runHashtableSearcher()
         if choice == 24:

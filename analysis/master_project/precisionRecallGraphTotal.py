@@ -70,6 +70,7 @@ def avg_recall(data, k):
 basePath = 'output/lsh/measurements/v3/'
 ks = range(1, 384)
 permutations = [10] # [50, 100]
+# thresholds = ['0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9', '1.0']
 thresholds = ['0.3', '0.4', '0.5', 'Diss_tree']
 querysets = ['partial', 'complete']
 limits = [500] # [100, 1000]

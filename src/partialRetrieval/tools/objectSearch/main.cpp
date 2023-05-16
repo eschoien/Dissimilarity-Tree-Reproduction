@@ -184,7 +184,11 @@ ObjectQueryResult runObjectQuery(
                         // TODO: greater than one search result will cause a result to be included more than once
                         if (searchResultOccurrenceCounts.at(result.entry.fileID) == consensusThreshold) {
                             std::vector<size_t> sortedDistanceIndices = sort_indexes(searchResultTotalDistance);
+                            unsigned int resultsQueried = 0;
                             for (auto & distanceIdx : sortedDistanceIndices) {
+                                if (resultsQueried >= resultsPerQuery) {
+                                    break;
+                                }
                                 std::cout << "\tFound match: "
                                         << haystackFiles.at(distanceIdx).filename().string() << ", "
                                         << searchResultOccurrenceCounts.at(distanceIdx) << ", "
@@ -192,6 +196,7 @@ ObjectQueryResult runObjectQuery(
                                 searchResults.emplace_back(distanceIdx,
                                                             searchResultOccurrenceCounts.at(distanceIdx),
                                                             searchResultTotalDistance.at(distanceIdx));
+                                resultsQueried++;
                             }
                             hasSurpassedThreshold = true;
                             break;
