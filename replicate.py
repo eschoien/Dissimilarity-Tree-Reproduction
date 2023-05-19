@@ -1317,30 +1317,39 @@ def runHashtableSearcher():
 
 def objectSearchTopKExperiment():
     consensusThreshold = '10'
-    queryPath = 'input/SHREC2016_partial_retrieval/complete_objects'
+    completeQueryPath = 'input/SHREC2016_partial_retrieval/complete_objects'
+    partialQueryPath = 'output/augmented_dataset_original'
     startIndex = 0
-    endIndex = len(os.listdir('input/SHREC2016_partial_retrieval/complete_objects'))
-    outputPath = 'output/dissTree/measurements/v4/complete_objects/'
-    os.makedirs(outputPath, exist_ok=True)
+    endIndex = len(os.listdir('output/augmented_dataset_original'))
+    outPutBasePath = 'output/dissTree/measurements/v4/'
 
-    ks = ['383']
+    completeOutputPath = outPutBasePath + 'complete_objects/'
+    partialOutputPath = outPutBasePath + 'partial_objects/'
+
+    os.makedirs(completeOutputPath, exist_ok=True)
+    os.makedirs(partialOutputPath, exist_ok=True)
+
+    queryPaths = [(completeQueryPath, completeOutputPath), (partialQueryPath, partialOutputPath)]
+
+    ks = ['383', '1', '3', '5', '10']
     for k in ks:
+        for queryPath in queryPaths:
     
-        outputFile = outputPath + 'measurement-' + k + '.json'
+            outputFile = queryPath[1] + 'measurement-' + k + '.json'
 
 
-        run_command_line_command('bin/build32x32/objectSearch '
-            '--index-directory=output/dissimilarity_tree/index32x32 '
-            '--haystack-directory=input/SHREC2016_partial_retrieval/complete_objects '
-            '--query-directory=' + queryPath + ' '
-            '--resultsPerQueryImage=' + k + ''
-            '--randomSeed=' + mainEvaluationRandomSeed + ' '
-            '--support-radius=' + shrec2016_support_radius + ' '
-            '--consensus-threshold=' + consensusThreshold + ' '
-            '--force-gpu=' + str(gpuID) + ' '
-            '--output-file=' + outputFile + ' '
-            '--subset-start-index=' + str(startIndex) + ' '
-            '--subset-end-index=' + str(endIndex))
+            run_command_line_command('bin/build32x32/objectSearch '
+                '--index-directory=output/dissimilarity_tree/index32x32 '
+                '--haystack-directory=input/SHREC2016_partial_retrieval/complete_objects '
+                '--query-directory=' + queryPath[0] + ' '
+                '--resultsPerQueryImage=' + k + ' '
+                '--randomSeed=' + mainEvaluationRandomSeed + ' '
+                '--support-radius=' + shrec2016_support_radius + ' '
+                '--consensus-threshold=' + consensusThreshold + ' '
+                '--force-gpu=' + str(gpuID) + ' '
+                '--output-file=' + outputFile + ' '
+                '--subset-start-index=' + str(startIndex) + ' '
+                '--subset-end-index=' + str(endIndex))
 
 def runMainMenu():
     while True:
