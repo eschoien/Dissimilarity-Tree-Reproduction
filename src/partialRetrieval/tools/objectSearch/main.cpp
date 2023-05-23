@@ -183,7 +183,7 @@ ObjectQueryResult runObjectQuery(
                         // assumes single object returned as best match though
                         // TODO: greater than one search result will cause a result to be included more than once
                         if (searchResultOccurrenceCounts.at(result.entry.fileID) == consensusThreshold) {
-                            std::vector<size_t> sortedDistanceIndices = sort_indexes(searchResultTotalDistance);
+                            std::vector<size_t> sortedDistanceIndices = sort_indexes(searchResultOccurrenceCounts);
                             unsigned int resultsQueried = 0;
                             for (auto & distanceIdx : sortedDistanceIndices) {
                                 if (resultsQueried >= resultsPerQuery) {
