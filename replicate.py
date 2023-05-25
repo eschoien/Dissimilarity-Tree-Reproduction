@@ -1273,10 +1273,10 @@ def runHashtableBuilder(descLimit, perm_count):
 
 def runHashtableSearcher():
 
-    version = "v7"
-    perm_counts = ['10', '50', '100']
-    thresholds = ['0.3','0.4','0.5','0.6']
-    descriptorlimits = ['100', '500', '1000']
+    version = "v8"
+    perm_counts = ['50']
+    thresholds = ['0.2', '0.3','0.4','0.5']
+    descriptorlimits = ['500']
     k = "383"
 
     completeQueryPath = 'input/SHREC2016_partial_retrieval/complete_objects'
