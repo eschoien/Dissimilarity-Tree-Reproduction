@@ -1,21 +1,22 @@
-# Source code repository for the paper "Partial 3D Object Retrieval using Local Binary QUICCI Descriptors and Dissimilarity Tree Indexing"
-
------
-
-### Notice: This repository is for archival and reproduction purposes only. 
-### Please refer to the following repositories for updated code and documentation:
-
-[libShapeDescriptor](https://github.com/bartvbl/libShapeDescriptor)
-
-
+# Source code repository for the paper ""
 
 -----
 
 This repository contains:
 
-- A reference implementation of the Dissimilarity Tree proposed in the paper.
-- A reference implementation of the Modified Quick Intersection Count Change Image for partial object retrieval purposes.
-- A script which can be used to completely reproduce all results presented in the paper.
+- A reference implementation of the LSH-based pipeline proposed in the paper.
+- A reference implementation of the Modified QUICCI descriptor.
+
+The modifications relevant to our master's thesis are in the files:
+- This contains our modifications to the QUICCI descriptors on lines 302-372:
+	- src/libShapeDescriptor/src/shapeDescriptor/gpu/quickIntersectionCountImageGenerator.cu
+
+- These contains our LSH-based partial retrieval pipeline:
+	- src/partialRetrieval/src/projectSymmetry/lsh/
+	- src/partialRetrieval/tools/
+		- hashTableBuilder/
+		- hashTableSearcher/
+		- signatureSearcher/
 
 ## Instructions
 
@@ -33,6 +34,8 @@ Should the script fail due to missing dependencies, you can find shell scripts i
 
 Refer to the included Manual PDF for further instructions.
 
+The options which were created for this master's thesis are options 16-23. 
+
 ## System Requirements
 
 The RAM and Disk space requirements are only valid when attempting to reproduce the presented results.
@@ -49,28 +52,4 @@ OS   | Ubuntu 16 or higher. Project has been tested on 18 and 20.
 
 ## Credits
 
-- Development and implementation: Bart Iver van Blokland, [NTNU Visual Computing Lab](https://www.idi.ntnu.no/grupper/vis/)
-- Supervision: Theoharis Theoharis, [NTNU Visual Computing Lab](https://www.idi.ntnu.no/grupper/vis/)
-
-If you use (parts of) this project in your research, we kindly ask you reference the papers on which this project is based:
-
-    @article{van2021dissimilarity,
-      title={Partial 3D Object Retrieval using Local Binary QUICCI Descriptors and Dissimilarity Tree Indexing},
-      author={van Blokland, Bart Iver and Theoharis, Theoharis},
-      journal={Computers \& Graphics},
-      volume="100",
-      pages="32--42",
-      year={2021},
-      publisher={Elsevier}
-    }
-    
-    @article{van2020indexing,
-      title={An Indexing Scheme and Descriptor for 3D Object Retrieval Based on Local Shape Querying},
-      author={van Blokland, Bart Iver and Theoharis, Theoharis},
-      journal={Computers \& Graphics},
-	  volume="92",
-	  pages="55--66",
-      year={2020},
-      publisher={Elsevier}
-    }
-
+This repository is a fork from Bart Iver van Blokland (https://github.com/bartvbl/Dissimilarity-Tree-Reproduction)
