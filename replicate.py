@@ -94,10 +94,10 @@ def downloadDatasetsMenu():
                          'input/precomputed_augmented_dataset', 'Augmented SHREC 2016 Query Dataset')
             shutil.copytree('input/precomputed_augmented_dataset', 'output', dirs_exist_ok=True)
         if choice == 1 or choice == 5:
-            downloadFile('https://ntnu.box.com/shared/static/q1blnwzrq8g0cuh3pl3f0av3v4n4qqi6.7z', 'index_96x96.7z',
-                         'input/precomputed_dissimilarity_trees/index_96x96', 'Precomputed Dissimilarity Tree for Descriptors of resolution 96x96')
-            downloadFile('https://ntnu.box.com/shared/static/cv4h14yqy9tx5llyc4t2tbbpr1nak52r.7z', 'index_64x64.7z',
-                         'input/precomputed_dissimilarity_trees/index_64x64', 'Precomputed Dissimilarity Tree for Descriptors of resolution 64x64')
+            # downloadFile('https://ntnu.box.com/shared/static/q1blnwzrq8g0cuh3pl3f0av3v4n4qqi6.7z', 'index_96x96.7z',
+            #              'input/precomputed_dissimilarity_trees/index_96x96', 'Precomputed Dissimilarity Tree for Descriptors of resolution 96x96')
+            # downloadFile('https://ntnu.box.com/shared/static/cv4h14yqy9tx5llyc4t2tbbpr1nak52r.7z', 'index_64x64.7z',
+            #              'input/precomputed_dissimilarity_trees/index_64x64', 'Precomputed Dissimilarity Tree for Descriptors of resolution 64x64')
             downloadFile('https://ntnu.box.com/shared/static/g5ckpzuqilcx2oknvytbh8l4uyv08ifv.7z', 'index_32x32.7z',
                          'input/precomputed_dissimilarity_trees/index_32x32', 'Precomputed Dissimilarity Tree for Descriptors of resolution 32x32')
         if choice == 6:
@@ -1202,10 +1202,10 @@ def runSignatureSearcher():
     
 def runSignatureExperiment():
 
-    version = "v6"
+    version = "v5"
     perm_counts = ['10', '50', '100']
     thresholds = ['0.1','0.2','0.3','0.4','0.5','0.6','0.7','0.8','0.9','1.0']
-    descriptorlimits = ['100', '500', '1000']
+    descriptorlimits = ['100', '500']
     k = "383"
 
     completeQueryPath = 'input/SHREC2016_partial_retrieval/complete_objects'
@@ -1274,8 +1274,8 @@ def runHashtableBuilder(descLimit, perm_count):
 def runHashtableSearcher():
 
     version = "v8"
-    perm_counts = ['50']
-    thresholds = ['0.2', '0.3','0.4','0.5']
+    perm_counts = ['10']
+    thresholds = ['0.3','0.4']
     descriptorlimits = ['500']
     k = "383"
 
@@ -1321,7 +1321,7 @@ def objectSearchTopKExperiment():
     partialQueryPath = 'output/augmented_dataset_original'
     startIndex = 0
     endIndex = len(os.listdir('output/augmented_dataset_original'))
-    outPutBasePath = 'output/dissTree/measurements/v4/'
+    outPutBasePath = 'output/dissTree/measurements/v5/'
 
     completeOutputPath = outPutBasePath + 'complete_objects/'
     partialOutputPath = outPutBasePath + 'partial_objects/'
@@ -1424,7 +1424,7 @@ def runMainMenu():
         if choice == 21:
             objectSearchTopKExperiment()
         if choice == 22:
-            runHashtableBuilder(100, 10)
+            runHashtableBuilder('100', '10')
         if choice == 23:
             runHashtableSearcher()
         if choice == 24:
