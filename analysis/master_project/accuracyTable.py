@@ -28,12 +28,13 @@ def calculate_time(data):
 
 
 # --- ARGUMENTS ---
-basePath = 'output/lsh/measurements/v3/'
-ks = [1, 3, 5, 10]
-permutations = [10, 50, 100]
+# basePath = 'output/lsh/measurements/v4/'
+basePath = 'output/hashtableMeasurements/v8/'
+ks = [1]
+permutations = [50]
 thresholds =  ["0.1","0.2","0.3","0.4","0.5","0.6","0.7","0.8","0.9","1.0"]
 querysets = ["partial", "complete"]
-limits = [100, 500, 1000]
+limits = [500]
 # -----------------
 
 

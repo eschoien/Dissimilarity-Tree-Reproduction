@@ -34,7 +34,7 @@ def calculate_time(data):
 
 
 # --- ARGUMENTS ---
-basePath = 'output/dissTree/measurements/v4/'
+basePath = 'output/dissTree/measurements/v5/'
 ks = [1, 3, 5, 10]
 # -----------------
 
@@ -44,12 +44,12 @@ outputTable.add_column("Top-K", ks)
 querysets = ['partial', 'complete']
 totalTime = 0
 for queryset in querysets:
-    dissTree_data = json.load(open(basePath + queryset + '_objects/measurement-383.json'))
     columnAccuracy = []
     columnTimes = []
     columnAvgTimes = []
     for k in ks:
         try:
+            dissTree_data = json.load(open(basePath + queryset + '_objects/measurement-383.json'))
             # dissTree_data = json.load(open(basePath + 'measurement-' + str(k) + '.json'))
             dissTree_accuracy = calculate_accuracy(dissTree_data, k, queryset)
             columnAccuracy.append('{:.2f}%'.format(round(dissTree_accuracy[1],2)).rjust(7, " "))

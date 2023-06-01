@@ -67,11 +67,11 @@ def avg_recall(data, k):
     return avg_recall
 
 # --- ARGUMENTS ---
-basePath = 'output/lsh/measurements/v3/'
+basePath = 'output/lsh/measurements/v4/'
 ks = range(1, 384)
-permutations = [10] # [50, 100]
+permutations = [50] # [50, 100]
 # thresholds = ['0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9', '1.0']
-thresholds = ['0.3', '0.4', '0.5', 'Diss_tree']
+thresholds = ['0.2', '0.3', '0.4', '0.5', 'Diss_tree']
 querysets = ['partial', 'complete']
 limits = [500] # [100, 1000]
 # -----------------
@@ -90,7 +90,7 @@ cmap1 = get_cmap('PiYG', len(thresholds)+1+len(thresholds))
 
 for p in permutations:
     for queryset in querysets:
-        diss_data = json.load(open('output/dissTree/measurements/v4/' + queryset + '_objects/measurement-383.json'))
+        diss_data = json.load(open('output/dissTree/measurements/v5/' + queryset + '_objects/measurement-383.json'))
         diss_done = False
         for d in limits:
             for j in thresholds:
@@ -115,7 +115,7 @@ for p in permutations:
 
                 # The colormap is two times the number of thresholds, as there are two querysets, plus a netrual middle value
                 # Line below basically starts in the middle, and either adds or subtracts the jaccard threshold index, depending on queryset
-                color_n = len(thresholds) + (thresholds.index(j)+1) * (1 if queryset == 'partial' else -1)
+                color_n = len(thresholds) + (thresholds.index(j)+2) * (1 if queryset == 'partial' else -1)
                 
                 if j == 'Diss_tree' and diss_done == True:
                     break
