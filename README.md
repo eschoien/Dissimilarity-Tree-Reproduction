@@ -5,7 +5,7 @@
 This repository contains:
 
 - A reference implementation of the LSH-based pipeline proposed in the paper.
-- A reference implementation of the Modified QUICCI descriptor.
+- A reference implementation of our Directionally Modified QUICCI descriptor.
 
 The modifications relevant to our master's thesis are in the files:
 - This contains our modifications to the QUICCI descriptors on lines 302-372:
