@@ -4,18 +4,21 @@
 
 This repository contains:
 
-- A reference implementation of the LSH-based pipeline proposed in the paper.
-- A reference implementation of our Directionally Modified QUICCI descriptor.
+- The implementation of the LSH-based pipeline proposed in the paper.
+- The implementation of our Directionally Modified QUICCI descriptor.
 
 The modifications relevant to our master's thesis are in the files:
 - This contains our modifications to the QUICCI descriptors on lines 302-372:
 	- src/libShapeDescriptor/src/shapeDescriptor/gpu/quickIntersectionCountImageGenerator.cu
+	- src/libShapeDescriptor/src/libraryBuildSettings.h
+		- Line 22 changes the direction of the QUICCI descriptor. Requires recompiling and recomputing of descriptors and dissimilarity tree.
 
 - These contains our LSH-based partial retrieval pipeline:
 	- src/partialRetrieval/src/projectSymmetry/lsh/
 	- src/partialRetrieval/tools/
 		- hashTableBuilder/
 		- hashTableSearcher/
+		- signatureBuilder/
 		- signatureSearcher/
 
 ## Instructions
@@ -29,12 +32,13 @@ python3 replicate.py
 ```
 
 From the root of the repository.
+**The options which were created for this master's thesis are options 16-23.**
 
 Should the script fail due to missing dependencies, you can find shell scripts installing all necessary packages in the scripts/ directory.
 
 Refer to the included Manual PDF for further instructions.
 
-The options which were created for this master's thesis are options 16-23. 
+
 
 ## System Requirements
 
