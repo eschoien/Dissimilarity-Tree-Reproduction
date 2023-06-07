@@ -2,11 +2,10 @@
 
 -----
 
+**Below are the instructions and system requirements of the original Dissimilarity Tree reproduction repository.**
 
-**Below are the instructions and system requirements found in the original Dissimilarity Tree reproduction repository.**
-
-## Instructions (original)
-
+> ## Instructions (original)
+> 
 > You only need to have python 3 installed, which comes with Ubuntu. Any dependencies needed by the project itself can be installed using the menu system in the script itself.
 >
 > You can run the script by executing:
@@ -20,9 +19,9 @@
 > Should the script fail due to missing dependencies, you can find shell scripts installing all necessary packages in the scripts/ directory.
 >
 > Refer to the included Manual PDF for further instructions.
-
-## System Requirements (original)
-
+>
+> ## System Requirements (original)
+>
 > The RAM and Disk space requirements are only valid when attempting to reproduce the presented results.
 > 
 > The codebase _should_ be able to compile on Windows, but due to some CUDA driver/SDK compatbility issues we have not yet been able to verify this.
@@ -36,7 +35,7 @@
 > OS   | Ubuntu 16 or higher. Project has been tested on 18 and 20.
 > 
 
-**Overview and Instructions for this thesis project**
+# Overview and Instructions for this thesis project**
 
 ## Overview
 
@@ -45,7 +44,7 @@ This repository is a fork of the Dissimilarity-Tree-Reproduction, which extends 
 - The implementation of the LSH-based pipeline proposed in the thesis.
 - The implementation of the Directionally Modified QUICCI descriptor proposed in the thesis.
 
-The modifications relevant to our master's thesis are:
+The modifications for our master's thesis project are:
 
 - Modifications for the directional QUICCI descriptors:
 	- src/libShapeDescriptor/src/shapeDescriptor/gpu/quickIntersectionCountImageGenerator.cu
@@ -68,7 +67,7 @@ The modifications relevant to our master's thesis are:
 
 After cloning the project, make sure to:
 1. Download the SHREC2016 dataset and the precomputed augmented SHREC2016 dataset using the replicate.py script
-which is required by in all of the steps below.
+which is required in all of the cases below.
 
 ### Testing the QUICCI directions:
 
@@ -85,7 +84,7 @@ which is required by in all of the steps below.
 3- Compute (or download the precomputed) descriptors
 4. Run option 20, signature experiment, which will produce a measurement file for every combination of parameters
 
-## Testing the LSH-based partial retrieval pipeline using hash tables:
+### Testing the LSH-based partial retrieval pipeline using hash tables:
 1. (make sure that the original horizontal QUICCI descriptor is used as described above)
 2. Run option 23: hashtable searcher
 
