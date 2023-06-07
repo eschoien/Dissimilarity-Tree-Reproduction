@@ -35,7 +35,7 @@
 > OS   | Ubuntu 16 or higher. Project has been tested on 18 and 20.
 > 
 
-# Overview and Instructions for this thesis project**
+# Overview and Instructions for this thesis project
 
 ## Overview
 
