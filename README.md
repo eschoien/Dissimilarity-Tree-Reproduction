@@ -92,6 +92,8 @@ which is required in all of the cases below.
 - Compute or download the precomputed dissimilarity tree
 - Run option 21: top-k results for dissimilarity tree
 
+**Various scripts, for creating the figures and tables from the measurement files produced, can be found in analysis/master_project directory in the lsh-experiment branch. These are not included in the master branch as they are created ad-hoc for visualizing the results.**
+
 ## Credits
 
 This repository is a fork from Bart Iver van Blokland (https://github.com/bartvbl/Dissimilarity-Tree-Reproduction)
