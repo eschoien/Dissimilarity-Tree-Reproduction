@@ -10,10 +10,12 @@ output/**/*.dat
 output/**/*.txt
 output/**/*.csv
 output/**/*.json
+output/**/*.png
 
 input/
 build/
 .vscode/
+misc/
 
 callgrind.out.*
 *.log
