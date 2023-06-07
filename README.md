@@ -71,7 +71,7 @@ which is required in all of the cases below.
 
 ### Testing the QUICCI directions:
 
-1. Choose between horizontal, vertical or combined QUICCI in the file specified above.
+1. Choose between horizontal, vertical or combined QUICCI as specified in the Overview above.
 2. Using the replicate.py script (need to redo this each time / for each direction):
 	- Compile the project
 	- Compute the descriptors
