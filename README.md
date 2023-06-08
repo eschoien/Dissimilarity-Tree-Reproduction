@@ -1,4 +1,4 @@
-# Source code repository for the paper ""
+# Source code repository for the paper "Improving Matching of QUICCI Shape Descriptors for Partial Object Retrieval"
 
 -----
 
